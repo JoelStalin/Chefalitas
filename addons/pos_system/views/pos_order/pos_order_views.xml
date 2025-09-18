@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- Formato de papel 80mm -->
+    <record id="paperformat_pos_ticket_80mm" model="report.paperformat">
+        <field name="name">POS Ticket 80mm</field>
+        <field name="default" eval="False" />
+        <field name="format">custom</field>
+        <field name="page_height">200</field> <!-- alto flexible; Odoo expandirá -->
+        <field name="page_width">80</field>   <!-- 80 mm -->
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">2</field>
+        <field name="margin_bottom">2</field>
+        <field name="margin_left">2</field>
+        <field name="margin_right">2</field>
+        <field name="header_line" eval="False" />
+        <field name="disable_shrinking" eval="True" />
+        <field name="dpi">110</field>
+    </record>
+
+    <!-- Acción de reporte (aparece en Imprimir del modelo pos.order) -->
+    <record id="action_report_pos_receipt" model="ir.actions.report">
+        <field name="name">POS Receipt</field>
+        <field name="model">pos.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pos_system.report_pos_order_receipt</field>
+        <field name="report_file">pos_system.report_pos_order_receipt</field>
+        <field name="print_report_name">'POS_Receipt_' + (object.name or '')</field>
+        <field name="paperformat_id" ref="pos_system.paperformat_pos_ticket_80mm" />
+        <!-- Esto “adhiere” el reporte al menú Imprimir de pos.order -->
+        <field name="binding_model_id" ref="point_of_sale.model_pos_order" />
+        <field name="binding_type">report</field>
+    </record>
+
+    <record id="view_pos_order_form_inherit_print_btn" model="ir.ui.view">
+        <field name="name">pos.order.form.print.receipt</field>
+        <field name="model">pos.order</field>
+        <field name="inherit_id" ref="point_of_sale.view_pos_pos_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="%(pos_system.action_report_pos_receipt)d"
+                    type="action"
+                    class="oe_highlight"
+                    string="Imprimir Recibo (PDF)" />
+            </xpath>
+        </field>
+    </record>
+    <!-- LISTA DE ÓRDENES: page-break solo entre docs -->
+    <template id="report_pos_order_receipt">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <t t-foreach="docs" t-as="doc">
+                    <t t-call="pos_system.report_pos_order_receipt_body">
+                        <t t-set="o" t-value="doc" />
+                    </t>
+                    <!-- <div t-if="not loop.last" style="page-break-after: always;" /> -->
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- CUERPO DEL TICKET -->
+    <template id="report_pos_order_receipt_body">
+        <t t-set="company" t-value="o.company_id" />
+        <t t-set="currency" t-value="o.pricelist_id.currency_id or o.company_id.currency_id" />
+        <t t-set="qmon" t-value="env['ir.qweb.field.monetary']" />
+        <t t-set="qfloat" t-value="env['ir.qweb.field.float']" />
+        <t t-set="qdt" t-value="env['ir.qweb.field.datetime']" />
+
+        <style>
+            .pos-ticket { font-size: 11px; width:100%; }
+            .text-center { text-align:center; }
+            .small { font-size:10px; }
+            .muted { color:#555; }
+            .bold { font-weight:700; }
+            .sep { text-align:center; margin:8px 0; }
+            .qty-pill {
+            display:inline-block; padding:2px 6px;
+            border-radius:6px; font-weight:600; background:#f6f6f6; margin-right:4px;
+            }
+            table.twocol { width:100%; border-collapse:collapse; }
+            table.twocol td { vertical-align:top; }
+            table.twocol td.right { text-align:right; white-space:nowrap; }
+        </style>
+
+        <div class="pos-ticket">
+
+            <!-- Header (logo único + datos empresa) -->
+            <div class="text-center">
+                <img t-if="company.logo" t-att-src="'/web/image/res.company/%s/logo' % company.id"
+                    style="max-height:70px; max-width:90%;" />
+
+<!-- La razon por la que no sale la imagen en el local host es porque  web.external_layout no esta cargando bien. -->
+                <!-- <img src="https://kabaygroup.com/api/image/res.partner/33/image_1920/" style="max-height:70px; max-width:90%;" /> -->
+                <div class="bold" t-esc="company.name" />
+                <div t-if="company.phone">Tel: <t t-esc="company.phone" /></div>
+                <div t-if="company.vat">RNC: <t t-esc="company.vat" /></div>
+                <div t-if="company.email" class="small" t-esc="company.email" />
+                <div t-if="company.website" class="small" t-esc="company.website" />
+                <div t-if="company.partner_id.comment" class="small" t-esc="company.partner_id.comment"/>
+            </div>
+
+            <div class="sep">--------------------------------</div>
+
+            <!-- Cajero + número grande (tracking/pos_reference) -->
+            <div class="text-center small muted">
+                <t t-if="o.user_id">Atendido por <t t-esc="o.user_id.name" /></t>
+            </div>
+            <div class="text-center" style="font-size:22px; line-height:1.1;">
+                <t t-esc="o.tracking_number or o.pos_reference or ''" />
+            </div>
+
+            <div class="sep">--------------------------------</div>
+
+            <!-- LÍNEAS -->
+            <t t-foreach="o.lines" t-as="l">
+                <t t-set="uom_name"
+                    t-value="(l.product_uom_id and l.product_uom_id.name) or 'Unidades'" />
+                <t t-set="unit_price_incl"
+                    t-value="(l.qty and (l.price_subtotal_incl / l.qty)) or 0.0" />
+
+                <!-- Nombre a la izquierda / total con impuestos a la derecha -->
+                <table class="twocol">
+                    <tr>
+                        <td class="bold">
+                            <t t-esc="l.product_id.display_name" />
+                        </td>
+                        <td class="right"
+                            t-raw="qmon.value_to_html(l.price_subtotal_incl, {'display_currency': currency})" />
+                    </tr>
+                </table>
+
+                <!-- Pastilla de cantidad + precio unitario incl -->
+                <div class="small muted">
+                    <span class="qty-pill">
+                        <t t-raw="qfloat.value_to_html(l.qty, {'precision': 2})" />
+                        <t t-esc="uom_name" />
+                    </span> × <span
+                        t-raw="qmon.value_to_html(unit_price_incl, {'display_currency': currency})" />
+                    / <t t-esc="uom_name" />
+                </div>
+            </t>
+
+            <!-- Nota general de la orden -->
+            <div t-if="o.general_note">
+                <div class="bold" style="margin-top:6px;">Nota general</div>
+                <div>
+                    <t t-esc="o.general_note" />
+                </div>
+            </div>
+
+            <!-- Totales -->
+            <div class="sep">--------------------------------</div>
+
+            <table class="twocol">
+                <tr>
+                    <td class="bold">Subtotal</td>
+                    <td class="right"
+                        t-raw="qmon.value_to_html(o.amount_total - o.amount_tax, {'display_currency': currency})" />
+                </tr>
+                <tr>
+                    <td>ITBIS</td>
+                    <td class="right"
+                        t-raw="qmon.value_to_html(o.amount_tax, {'display_currency': currency})" />
+                </tr>
+            </table>
+
+            <div class="sep">--------------------------------</div>
+
+            <table class="twocol">
+                <tr>
+                    <td class="bold">TOTAL</td>
+                    <td class="right bold"
+                        t-raw="qmon.value_to_html(o.amount_total, {'display_currency': currency})" />
+                </tr>
+            </table>
+
+            <!-- Pagos -->
+            <t t-foreach="o.payment_ids" t-as="p">
+                <table class="twocol">
+                    <tr>
+                        <td>
+                            <t t-esc="p.payment_method_id.name" />
+                        </td>
+                        <td class="right"
+                            t-raw="qmon.value_to_html(p.amount, {'display_currency': currency})" />
+                    </tr>
+                </table>
+            </t>
+            <table class="twocol" t-if="o.amount_return">
+                <tr>
+                    <td>Cambio</td>
+                    <td class="right"
+                        t-raw="qmon.value_to_html(o.amount_return, {'display_currency': currency})" />
+                </tr>
+            </table>
+
+            <!-- Pie -->
+            <div class="small muted" style="text-align:center; margin-top:10px;">
+                KabayGroup
+            </div>
+            <div class="small muted" style="text-align:center;">
+                <t t-esc="o.name" />
+            </div>
+            <div class="small muted" style="text-align:center;" t-if="o.date_order">
+                <t
+                    t-raw="qdt.value_to_html(o.date_order, {'tz': (o.company_id.partner_id.tz or 'UTC')})" />
+            </div>
+
+        </div>
+    </template>
+
+</odoo>
