@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="informations">
+        <div id="informations" class="row mt36 mb32">
+            <div class="col-6">
+                <strong t-field="o.company_id.partner_id.name" />
+                <br />
+                <span t-field="o.company_id.partner_id"
+                    class="text-muted"
+                    t-options='{"widget": "contact", "fields": ["address"], "no_marker": true}' />
+                <br />
+                <strong>RNC:</strong>
+                <span t-if="o.company_id.vat" t-field="o.company_id.vat" />
+                <br />
+                <strong>Fecha Emisión:</strong>
+                <span t-field="o.invoice_date" t-options='{"format": "dd/MM/yyyy"}' />
+                <br />
+                <t
+                    t-if="o.invoice_date_due and o.move_type == 'out_invoice' and o.state == 'posted'">
+                    <strong>Vencimiento:</strong>
+                    <span t-field="o.invoice_date_due" t-options='{"format": "dd/MM/yyyy"}' />
+                </t>
+            </div>
+            <div class="col-6">
+                <t t-if="o.l10n_latam_document_type_id">
+                    <h2>
+                        <span t-field="o.l10n_latam_document_type_id.report_name" />
+                    </h2>
+                </t>
+                <strong>NCF:</strong>
+                <span t-field="o.l10n_do_fiscal_number" />
+                <br />
+                <!-- <t t-if="o.l10n_do_ncf_expiration_date"> -->
+                <strong>Válida hasta:</strong>
+                <span t-field="o.l10n_do_ncf_expiration_date" t-options='{"format": "dd/MM/yyyy"}' />
+                <!-- </t> -->
+            </div>
+        </div>
+        <div id="receiver_info" class="row mt32 mb32">
+            <t t-set="vat_len" t-value="len(o.commercial_partner_id.vat or '')" />
+            <div class="col-auto col-7 mw-100 mb-2">
+                <strong>
+                    <t t-if="vat_len == 9">RNC:</t>
+                    <t t-elif="vat_len == 11">Cédula:</t>
+                    <t t-else="">ID Cliente:</t>
+                </strong>
+                <span class="m-0" t-field="o.commercial_partner_id.vat" />
+                <br />
+                <strong>
+                    <t t-if="vat_len == 9">Razón Social:</t>
+                    <t t-else="">Nombre:</t>
+                </strong>
+                <span class="m-0" t-field="o.commercial_partner_id.name" />
+                <br />
+                <span t-if="o.partner_id.street" class="m-0"
+                    t-field="o.partner_id"
+                    t-options='{"widget": "contact", "fields": ["address"], "no_marker": true}' />
+            </div>
+        </div>
+    </template>
+
+    <!-- Tax Totals Template -->
+    <template id="document_tax_totals">
+        <t t-if="o._name == 'account.move'">
+            <t t-set="l10n_do_amounts" t-value="o._get_l10n_do_amounts() or {}" />
+            <!-- Subtotal -->
+            <tr>
+                <td>Subtotal</td>
+                <td class="text-end">
+                    <span t-field="o.amount_untaxed"
+                        t-options='{"widget": "monetary", "display_currency": o.currency_id}' />
+                </td>
+            </tr>
+            <!-- Total Impuestos con amount_tax_signed -->
+            <tr>
+                <td>ITBIS</td>
+                <td class="text-end">
+                    <span t-field="o.itbis_amount"
+                        t-options='{"widget": "monetary", "display_currency": o.currency_id}' />
+                </td>
+            </tr>
+            <!-- Propina (10%) solo si o.propina_amount != 0 -->
+            <t t-if="o.propina_amount">
+                <tr>
+                    <td>Propina (10%)</td>
+                    <td class="text-end">
+                        <span t-field="o.propina_amount"
+                            t-options='{"widget":"monetary","display_currency":o.currency_id}' />
+                    </td>
+                </tr>
+            </t>
+            <!-- Total General -->
+            <tr class="border-black o_total">
+                <td>
+                    <strong>Total</strong>
+                </td>
+                <td class="text-end">
+                    <span t-field="o.amount_total"
+                        t-options='{"widget": "monetary", "display_currency": o.currency_id}' />
+                </td>
+            </tr>
+        </t>
+    </template>
+
+    <!-- Main Report Inheritance -->
+    <template id="report_invoice_document_inherited" inherit_id="account.report_invoice_document"
+        primary="True">
+        <xpath expr="//div[contains(@class, 'invoice_main')]" position="replace">
+            <div class="clearfix invoice_main">
+                <div class="page mb-4">
+                    <t t-call="web.external_layout">
+                        <t t-set="o" t-value="o.with_context(lang=lang)" />
+                        <t t-set="is_l10n_do_invoice"
+                            t-value="o.l10n_latam_use_documents and o.company_id.country_id and o.country_code == 'DO'" />
+
+                        <!-- Header and Receiver Info -->
+                        <t t-call="l10n_do_accounting.informations" />
+
+                        <!-- Invoice Line Table -->
+                        <table class="o_has_total_table table o_main_table table-borderless"
+                            name="invoice_line_table">
+                            <thead>
+                                <tr>
+                                    <th class="text-start">Descripción</th>
+                                    <th class="text-end">Cantidad</th>
+                                    <th class="text-end">Precio Unitario</th>
+                                    <th class="text-end">Impuestos</th>
+                                    <th class="text-end">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody class="invoice_tbody">
+                                <t
+                                    t-foreach="o.invoice_line_ids.filtered(lambda l: l.display_type == 'product')"
+                                    t-as="line">
+                                    <tr>
+                                        <td>
+                                            <span t-field="line.name" t-options='{"widget": "text"}' />
+                                        </td>
+                                        <td class="text-end">
+                                            <span t-field="line.quantity" />
+                                        </td>
+                                        <td class="text-end">
+                                            <span t-field="line.price_unit"
+                                                t-options='{"widget": "monetary", "display_currency": o.currency_id}' />
+                                        </td>
+                                        <td class="text-end">
+                                            <span
+                                                t-out="', '.join([tax.name for tax in line.tax_ids])" />
+                                        </td>
+                                        <td class="text-end">
+                                            <span t-field="line.price_subtotal"
+                                                t-options='{"widget": "monetary", "display_currency": o.currency_id}' />
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <!-- Totals -->
+                        <div class="row">
+                            <div class="col-6 offset-6">
+                                <table class="table table-borderless">
+                                    <t t-call="l10n_do_accounting.document_tax_totals" />
+                                </table>
+                            </div>
+                        </div>
+
+
+                    </t>
+                </div>
+            </div>
+        </xpath>
+    </template>
+
+    <!-- Report Selection Override -->
+    <template id="report_invoice" inherit_id="account.report_invoice">
+        <xpath expr='//t[@t-call="account.report_invoice_document"]' position="replace">
+            <t
+                t-if="o._get_name_invoice_report() == 'l10n_do_accounting.report_invoice_document_inherited'"
+                t-call="l10n_do_accounting.report_invoice_document_inherited"
+                t-lang="lang" />
+        </xpath>
+    </template>
+</odoo>

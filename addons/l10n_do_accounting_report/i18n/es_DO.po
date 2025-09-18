@@ -1,0 +1,1658 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* l10n_do_accounting_report
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 15.0+e\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-07-16 15:47+0000\n"
+"PO-Revision-Date: 2022-07-16 15:47+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,help:l10n_do_accounting_report.field_account_bank_statement_line__fiscal_status
+#: model:ir.model.fields,help:l10n_do_accounting_report.field_account_move__fiscal_status
+#: model:ir.model.fields,help:l10n_do_accounting_report.field_account_payment__fiscal_status
+msgid ""
+"* The 'Grey' status means invoice isn't fully reported and may appear in other report if a withholding is applied.\n"
+"* The 'Green' status means invoice is fully reported.\n"
+"* The 'Red' status means invoice is included in a non sent DGII report.\n"
+"* The blank status means that the invoice havenot been included in a report."
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_form_view
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_supplier_form_inherited
+msgid "606"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__purchase_binary
+msgid "606 file"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_form_view
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_form_inherited
+msgid "607"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_form_view
+msgid "607 Reported Operations by NCF Type"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__sale_binary
+msgid "607 file"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_form_view
+msgid "608"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__cancel_binary
+msgid "608 file"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_form_view
+msgid "609"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__exterior_binary
+msgid "609 file"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_form_view
+msgid "<span class=\"fa fa-lightbulb-o fa-lg\" title=\"Info\" aria-label=\"Info\"/>"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_regenerate_wizard_form
+msgid "<span class=\"fa fa-warning fa-lg\" title=\"Warning\" aria-label=\"Warning\"/>"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__a08
+msgid "A08 - Otras Operaciones (Positivas)"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__a09
+msgid "A09 - Otras Operaciones (Negativas)"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__a19
+msgid "A19 - Ingresos por Operaciones (No Financieros)"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__a20
+msgid "A20 - Ingresos Financieros"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__a21
+msgid "A21 - Ingresos Extraordinarios"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__a22
+msgid "A22 - Ingresos por Arrendamientos"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__a23
+msgid "A23 - Ingresos por Ventas de Activos Depreciables"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__a24
+msgid "A24 - Otros Ingresos"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__a26
+msgid "A26 - ITBIS Pagado en Importaciones"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__a27
+msgid ""
+"A27 - ITBIS Pagado en Importaciones para la Producción de Bienes Exentos"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__a29
+msgid "A29 - ITBIS en Bienes o Servicios sujetos a Proporcionalidad"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__a30
+msgid "A30 - ITBIS en Importaciones sujetos a Proporcionalidad"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__a34
+msgid "A34 - Pagos Computables por Retenciones (N08-04)"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__a35
+msgid "A35 - Pagos Computables por Boletos Aéreos (N02-05) (BSP-IATA)"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__a36
+msgid "A36 - Pagos Computables por otras Retenciones (N02-05)"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__a37
+msgid "A37 - Pagos Computables por Paquetes de Alojamiento y Ocupación"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__a38
+msgid "A38 - Crédito por retención realizada por Entidades del Estado"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__a41
+msgid "A41 - Dirección Técnica (N07-07)"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__a42
+msgid "A42 - Contrato de Administración (N07-07)"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__a43
+msgid "A43 - Asesorías / Honorarios"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__a46
+msgid "A46 - Ventas de Bienes en Concesión"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__a47
+msgid "A47 - Ventas de Servicios en Nombre de Terceros"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__a50
+msgid "A50 - Total Notas de Crédito emitidas con más de 30 días"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__a51
+msgid "A51 - ITBIS llevado al Costo"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model,name:l10n_do_accounting_report.model_account_account
+msgid "Account"
+msgstr "Cuenta"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_account__account_fiscal_type
+msgid "Account Fiscal Type"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__message_needaction
+msgid "Action Needed"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_bank_statement_line__advance_itbis
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_move__advance_itbis
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_payment__advance_itbis
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__advance_itbis
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__advance_itbis
+msgid "Advance Itbis"
+msgstr "ITBIS por Adelanter"
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_supplier_form_inherited
+msgid "Advanced ITBIS"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_summary__amount
+msgid "Amount"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_bank_statement_line__amount_with_isr_withholding
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_move__amount_with_isr_withholding
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_payment__amount_with_isr_withholding
+msgid "Amount With Isr Withholding"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: code:addons/l10n_do_accounting_report/models/account_move.py:0
+#, python-format
+msgid "An invoice cannot have multiplewithholding taxes."
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_cancel_line__anulation_type
+msgid "Anulation Type"
+msgstr "Tipo de Anulación"
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_cancel_line_search
+msgid "Anulation type"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_move__service_type__03
+msgid "Arrendamientos"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__message_attachment_count
+msgid "Attachment Count"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__bank
+msgid "Bank"
+msgstr "Cheque/ Transferencia/ Depósito"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__bond
+msgid "Bond"
+msgstr "Bonos o Certificados de Regalo"
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_regenerate_wizard_form
+msgid "Cancel"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__cancel_filename
+msgid "Cancel Filename"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__cancel_records
+msgid "Cancel Records"
+msgstr "Cantidad Cancelada"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__card
+msgid "Card"
+msgstr "Tarjeta Débito/Crédito"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__cash
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__csmr_cash
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__cash
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_move__payment_form__01
+msgid "Cash"
+msgstr "Efectivo"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__bank
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__csmr_bank
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_move__payment_form__02
+msgid "Check / Transfer / Deposit"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_invoice_service_type_detail__code
+msgid "Code"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: code:addons/l10n_do_accounting_report/models/account_move.py:0
+#: model:ir.model.constraint,message:l10n_do_accounting_report.constraint_invoice_service_type_detail_code_unique
+#, python-format
+msgid "Code must be unique"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__company_id
+msgid "Company"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_form_view
+msgid "Consumer Invoices Summary"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model,name:l10n_do_accounting_report.model_res_partner
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_cancel_line_search
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_purchase_line_search
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_sale_line_search
+msgid "Contact"
+msgstr "Contacto"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_bank_statement_line__cost_itbis
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_move__cost_itbis
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_payment__cost_itbis
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__cost_itbis
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__cost_itbis
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_supplier_form_inherited
+msgid "Cost Itbis"
+msgstr "ITBIS llevado al Costo"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_exterior_line__country_code
+msgid "Country Code"
+msgstr "País de Destino"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_report_regenerate_wizard__create_uid
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__create_uid
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_cancel_line__create_uid
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_exterior_line__create_uid
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__create_uid
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__create_uid
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_summary__create_uid
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_invoice_service_type_detail__create_uid
+msgid "Created by"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_report_regenerate_wizard__create_date
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__create_date
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_cancel_line__create_date
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_exterior_line__create_date
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__create_date
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__create_date
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_summary__create_date
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_invoice_service_type_detail__create_date
+msgid "Created on"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__credit
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__csmr_credit
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__credit
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_move__payment_form__04
+msgid "Credit"
+msgstr "Venta a Crédito"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__card
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__csmr_card
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_move__payment_form__03
+msgid "Credit Card / Debit Card"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__credit_note
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__credit_note
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_move__payment_form__06
+msgid "Credit Note"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__currency_id
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_summary__currency_id
+msgid "Currency"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.ui.menu,name:l10n_do_accounting_report.marcos_account_dgii_menu
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_form_inherited
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_supplier_form_inherited
+msgid "DGII"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model,name:l10n_do_accounting_report.model_dgii_reports
+msgid "DGII Report"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model,name:l10n_do_accounting_report.model_dgii_report_regenerate_wizard
+msgid "DGII Report Regenerate Wizard"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model,name:l10n_do_accounting_report.model_dgii_reports_sale_summary
+msgid "DGII Report Sale Summary"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model,name:l10n_do_accounting_report.model_dgii_reports_cancel_line
+msgid "DGII Reports Cancel Line"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model,name:l10n_do_accounting_report.model_dgii_reports_exterior_line
+msgid "DGII Reports Exterior Line"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model,name:l10n_do_accounting_report.model_dgii_reports_purchase_line
+msgid "DGII Reports Purchase Line"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model,name:l10n_do_accounting_report.model_dgii_reports_sale_line
+msgid "DGII Reports Sale Line"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__ast_income
+msgid "Depreciable Assets Income"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_cancel_line__dgii_report_id
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_exterior_line__dgii_report_id
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__dgii_report_id
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__dgii_report_id
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_summary__dgii_report_id
+msgid "Dgii Report"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_report_regenerate_wizard__display_name
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__display_name
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_cancel_line__display_name
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_exterior_line__display_name
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__display_name
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__display_name
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_summary__display_name
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_invoice_service_type_detail__display_name
+msgid "Display Name"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_exterior_line__doc_date
+msgid "Doc Date"
+msgstr "Fecha de Documento"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_exterior_line__doc_number
+msgid "Doc Number"
+msgstr "Número de Documento"
+
+#. module: l10n_do_accounting_report
+#: code:addons/l10n_do_accounting_report/models/dgii_report.py:0
+#, python-format
+msgid "Error. Date format must be MM/YYYY"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__expense_type
+msgid "Expense Type"
+msgstr "Tipo Bienes y Servicios Comprados"
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_purchase_line_search
+msgid "Expense type"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__exterior_filename
+msgid "Exterior Filename"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__exterior_invoiced_amount
+msgid "Exterior Invoiced Amount"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__exterior_records
+msgid "Exterior Records"
+msgstr "Cantidad Exterior"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__exterior_withholded_isr
+msgid "Exterior Withholded Isr"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__ext_income
+msgid "Extraordinary Income"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__fin_income
+msgid "Financial Income"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__fiscal_invoice_id
+msgid "Fiscal Invoice"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_cancel_line__fiscal_invoice_number
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__fiscal_invoice_number
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__fiscal_invoice_number
+msgid "Fiscal Invoice Number"
+msgstr "Número de Comprobante Fiscal"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_bank_statement_line__fiscal_status
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_move__fiscal_status
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_payment__fiscal_status
+msgid "Fiscal Status"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__message_follower_ids
+msgid "Followers"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__message_partner_ids
+msgid "Followers (Partners)"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_move__service_type__06
+msgid "Gastos Financieros"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_move__service_type__04
+msgid "Gastos de Activos Fijos"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_move__service_type__01
+msgid "Gastos de Personal"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_move__service_type__05
+msgid "Gastos de Representación"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_move__service_type__07
+msgid "Gastos de Seguros"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_move__service_type__08
+msgid "Gastos por Regalías y otros Intangibles"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_move__service_type__02
+msgid "Gastos por Trabajos, Suministros y Servicios"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_form_view
+msgid "General Summary of Consumer Invoices"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_form_view
+msgid "Generate Statements"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__dgii_reports__state__generated
+msgid "Generated"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__bond
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__csmr_bond
+msgid "Gift certificates or vouchers"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_bank_statement_line__good_total_amount
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_move__good_total_amount
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_payment__good_total_amount
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__good_total_amount
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__good_total_amount
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_supplier_form_inherited
+msgid "Good Total Amount"
+msgstr "Monto Facturado en Bienes"
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_cancel_line_search
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_purchase_line_search
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_sale_line_search
+msgid "Group By"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__has_message
+msgid "Has Message"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__i02
+msgid "I02 - Ingresos por Exportaciones de Bienes o Servicios"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__i03
+msgid "I03 - Ingresos por ventas locales de bienes o servicios exentos"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__i04
+msgid "I04 - Ingresos por ventas de bienes o servicios exentos por destino"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__i13
+msgid ""
+"I13 - Operaciones gravadas por ventas de Activos Depreciables(categoría 2 y "
+"3)"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__i28
+msgid "I28 - Saldos Compensables Autorizados (Otros Impuestos) y/o Reembolsos"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__i35
+msgid "I35 - Recargos"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__i36
+msgid "I36 - Interés Indemnizatorio"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__i39
+msgid "I39 - Servicios sujetos a Retención Personas Físicas"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_report_regenerate_wizard__id
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__id
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_cancel_line__id
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_exterior_line__id
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__id
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__id
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_summary__id
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_invoice_service_type_detail__id
+msgid "ID"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_tax__purchase_tax_type__isr
+msgid "ISR Retenido"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_account__isr_retention_type
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_supplier_form_inherited
+msgid "ISR Withholding Type"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_purchase_line_search
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_sale_line_search
+msgid "ISR withholding"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_form_view
+msgid "IT-1"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_tax__purchase_tax_type__itbis
+msgid "ITBIS Pagado"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_tax__purchase_tax_type__ritbis
+msgid "ITBIS Retenido"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_purchase_line_search
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_sale_line_search
+msgid "ITBIS withholding"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__identification_type
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__identification_type
+msgid "Identification Type"
+msgstr "Tipo Id"
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_purchase_line_search
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_sale_line_search
+msgid "Identification type"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,help:l10n_do_accounting_report.field_dgii_reports__message_needaction
+#: model:ir.model.fields,help:l10n_do_accounting_report.field_dgii_reports__message_unread
+msgid "If checked, new messages require your attention."
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,help:l10n_do_accounting_report.field_dgii_reports__message_has_error
+#: model:ir.model.fields,help:l10n_do_accounting_report.field_dgii_reports__message_has_sms_error
+msgid "If checked, some messages have a delivery error."
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__income_type
+msgid "Income Type"
+msgstr "Tipo de Ingreso"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_bank_statement_line__income_withholding
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_move__income_withholding
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_payment__income_withholding
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__income_withholding
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__income_withholding
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_supplier_form_inherited
+msgid "Income Withholding"
+msgstr "Monto Retencion Renta"
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_form_inherited
+msgid "Income Withholding by a third"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_sale_line_search
+msgid "Income type"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_cancel_line__invoice_id
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_exterior_line__invoice_id
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__invoice_id
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__invoice_id
+msgid "Invoice"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_cancel_line__invoice_date
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__invoice_date
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__invoice_date
+msgid "Invoice Date"
+msgstr "Fecha de Comprobante"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_cancel_line__invoice_partner_id
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__invoice_partner_id
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__invoice_partner_id
+msgid "Invoice Partner"
+msgstr "Cliente"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model,name:l10n_do_accounting_report.model_invoice_service_type_detail
+msgid "Invoice Service Type Detail"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_exterior_line__invoiced_amount
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__invoiced_amount
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__invoiced_amount
+msgid "Invoiced Amount"
+msgstr "Monto Facturado"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__csmr_ncf_total_amount
+msgid "Invoiced Amount Total"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_form_inherited
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_supplier_form_inherited
+msgid "Invoiced ITBIS"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__csmr_ncf_total_itbis
+msgid "Invoiced ITBIS Total"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_bank_statement_line__invoiced_itbis
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_move__invoiced_itbis
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_payment__invoiced_itbis
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__invoiced_itbis
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__invoiced_itbis
+msgid "Invoiced Itbis"
+msgstr "ITBIS Facturado"
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_supplier_form_inherited
+msgid "Invoicing"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_bank_statement_line__is_exterior
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_move__is_exterior
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_payment__is_exterior
+msgid "Is Exterior"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__message_is_follower
+msgid "Is Follower"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_exterior_line__isr_withholding_date
+msgid "Isr Withholding Date"
+msgstr "Fecha de Retención ISR"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_bank_statement_line__isr_withholding_type
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_move__isr_withholding_type
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_payment__isr_withholding_type
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__isr_withholding_type
+msgid "Isr Withholding Type"
+msgstr "Tipo de Retencion en ISR"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__csmr_ncf_qty
+msgid "Issued Consumer NCF Qty"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model,name:l10n_do_accounting_report.model_account_move
+msgid "Journal Entry"
+msgstr "Asiento contable"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_report_regenerate_wizard____last_update
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports____last_update
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_cancel_line____last_update
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_exterior_line____last_update
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line____last_update
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line____last_update
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_summary____last_update
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_invoice_service_type_detail____last_update
+msgid "Last Modified on"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_report_regenerate_wizard__write_uid
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__write_uid
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_cancel_line__write_uid
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_exterior_line__write_uid
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__write_uid
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__write_uid
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_summary__write_uid
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_invoice_service_type_detail__write_uid
+msgid "Last Updated by"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_report_regenerate_wizard__write_date
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__write_date
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_cancel_line__write_date
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_exterior_line__write_date
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__write_date
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__write_date
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_summary__write_date
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_invoice_service_type_detail__write_date
+msgid "Last Updated on"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__lea_income
+msgid "Lease Income"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_exterior_line__legal_name
+msgid "Legal Name"
+msgstr "Nombre / Razón Social"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_bank_statement_line__legal_tip
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_move__legal_tip
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_payment__legal_tip
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__legal_tip
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__legal_tip
+msgid "Legal Tip"
+msgstr "Monto Propina Legal"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__csmr_ncf_total_lgl_tip
+msgid "Legal Tip Total"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_purchase_line_search
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_sale_line_search
+msgid "Legal person"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_form_inherited
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_supplier_form_inherited
+msgid "Legal tip amount"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_cancel_line__line
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_exterior_line__line
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__line
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__line
+msgid "Line"
+msgstr "No"
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_form_view
+msgid "MM/YYYY"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__message_main_attachment_id
+msgid "Main Attachment"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__message_has_error
+msgid "Message Delivery error"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__message_ids
+msgid "Messages"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_move__payment_form__07
+msgid "Mixed"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__modified_invoice_id
+msgid "Modified Invoice"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__modified_invoice_number
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__modified_invoice_number
+msgid "Modified Invoice Number"
+msgstr "NCF o Documento Modificado"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_summary__name
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_invoice_service_type_detail__name
+msgid "Name"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__dgii_reports__state__draft
+msgid "New"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_tax__purchase_tax_type__none
+msgid "No Deducible"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__res_partner__related__0
+msgid "Not Related"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_move__fiscal_status__blocked
+msgid "Not Sent"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_form_view
+msgid ""
+"Not setting a report as sent may throw inconsistencies\n"
+"                                regarding invoices withholding dates."
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__message_needaction_counter
+msgid "Number of Actions"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__message_has_error_counter
+msgid "Number of errors"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,help:l10n_do_accounting_report.field_dgii_reports__message_needaction_counter
+msgid "Number of messages which requires an action"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,help:l10n_do_accounting_report.field_dgii_reports__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,help:l10n_do_accounting_report.field_dgii_reports__message_unread_counter
+msgid "Number of unread messages"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_exterior_line_search
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_purchase_line_search
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_sale_line_search
+msgid "Open"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__opr_income
+msgid "Operations Income (No-Financial)"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_form_view
+msgid "Operations Total"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_form_view
+msgid "Operations by Income Type"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__ncf_sale_summary_ids
+msgid "Operations by NCF type"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_form_view
+msgid "Operations by Sale Type"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__csmr_others
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__others
+msgid "Other Sale Forms"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_bank_statement_line__other_taxes
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_move__other_taxes
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_payment__other_taxes
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__other_taxes
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__other_taxes
+msgid "Other Taxes"
+msgstr "Otros Impuestos/Tasas"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__csmr_ncf_total_othr
+msgid "Other Taxes Total"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_form_inherited
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_supplier_form_inherited
+msgid "Other taxes"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__others
+msgid "Others"
+msgstr "Otras Formas de Ventas"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__otr_income
+msgid "Others Income"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_tax__purchase_tax_type__rext
+msgid "Pagos al Exterior (Ley 253-12)"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_exterior_line_search
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_purchase_line_search
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_sale_line_search
+msgid "Paid"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_invoice_service_type_detail__parent_code
+msgid "Parent Code"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_move__fiscal_status__normal
+msgid "Partial"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_exterior_line__partner_id
+msgid "Partner"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_bank_statement_line__payment_date
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_move__payment_date
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_payment__payment_date
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__payment_date
+msgid "Payment Date"
+msgstr "Fecha Pago"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_bank_statement_line__payment_form
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_move__payment_form
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_payment__payment_form
+msgid "Payment Form"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__payment_type
+msgid "Payment Type"
+msgstr "Forma de Pago"
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_supplier_form_inherited
+msgid "Payment date"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_supplier_form_inherited
+msgid "Payment form"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_purchase_line_search
+msgid "Payment type"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__perceived_isr
+msgid "Perceived Isr"
+msgstr "ISR Percibido"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__perceived_itbis
+msgid "Perceived Itbis"
+msgstr "ITBIS Percibido"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__name
+msgid "Period"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_purchase_line_search
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_sale_line_search
+msgid "Physical person"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__presumed_income
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_exterior_line__presumed_income
+msgid "Presumed Income"
+msgstr "Renta Presunta"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__previous_report_pending
+msgid "Previous Report Pending"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__previous_balance
+msgid "Previous balance"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_bank_statement_line__proportionality_tax
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_move__proportionality_tax
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_payment__proportionality_tax
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__proportionality_tax
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_supplier_form_inherited
+msgid "Proportionality Tax"
+msgstr "ITBIS sujeto a Proporcionalidad (Art. 349)"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__purchase_filename
+msgid "Purchase Filename"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__purchase_invoiced_amount
+msgid "Purchase Invoiced Amount"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__purchase_invoiced_itbis
+msgid "Purchase Invoiced Itbis"
+msgstr "Total ITBIS"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__purchase_legal_tip
+msgid "Purchase Legal Tip"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__purchase_other_taxes
+msgid "Purchase Other Taxes"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__purchase_perceived_isr
+msgid "Purchase Perceived Isr"
+msgstr "ISR Percibido en compras"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__purchase_perceived_itbis
+msgid "Purchase Perceived Itbis"
+msgstr "ITBIS percibido en compras"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__purchase_records
+msgid "Purchase Records"
+msgstr "Cantidad Compras"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__purchase_selective_tax
+msgid "Purchase Selective Tax"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__purchase_withholded_itbis
+msgid "Purchase Withholded Itbis"
+msgstr "ITBIS Retenido"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_exterior_line__purchased_service_type
+msgid "Purchased Service Type"
+msgstr "Tipo de Servicio Adquirido"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_summary__qty
+msgid "Qty"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.actions.server,name:l10n_do_accounting_report.action_run_norma_recompute
+msgid "Recalcular norma 07-2018"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_regenerate_wizard_form
+msgid "Regenerate"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.actions.act_window,name:l10n_do_accounting_report.dgii_report_regenerate_wizard_action
+msgid "Regenerate Report"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_regenerate_wizard_form
+msgid ""
+"Regenerate this report may cause data variation. Don't do that if you want to preserve equality\n"
+"                        between the report you sent and the data in your system."
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_res_partner__related
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_res_users__related
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__res_partner__related__1
+msgid "Related"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_exterior_line__related_part
+msgid "Related Part"
+msgstr "Parte Relacionada"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_report_regenerate_wizard__report_id
+msgid "Report"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_move__fiscal_status__done
+msgid "Reported"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.actions.act_window,name:l10n_do_accounting_report.dgii_report_action
+#: model:ir.ui.menu,name:l10n_do_accounting_report.dgii_report_menu
+msgid "Reports"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_account__account_fiscal_type__isr
+msgid "Retención de Renta por Terceros"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__rnc_cedula
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__rnc_cedula
+msgid "Rnc Cedula"
+msgstr "RNC o Cedula"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__message_has_sms_error
+msgid "SMS Delivery error"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__sale_filename
+msgid "Sale Filename"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__sale_invoiced_amount
+msgid "Sale Invoiced Amount"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__sale_invoiced_itbis
+msgid "Sale Invoiced Itbis"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__sale_legal_tip
+msgid "Sale Legal Tip"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__sale_other_taxes
+msgid "Sale Other Taxes"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__sale_records
+msgid "Sale Records"
+msgstr "Contidad Ventas"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__sale_selective_tax
+msgid "Sale Selective Tax"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__sale_withholded_isr
+msgid "Sale Withholded Isr"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__sale_withholded_itbis
+msgid "Sale Withholded Itbis"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_cancel_line_search
+msgid "Search Cancel Line"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_purchase_line_search
+msgid "Search Purchase Line"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_exterior_line_search
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_sale_line_search
+msgid "Search Sale Line"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_bank_statement_line__selective_tax
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_move__selective_tax
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_payment__selective_tax
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__csmr_ncf_total_isc
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__selective_tax
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__selective_tax
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_form_inherited
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_supplier_form_inherited
+msgid "Selective Tax"
+msgstr "Impuesto Selectivo al Consumo"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__dgii_reports__state__sent
+msgid "Sent"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_summary__sequence
+msgid "Sequence"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_bank_statement_line__service_total_amount
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_move__service_total_amount
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_payment__service_total_amount
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__service_total_amount
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__service_total_amount
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_supplier_form_inherited
+msgid "Service Total Amount"
+msgstr "Monto Facturado en Servicios"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_bank_statement_line__service_type
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_move__service_type
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_payment__service_type
+msgid "Service Type"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_bank_statement_line__service_type_detail
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_move__service_type_detail
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_payment__service_type_detail
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_exterior_line__service_type_detail
+msgid "Service Type Detail"
+msgstr "Detalle del Servicio Adquirido"
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_form_view
+msgid "Set as sent"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__state
+msgid "State"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_form_view
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_search_view
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_tree_view
+msgid "Statements"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__csmr_swap
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__swap
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__swap
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__account_move__payment_form__05
+msgid "Swap"
+msgstr "Permuta"
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_form_view
+msgid "TXT Files"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model,name:l10n_do_accounting_report.model_account_tax
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_exterior_line__tax_id
+msgid "Tax"
+msgstr "Impuesto"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_exterior_line__tax_id_type
+msgid "Tax Id Type"
+msgstr "Tipo ID Tributaria"
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_form_inherited
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_supplier_form_inherited
+msgid "Taxes"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_form_view
+msgid "The previous report is still not marked as sent."
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_bank_statement_line__third_income_withholding
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_move__third_income_withholding
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_payment__third_income_withholding
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__third_income_withholding
+msgid "Third Income Withholding"
+msgstr "Retención Renta por Terceros"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_bank_statement_line__third_withheld_itbis
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_move__third_withheld_itbis
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_payment__third_withheld_itbis
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__third_withheld_itbis
+msgid "Third Withheld Itbis"
+msgstr "ITBIS Retenido por Terceros"
+
+#. module: l10n_do_accounting_report
+#: code:addons/l10n_do_accounting_report/models/dgii_report.py:0
+#, python-format
+msgid ""
+"This module needs pycountry to get 609 ISO 3166 country codes. Please "
+"install pycountry on your system. (See requirements file)"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_tax__purchase_tax_type
+msgid "Tipo de Impuesto en Compra"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_tax__isr_retention_type
+msgid "Tipo de Retención en ISR"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_exterior_report_line_tree
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_purchase_line_tree
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_sale_line_tree
+msgid "Total"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__income_type_total
+msgid "Total ingresos"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__sale_type_total
+msgid "Total venta"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__message_unread
+msgid "Unread Messages"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__message_unread_counter
+msgid "Unread Messages Counter"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports__website_message_ids
+msgid "Website Messages"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,help:l10n_do_accounting_report.field_dgii_reports__website_message_ids
+msgid "Website communication history"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields.selection,name:l10n_do_accounting_report.selection__dgii_reports__state__error
+msgid "With error"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_supplier_form_inherited
+msgid "Withheld ITBIS"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_form_inherited
+msgid "Withheld ITBIS by a third"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_exterior_line_search
+msgid "Withholded ISR"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_exterior_line__withholded_isr
+msgid "Withholded Isr"
+msgstr "ISR Retenido"
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_bank_statement_line__withholded_itbis
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_move__withholded_itbis
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_account_payment__withholded_itbis
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_purchase_line__withholded_itbis
+msgid "Withholded Itbis"
+msgstr "ITBIS Retenido"
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_form_inherited
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_supplier_form_inherited
+msgid "Withholding"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model:ir.model.fields,field_description:l10n_do_accounting_report.field_dgii_reports_sale_line__withholding_date
+msgid "Withholding Date"
+msgstr "Fecha de Retención"
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.invoice_form_inherited
+msgid "Withholding date"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting_report.dgii_report_purchase_line_search
+msgid "Withholding type"
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: model_terms:ir.actions.act_window,help:l10n_do_accounting_report.dgii_report_action
+msgid "You can create your DGII Tax Statements here."
+msgstr ""
+
+#. module: l10n_do_accounting_report
+#: code:addons/l10n_do_accounting_report/models/dgii_report.py:0
+#: model:ir.model.constraint,message:l10n_do_accounting_report.constraint_dgii_reports_name_unique
+#, python-format
+msgid "You cannot have more than one report by period."
+msgstr ""

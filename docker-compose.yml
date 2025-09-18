@@ -1,0 +1,51 @@
+services:
+  odoo:
+    image: odoo:18.0
+    depends_on:
+      - db
+    env_file: .env
+    restart: always
+    ports:
+      - "8069:8069"
+    volumes:
+      - odoo-data:/var/lib/odoo
+      - ./addons:/mnt/extra-addons
+      - ./config/odoo.conf:/etc/odoo/odoo.conf
+      - ./logs:/var/log/odoo
+    networks:
+      - odoo-net
+    # command: >
+    #    odoo -d odoo -i base --without-demo=all --stop-after-init
+
+  db:
+    image: postgres:15
+    env_file: .env
+    restart: always
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres-config/pg_hba.conf:/etc/postgresql/pg_hba.conf
+      - ./postgres-config/postgresql.conf:/etc/postgresql/postgresql.conf
+    networks:
+      - odoo-net
+
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    ports:
+      - "5050:80"
+    env_file: .env
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - odoo-net
+
+networks:
+  odoo-net:
+    driver: bridge
+
+volumes:
+  odoo-data:
+  postgres-data:
+  pgadmin-data:
