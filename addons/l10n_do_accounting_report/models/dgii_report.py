@@ -7,14 +7,14 @@ import logging
 import json
 _logger = logging.getLogger(__name__)
 
-from odoo import _, api, fields, models
+from odoo import _, _lt, api, fields, models
 from odoo.exceptions import ValidationError
 
 try:
     import pycountry
 except ImportError:
     raise ImportError(
-        _(
+        _lt(
             "This module needs pycountry to get 609 ISO 3166 "
             "country codes. Please install pycountry on your system. "
             "(See requirements file)"
@@ -99,7 +99,7 @@ class DgiiReport(models.Model):
         (
             "name_unique",
             "UNIQUE(name, company_id)",
-            _("You cannot have more than one report by period."),
+            _lt("You cannot have more than one report by period."),
         )
     ]
 
@@ -323,18 +323,17 @@ class DgiiReport(models.Model):
             else:
                 raise ValidationError(error)
 
-    @api.model
-    def create(self, vals):
-        """overwrite."""
-        self._validate_date_format(vals.get("name"))
+    @api.model_create_multi
+    def create(self, vals_list):
+        """overwrite (batch support)."""
+        for vals in vals_list:
+            self._validate_date_format(vals.get("name"))
+        return super(DgiiReport, self).create(vals_list)
 
-        return super(DgiiReport, self).create(vals)
-
-    @api.model
     def write(self, vals):
         """overwrite."""
-        self._validate_date_format(vals.get("name"))
-
+        if "name" in vals:
+            self._validate_date_format(vals.get("name"))
         return super(DgiiReport, self).write(vals)
 
     @staticmethod
@@ -385,17 +384,7 @@ class DgiiReport(models.Model):
         last_day = calendar.monthrange(int(year), int(month))[1]
         start_date = "{}-{}-01".format(year, month)
         end_date = "{}-{}-{}".format(year, month, last_day)
-        # start_date = dt.strptime(start_date, "%Y-%m-%d").date()
-        # end_date = dt.strptime(end_date, "%Y-%m-%d").date()
 
-        # invoice_ids = self.env['account.move'].search(
-        #     [('invoice_date', '>=', start_date),
-        #      ('invoice_date', '<=', end_date),
-        #      ('company_id', '=', self.company_id.id),
-        #      ('state', 'in', states),
-        #      ('move_type', 'in', types)],
-        #     order='invoice_date asc').filtered(
-        #         lambda inv: (inv.journal_id.purchase_type != 'others'))
         invoice_ids = self.env["account.move"].search(
             [
                 ("invoice_date", ">=", start_date),
@@ -771,33 +760,6 @@ class DgiiReport(models.Model):
             op_dict["debit_note"]["amount"] += invoice.amount_untaxed_signed
         return op_dict
 
-    # def _process_op_dict(dict, invoice):
-    #     op_dict = dict
-    #     document_type_id = invoice.l10n_latam_document_type_id
-    #     if not document_type_id:
-    #         ValidationError(
-    #             "La factura: %s no tiene un documento asigando" % invoice.name)
-    #     ncf_type = document_type_id.l10n_do_ncf_type
-    #     _logger.info("Factura: %s | %s" % (invoice.id, invoice.name))
-    #     _logger.info("Factura: %s" % invoice.l10n_latam_document_number)
-    #     _logger.info("Factura: %s | %s" % (invoice.state,
-    #                                        invoice.invoice_payment_state))
-    #     _logger.info("Tipo de NCF: %s" % ncf_type)
-    #     _logger.info("Datos: %r" % op_dict[ncf_type])
-    #     if document_type_id and invoice.type != 'out_refund':
-    #         op_dict[ncf_type]['qty'] += 1
-    #         op_dict[ncf_type]['amount'] += invoice.amount_untaxed_signed
-    #     if invoice.type == 'out_refund' and not invoice.is_debit_note:
-    #         op_dict['credit_note']['qty'] += 1
-    #         op_dict['credit_note']['amount'] += invoice.amount_untaxed_signed
-    #     if invoice.is_debit_note:
-    #         op_dict['debit_note']['qty'] += 1
-    #         op_dict['debit_note']['amount'] += invoice.amount_untaxed_signed
-
-    #     return op_dict
-
-
-
     @api.model
     def _get_l10n_do_ncf_types(self, latam_doc_code: str) -> str:
         return {
@@ -980,7 +942,6 @@ class DgiiReport(models.Model):
             SaleLine.search([("dgii_report_id", "=", rec.id)]).unlink()
 
             invoice_ids = self._get_invoices(["posted"], ["out_invoice", "out_refund"])
-            # import ipdb; ipdb.set_trace()
 
             line = 0
             excluded_line = line
@@ -1133,14 +1094,6 @@ class DgiiReport(models.Model):
         for rec in self:
             CancelLine = self.env["dgii.reports.cancel.line"]
             CancelLine.search([("dgii_report_id", "=", rec.id)]).unlink()
-
-            # invoice_ids = self._get_invoices(
-            #     ["cancel"], ["out_invoice", "in_invoice", "out_refund"]
-            # ).filtered(
-            #     lambda inv: (
-            #         inv.l10n_latam_document_type_id.l10n_do_ncf_type != "normal"
-            #     )
-            # )
 
             invoice_ids = self._get_invoices(
                 ["cancel"], ["out_invoice", "in_invoice", "out_refund"]
