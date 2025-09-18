@@ -23,6 +23,6 @@ jobs:
           username: ${{ secrets.PROD_SSH_USER }}  # Usuario del servidor (p.ej. ubuntu)
           key: ${{ secrets.PROD_SSH_KEY }}        # Llave privada para SSH
           script: |
-            cd /home/ubuntu/odoo18-docker
+            cd /home/ubuntu/odoo18
             git pull origin main
             ./restart.sh
