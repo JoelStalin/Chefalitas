@@ -1,28 +1,28 @@
-name: Deploy to AWS Ubuntu
+name: Deploy to Production
 
 on:
   push:
     branches:
-      - main
+      - main # Este workflow se ejecuta cuando se hace push a la rama 'main'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://chefalitas.com.do/ # URL de tu instancia Odoo en producción
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up SSH
-      uses: webfactory/ssh-agent@v0.8.0
-      with:
-        ssh-private-key: ${{ secrets.AWS_SSH_KEY }}
-
-    - name: Deploy to AWS
-      run: |
-        ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.AWS_SERVER_IP }} << 'EOF'
-          cd /ruta/de/tu/proyecto
-          git fetch --all
-          git reset --hard origin/main
-          ./restart.sh
-        EOF
+      - name: Deploy to production server via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}      # IP pública de tu servidor AWS
+          username: ${{ secrets.PROD_SSH_USER }}  # Usuario del servidor (p.ej. ubuntu)
+          key: ${{ secrets.PROD_SSH_KEY }}        # Llave privada para SSH
+          script: |
+            cd /home/ubuntu/odoo18-docker
+            git pull origin main
+            ./restart.sh
