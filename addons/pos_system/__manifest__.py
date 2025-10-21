@@ -9,7 +9,7 @@
     'complexity': "easy",
     'author': 'Emy Saul Soto',
     'depends': [
-        'sale_management', 'point_of_sale', 'product', 'rdbazar_base_addons', 'pos_loyalty'
+        'sale_management', 'point_of_sale', 'product', 'pos_loyalty'
     ],
     'data': [
        'views/pos_order/pos_order_views.xml',
