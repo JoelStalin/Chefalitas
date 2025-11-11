@@ -15,16 +15,16 @@ try:
 except ImportError:
     raise ImportError(
         _lt(
-            "This module needs pycountry to get 609 ISO 3166 "
-            "country codes. Please install pycountry on your system. "
-            "(See requirements file)"
+            "Este módulo necesita pycountry para obtener los códigos de país "
+            "ISO 3166 del formulario 609. Instala pycountry en tu sistema. "
+            "(Consulta el archivo de requisitos)"
         )
     )
 
 
 class DgiiReportSaleSummary(models.Model):
     _name = "dgii.reports.sale.summary"
-    _description = "DGII Report Sale Summary"
+    _description = _lt("Resumen de ventas DGII")
     _order = "sequence"
 
     name = fields.Char()
@@ -33,7 +33,7 @@ class DgiiReportSaleSummary(models.Model):
     amount = fields.Monetary()
     currency_id = fields.Many2one(
         "res.currency",
-        string="Currency",
+        string="Moneda",
         required=True,
         default=lambda self: self.env.company.currency_id,
     )
@@ -44,7 +44,7 @@ class DgiiReport(models.Model):
     """Este es el modelo del reporte."""
 
     _name = "dgii.reports"
-    _description = "DGII Report"
+    _description = _lt("Reporte DGII")
     _inherit = ["mail.thread"]
 
     @api.model
@@ -68,28 +68,28 @@ class DgiiReport(models.Model):
             else:
                 report.previous_report_pending = False
 
-    name = fields.Char(string="Period", required=True, size=7)
+    name = fields.Char(string="Período", required=True, size=7)
     state = fields.Selection(
         [
-            ("draft", "New"),
-            ("error", "With error"),
-            ("generated", "Generated"),
-            ("sent", "Sent"),
+            ("draft", "Nuevo"),
+            ("error", "Con error"),
+            ("generated", "Generado"),
+            ("sent", "Enviado"),
         ],
         default="draft",
         tracking=True,
         copy=False,
     )
-    previous_balance = fields.Float("Previous balance", copy=False)
+    previous_balance = fields.Float("Saldo anterior", copy=False)
     currency_id = fields.Many2one(
         "res.currency",
-        string="Currency",
+        string="Moneda",
         required=True,
         default=lambda self: self.env.company.currency_id,
     )
     company_id = fields.Many2one(
         "res.company",
-        "Company",
+        "Compañía",
         default=lambda self: self.env.company.id,
         required=True,
     )
@@ -99,7 +99,7 @@ class DgiiReport(models.Model):
         (
             "name_unique",
             "UNIQUE(name, company_id)",
-            _lt("You cannot have more than one report by period."),
+            _lt("No puedes tener más de un reporte por período."),
         )
     ]
 
@@ -314,7 +314,7 @@ class DgiiReport(models.Model):
     def _validate_date_format(self, date):
         """Validate date format <MM/YYYY>."""
         if date is not None:
-            error = _("Error. Date format must be MM/YYYY")
+            error = _("Error. El formato de fecha debe ser MM/AAAA")
             if len(date) == 7:
                 try:
                     dt.strptime(date, "%m/%Y")
@@ -512,15 +512,13 @@ class DgiiReport(models.Model):
         )
 
     def _include_in_current_report(self, invoice):
-        """
-        Evaluate if invoice was paid in current month or
-        was included in a previous period.
-        New reported invoices should not include any
-        withholding amount nor payment date
-        if payment was made after current period.
+        """Evalúa si la factura fue pagada en el mes actual o en un período anterior.
 
-        :param invoice: account.move object
-        :return: boolean
+        Las facturas reportadas nuevas no deben incluir montos retenidos ni fecha de
+        pago cuando el pago se realizó después del período actual.
+
+        :param invoice: registro de account.move
+        :return: bool
         """
         if not invoice.payment_date:
             return False
@@ -609,7 +607,7 @@ class DgiiReport(models.Model):
 
     @staticmethod
     def include_payment(invoice_id, payment_id):
-        """Returns True if payment date is on or before current period"""
+        """Devuelve True si la fecha de pago es en o antes del período actual."""
 
         if not payment_id.date or not invoice_id.invoice_date:
             return False

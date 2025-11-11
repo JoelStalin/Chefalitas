@@ -1,4 +1,4 @@
-from odoo import models, fields, api, _
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError, AccessError
 
 
@@ -8,8 +8,8 @@ class AccountDebitNote(models.TransientModel):
     @api.model
     def _get_l10n_do_debit_type_selection(self):
         selection = [
-            ("percentage", _("Percentage")),
-            ("fixed_amount", _("Amount")),
+            ("percentage", _("Porcentaje")),
+            ("fixed_amount", _("Monto")),
         ]
         return selection
 
@@ -20,53 +20,53 @@ class AccountDebitNote(models.TransientModel):
     @api.model
     def _get_l10n_do_debit_action_selection(self):
         return [
-            ("draft_debit", _("Draft debit")),
-            ("apply_debit", _("Apply debit")),
+            ("draft_debit", _("Crear borrador de nota de débito")),
+            ("apply_debit", _("Aplicar nota de débito")),
         ]
 
     l10n_latam_country_code = fields.Char(
         default=lambda self: self.env.company.country_code,
-        help="Technical field used to hide/show fields regarding the localization",
+        help="Campo técnico para mostrar u ocultar campos según la localización.",
     )
     l10n_do_debit_type = fields.Selection(
         selection=_get_l10n_do_debit_type_selection,
         default=_get_l10n_do_default_debit_type,
-        string="Debit Type",
+        string="Tipo de débito",
     )
     l10n_do_debit_action = fields.Selection(
         selection=_get_l10n_do_debit_action_selection,
         default="draft_debit",
-        string="Action",
+        string="Acción",
     )
     l10n_do_percentage = fields.Float(
-        help="Debit Note based on origin invoice percentage",
-        string="Percentage",
+        help="Nota de débito basada en el porcentaje de la factura de origen.",
+        string="Porcentaje",
     )
     l10n_do_amount = fields.Float(
-        help="Debit Note based fixed amount",
-        string="Amount",
+        help="Nota de débito basada en un monto fijo.",
+        string="Monto",
     )
     l10n_do_account_id = fields.Many2one(
         "account.account",
-        string="Account",
+        string="Cuenta",
         domain=[("deprecated", "=", False)],
     )
     l10n_latam_document_number = fields.Char(
-        string="Document Number",
+        string="Número de documento",
     )
     l10n_do_ecf_modification_code = fields.Selection(
         selection=lambda self: self.env[
             "account.move"
         ]._get_l10n_do_ecf_modification_code(),
-        string="e-CF Modification Code",
+        string="Código de modificación e-CF",
         copy=False,
     )
     is_ecf_invoice = fields.Boolean(
-        string="Is Electronic Invoice",
+        string="Es factura electrónica",
     )
-    l10n_latam_use_documents = fields.Boolean("Use Documents", readonly=True)
+    l10n_latam_use_documents = fields.Boolean("Usa documentos", readonly=True)
     l10n_latam_document_type_id = fields.Many2one(
-        "l10n_latam.document.type", "Document Type", ondelete="cascade"
+        "l10n_latam.document.type", "Tipo de documento", ondelete="cascade"
     )
 
     @api.model
@@ -80,7 +80,7 @@ class AccountDebitNote(models.TransientModel):
         )
 
         if not move_ids:
-            raise UserError(_("No invoice found for this operation"))
+            raise UserError(_("No se encontró factura para esta operación."))
 
         move_ids_use_document = move_ids.filtered(
             lambda move: move.l10n_latam_use_documents
@@ -89,7 +89,7 @@ class AccountDebitNote(models.TransientModel):
         if move_ids_use_document and not self.env.user.has_group(
             "l10n_do_accounting.group_l10n_do_debit_note"
         ):
-            raise AccessError(_("You are not allowed to issue Debit Notes"))
+            raise AccessError(_("No tienes permiso para emitir notas de débito."))
 
         # Setting default account
         journal = move_ids[0].journal_id
@@ -104,13 +104,13 @@ class AccountDebitNote(models.TransientModel):
             "e-minor",
         ):
             raise UserError(
-                _("You cannot issue Credit/Debit Notes for %s document type")
+                _("No puedes emitir notas de crédito/débito para el tipo de documento %s")
                 % move_ids_use_document.l10n_latam_document_type_id.name
             )
 
         if len(move_ids_use_document) > 1:
             raise UserError(
-                _("You cannot create Debit Notes from multiple documents at a time.")
+                _("No puedes crear notas de débito para múltiples documentos a la vez.")
             )
         else:
             res["is_ecf_invoice"] = (
@@ -200,7 +200,7 @@ class AccountDebitNote(models.TransientModel):
                     0,
                     0,
                     {
-                        "name": self.reason or _("Debit"),
+                        "name": self.reason or _("Débito"),
                         "price_unit": price_unit,
                         "quantity": 1,
                         "tax_ids": taxes,
