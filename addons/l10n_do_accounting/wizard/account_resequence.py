@@ -1,4 +1,4 @@
-from odoo import _, api, models
+from odoo import models, api, _
 from odoo.exceptions import UserError
 
 
@@ -24,6 +24,6 @@ class ReSequenceWizard(models.TransientModel):
             )
 
             if l10n_do_move_ids:
-                raise UserError(_("No se permite reordenar secuencias de comprobantes fiscales."))
+                raise UserError(_("Fiscal invoices resequence is not allowed."))
 
         return super(ReSequenceWizard, self).default_get(fields_list)
