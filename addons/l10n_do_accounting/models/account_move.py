@@ -2,7 +2,7 @@
 import re
 from werkzeug import urls
 
-from odoo import models, fields, api, _
+from odoo import _, api, fields, models
 from odoo.osv import expression
 from odoo.exceptions import ValidationError, UserError, AccessError
 from odoo.tools.sql import column_exists, create_column, drop_index, index_exists
@@ -468,7 +468,7 @@ class AccountMove(models.Model):
         if fiscal_invoice and not self.env.user.has_group(
             "l10n_do_accounting.group_l10n_do_fiscal_credit_note"
         ):
-            raise AccessError(_("You are not allowed to issue Fiscal Credit Notes"))
+            raise AccessError(_("No tienes permiso para emitir notas de crédito fiscales."))
 
         return super(AccountMove, self).action_reverse()
 
@@ -662,9 +662,9 @@ class AccountMove(models.Model):
         # Validaciones adicionales para facturas dominicanas
         for invoice in l10n_do_invoices.filtered(lambda inv: inv.l10n_latam_document_type_id):
             if not invoice.amount_total:
-                raise UserError(_("Fiscal invoice cannot be posted with amount zero."))
+                raise UserError(_("No se puede publicar un comprobante fiscal con monto cero."))
             if not invoice.partner_id.l10n_do_dgii_tax_payer_type:
-                raise ValidationError(_("Fiscal invoices require partner fiscal type"))
+                raise ValidationError(_("Los comprobantes fiscales requieren que el socio tenga tipo fiscal."))
 
         return res
 

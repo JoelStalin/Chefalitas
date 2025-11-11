@@ -1,4 +1,4 @@
-from odoo import models, api, fields, _
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 
@@ -8,9 +8,9 @@ class AccountMoveReversal(models.TransientModel):
     @api.model
     def _get_l10n_do_refund_type_selection(self):
         selection = [
-            ("full_refund", _("Full Refund")),
-            ("percentage", _("Percentage")),
-            ("fixed_amount", _("Amount")),
+            ("full_refund", _("Reembolso total")),
+            ("percentage", _("Porcentaje")),
+            ("fixed_amount", _("Monto")),
         ]
 
         return selection
@@ -22,8 +22,8 @@ class AccountMoveReversal(models.TransientModel):
     @api.model
     def _get_refund_action_selection(self):
         return [
-            ("draft_refund", _("Partial Refund")),
-            ("apply_refund", _("Full Refund")),
+            ("draft_refund", _("Reembolso parcial")),
+            ("apply_refund", _("Reembolso total")),
         ]
 
     @api.model
@@ -42,23 +42,23 @@ class AccountMoveReversal(models.TransientModel):
 
     country_code = fields.Char(
         related="company_id.country_code",
-        help="Technical field used to hide/show fields regarding the localization",
+        help="Campo técnico para mostrar u ocultar campos según la localización.",
     )
     l10n_do_refund_type = fields.Selection(
         selection=_get_l10n_do_refund_type_selection,
         default=_get_default_l10n_do_refund_type,
     )
-    l10n_do_percentage = fields.Float("Percentage")
-    l10n_do_amount = fields.Float("Amount")
+    l10n_do_percentage = fields.Float("Porcentaje")
+    l10n_do_amount = fields.Float("Monto")
     l10n_do_ecf_modification_code = fields.Selection(
         selection=lambda self: self.env[
             "account.move"
         ]._get_l10n_do_ecf_modification_code(),
-        string="e-CF Modification Code",
+        string="Código de modificación e-CF",
         copy=False,
     )
     is_ecf_invoice = fields.Boolean(
-        string="Is Electronic Invoice",
+        string="Es factura electrónica",
     )
 
     @api.depends(
@@ -126,7 +126,7 @@ class AccountMoveReversal(models.TransientModel):
                         0,
                         0,
                         {
-                            "name": self.reason or _("Credit"),
+                            "name": self.reason or _("Crédito"),
                             "price_unit": price_unit,
                             "quantity": 1,
                         },
@@ -153,8 +153,8 @@ class AccountMoveReversal(models.TransientModel):
                 if move_ids_use_document:
                     raise UserError(
                         _(
-                            "You can only reverse documents with legal invoicing documents from Latin America "
-                            "one at a time.\nProblematic documents: %s"
+                            "Solo puedes revertir documentos con comprobantes legales de América Latina "
+                            "uno a la vez.\nDocumentos con problemas: %s"
                         )
                         % ", ".join(move_ids_use_document.mapped("name"))
                     )
