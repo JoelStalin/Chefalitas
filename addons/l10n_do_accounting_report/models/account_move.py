@@ -1,6 +1,7 @@
 import json
 
-from odoo import _, _lt, api, fields, models
+from odoo import _, api, fields, models
+from odoo.tools.translate import _lt
 from odoo.exceptions import ValidationError
 
 

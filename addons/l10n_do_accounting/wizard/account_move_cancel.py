@@ -1,18 +1,22 @@
-from odoo import _, _lt, fields, models
+from odoo import models, fields, _
 from odoo.exceptions import UserError
 
 
 class AccountMoveCancel(models.TransientModel):
-    """Este asistente cancela todas las facturas seleccionadas."""
+    """
+    This wizard will cancel the all the selected invoices.
+    If in the journal, the option allow cancelling entry is not selected then
+    it will give warning message.
+    """
 
     _name = "account.move.cancel"
-    _description = _lt("Cancelar las facturas seleccionadas")
+    _description = "Cancel the Selected Invoice"
 
     l10n_do_cancellation_type = fields.Selection(
         selection=lambda self: self.env[
             "account.move"
         ]._get_l10n_do_cancellation_type(),
-        string="Tipo de cancelación",
+        string="Cancellation Type",
         copy=False,
         required=True,
     )
@@ -24,15 +28,15 @@ class AccountMoveCancel(models.TransientModel):
             if invoice.state == "cancel":
                 raise UserError(
                     _(
-                        "Las facturas seleccionadas no pueden cancelarse porque "
-                        "ya están en estado 'Cancelado'."
+                        "Selected invoice(s) cannot be cancelled as they are "
+                        "already in 'Cancelled' state."
                     )
                 )
             if invoice.payment_state != "not_paid":
                 raise UserError(
                     _(
-                        "Las facturas seleccionadas no pueden cancelarse porque "
-                        "ya están en estado 'Pagado'."
+                        "Selected invoice(s) cannot be cancelled as they are "
+                        "already in 'Paid' state."
                     )
                 )
 
