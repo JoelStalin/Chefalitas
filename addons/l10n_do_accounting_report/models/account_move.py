@@ -1,7 +1,7 @@
+# -*- coding: utf-8 -*-
 import json
 
-from odoo import _, api, fields, models
-from odoo.tools.translate import _lt
+from odoo import _, _lt, api, fields, models
 from odoo.exceptions import ValidationError
 
 
@@ -9,10 +9,10 @@ class InvoiceServiceTypeDetail(models.Model):
     """Almacena los detalles de servicios para reportes DGII."""
 
     _name = "invoice.service.type.detail"
-    _description = "Detalle del Tipo de Servicio DGII"
+    _description = _lt("Detalle del Tipo de Servicio DGII")
 
-    name = fields.Char(string="Nombre")
-    code = fields.Char(string="Código", size=2)
+    name = fields.Char(string="Nombre", required=True)
+    code = fields.Char(string="Código", size=2, required=True, index=True)
     parent_code = fields.Char(string="Código Padre")
 
     _sql_constraints = [
@@ -180,15 +180,22 @@ class AccountMove(models.Model):
 
     @api.constrains("line_ids")
     def _check_isr_tax(self):
-        """Restringe más de una retención ISR o ITBIS por factura."""
+        """Restringe más de una retención ISR o ITBIS por factura.
+
+        Usamos directamente ``line_ids`` en lugar de un helper inexistente
+        (p. ej. ``_get_tax_line_ids``) para evitar errores de atributo
+        durante la validación.
+        """
         for inv in self:
-            line = [
-                tax_line.tax_line_id.purchase_tax_type
-                for tax_line in inv._get_tax_line_ids()
-                if tax_line.tax_line_id
-                and tax_line.tax_line_id.purchase_tax_type in ["isr", "ritbis"]
+            tax_types = [
+                line.tax_line_id.purchase_tax_type
+                for line in inv.line_ids
+                if line.tax_line_id
+                and line.tax_line_id.purchase_tax_type in ("isr", "ritbis")
             ]
-            if len(line) != len(set(line)):
+            if len(tax_types) != len(set(tax_types)):
                 raise ValidationError(
-                    _("Una factura no puede tener múltiples retenciones fiscales (ISR/ITBIS).")
+                    _(
+                        "Una factura no puede tener múltiples retenciones fiscales (ISR/ITBIS)."
+                    )
                 )
