@@ -30,6 +30,32 @@ services:
     networks:
       - odoo-net
 
+  nginx:
+    image: nginx:stable
+    depends_on:
+      - odoo
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/html:/var/www/certbot
+      - ./nginx/ssl:/etc/letsencrypt
+    networks:
+      - odoo-net
+
+  certbot:
+    image: certbot/certbot
+    depends_on:
+      - nginx
+    volumes:
+      - ./nginx/ssl:/etc/letsencrypt
+      - ./nginx/html:/var/www/certbot
+    entrypoint: >
+      /bin/sh -c "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h; done"
+    networks:
+      - odoo-net
+
   pgadmin:
     image: dpage/pgadmin4
     restart: always
