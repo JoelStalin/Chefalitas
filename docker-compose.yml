@@ -14,8 +14,6 @@ services:
       - ./logs:/var/log/odoo
     networks:
       - odoo-net
-    # command: >
-    #    odoo -d odoo -i base --without-demo=all --stop-after-init
 
   db:
     image: postgres:15
@@ -51,6 +49,11 @@ services:
     volumes:
       - ./nginx/ssl:/etc/letsencrypt
       - ./nginx/html:/var/www/certbot
+    # Este entrypoint es para la RENOVACIÓN automática cada 12 horas.
+    # Para emitir el primer certificado usa:
+    #   docker compose run --rm --entrypoint certbot certbot \
+    #     certonly --webroot -w /var/www/certbot \
+    #     -d chefalitas.com.do -d www.chefalitas.com.do ...
     entrypoint: >
       /bin/sh -c "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h; done"
     networks:

@@ -9,3 +9,5 @@ __pycache__/
 .env
 nginx/ssl/*
 !nginx/ssl/.gitkeep
+backups/*.tgz
+backups/*.sql.gz
