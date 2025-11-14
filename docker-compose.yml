@@ -14,6 +14,11 @@ services:
       - ./logs:/var/log/odoo
     networks:
       - odoo-net
+    # >>> Más prioridad y más recursos <<<
+    cpu_shares: 2048      # prioridad alta de CPU frente a otros
+    cpus: "2.0"           # puede usar hasta 2 cores lógicos
+    mem_reservation: 2g   # el sistema intenta reservarle 2 GB
+    mem_limit: 3g         # no puede pasar de 3 GB
 
   db:
     image: postgres:15
@@ -27,6 +32,11 @@ services:
       - ./postgres-config/postgresql.conf:/etc/postgresql/postgresql.conf
     networks:
       - odoo-net
+    # >>> Base de datos también prioritaria <<<
+    cpu_shares: 2048
+    cpus: "1.5"
+    mem_reservation: 2g
+    mem_limit: 3g
 
   nginx:
     image: nginx:stable
@@ -41,6 +51,10 @@ services:
       - ./nginx/ssl:/etc/letsencrypt
     networks:
       - odoo-net
+    # >>> Menos prioridad que odoo/db, pero sin ahogarlo <<<
+    cpu_shares: 512
+    cpus: "0.5"
+    mem_limit: 512m
 
   certbot:
     image: certbot/certbot
@@ -49,15 +63,14 @@ services:
     volumes:
       - ./nginx/ssl:/etc/letsencrypt
       - ./nginx/html:/var/www/certbot
-    # Este entrypoint es para la RENOVACIÓN automática cada 12 horas.
-    # Para emitir el primer certificado usa:
-    #   docker compose run --rm --entrypoint certbot certbot \
-    #     certonly --webroot -w /var/www/certbot \
-    #     -d chefalitas.com.do -d www.chefalitas.com.do ...
     entrypoint: >
       /bin/sh -c "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h; done"
     networks:
       - odoo-net
+    # >>> Muy bajo consumo, no hace falta mucho <<<
+    cpu_shares: 256
+    cpus: "0.25"
+    mem_limit: 256m
 
   pgadmin:
     image: dpage/pgadmin4
@@ -69,6 +82,10 @@ services:
       - pgadmin-data:/var/lib/pgadmin
     networks:
       - odoo-net
+    # >>> Menos importante que odoo/db y nginx <<<
+    cpu_shares: 128
+    cpus: "0.25"
+    mem_limit: 256m
 
 networks:
   odoo-net:
