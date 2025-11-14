@@ -6,22 +6,18 @@ from odoo.exceptions import ValidationError
 
 
 class InvoiceServiceTypeDetail(models.Model):
-    """
-    Almacena los detalles de servicios para reportes DGII.
-    Se usa como catálogo para desglosar el Tipo de Servicio (606 / 609).
-    """
-    _name = "invoice.service.type.detail"
-    _description = "Detalle del Tipo de Servicio DGII"  # <- OJO: string plano
+    _name = "invoice.service_type.detail"
+    _description = "Invoice Service Type Detail"
 
-    name = fields.Char(string="Nombre", required=True)
-    code = fields.Char(string="Código", size=2, required=True, index=True)
-    parent_code = fields.Char(string="Código Padre")
+    name = fields.Char(string="Name", required=True)
+    code = fields.Char(string="Code", required=True)
+    parent_code = fields.Char(string="Parent Code")
 
     _sql_constraints = [
         (
-            "code_unique",
-            "unique(code)",
-            _("El código debe ser único."),  # <- OJO: _(), NO _lt()
+            "invoice_service_type_detail_code_unique",
+            "unique (code)",
+            "El código debe ser único.",  # ← SIN _(), texto plano
         ),
     ]
 
