@@ -76,7 +76,7 @@ services:
     image: dpage/pgadmin4
     restart: always
     ports:
-      - "5050:80"
+      - "5050:5050"
     env_file: .env
     volumes:
       - pgadmin-data:/var/lib/pgadmin
