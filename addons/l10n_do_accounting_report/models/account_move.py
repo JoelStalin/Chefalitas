@@ -1,28 +1,26 @@
 # -*- coding: utf-8 -*-
 import json
 
-from odoo import _, _lt, api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 
 
 class InvoiceServiceTypeDetail(models.Model):
     """Almacena los detalles de servicios para reportes DGII."""
-
     _name = "invoice.service.type.detail"
-    _description = _lt("Detalle del Tipo de Servicio DGII")
+    _description = _("Detalle del Tipo de Servicio DGII")
 
     name = fields.Char(string="Nombre", required=True)
     code = fields.Char(string="Código", size=2, required=True, index=True)
     parent_code = fields.Char(string="Código Padre")
 
     _sql_constraints = [
-        ("code_unique", "unique(code)", _lt("El código debe ser único.")),
+        ("code_unique", "unique(code)", _("El código debe ser único.")),
     ]
 
 
 class AccountMove(models.Model):
     """Extensión de facturas para reportes DGII (606 / 607 / 608 / 609)."""
-
     _inherit = "account.move"
 
     # --- Campos DGII 606 ---
@@ -38,14 +36,12 @@ class AccountMove(models.Model):
         store=True,
         currency_field="company_currency_id",
     )
-
     invoiced_itbis = fields.Monetary(
         string="ITBIS Facturado",
         compute="_compute_invoiced_itbis",
         store=True,
         currency_field="company_currency_id",
     )
-
     withholded_itbis = fields.Monetary(
         string="ITBIS Retenido",
         compute="_compute_withheld_taxes",
@@ -58,7 +54,6 @@ class AccountMove(models.Model):
         store=True,
         currency_field="company_currency_id",
     )
-
     third_withheld_itbis = fields.Monetary(
         string="ITBIS Retenido (Terceros)",
         compute="_compute_withheld_taxes",
@@ -71,7 +66,6 @@ class AccountMove(models.Model):
         store=True,
         currency_field="company_currency_id",
     )
-
     payment_date = fields.Date(
         string="Fecha de Pago",
         compute="_compute_taxes_fields",
@@ -107,21 +101,18 @@ class AccountMove(models.Model):
         store=True,
         currency_field="company_currency_id",
     )
-
     advance_itbis = fields.Monetary(
         string="ITBIS por Adelantar",
         compute="_compute_advance_itbis",
         store=True,
         currency_field="company_currency_id",
     )
-
     isr_withholding_type = fields.Char(
         string="Tipo de Retención ISR",
         compute="_compute_isr_withholding_type",
         store=True,
         size=2,
     )
-
     payment_form = fields.Selection(
         [
             ("01", "Efectivo"),
@@ -136,7 +127,6 @@ class AccountMove(models.Model):
         compute="_compute_in_invoice_payment_form",
         store=True,
     )
-
     is_exterior = fields.Boolean(
         string="Factura del Exterior",
         compute="_compute_is_exterior",
@@ -156,9 +146,9 @@ class AccountMove(models.Model):
         string="Tipo de Servicio",
     )
     service_type_detail = fields.Many2one(
-        "invoice.service.type.detail", string="Detalle del Tipo de Servicio"
+        "invoice.service.type.detail",
+        string="Detalle del Tipo de Servicio",
     )
-
     fiscal_status = fields.Selection(
         [
             ("normal", "Parcial"),
@@ -175,12 +165,17 @@ class AccountMove(models.Model):
             "* En blanco: Factura aún no incluida en un reporte."
         ),
     )
+    amount_with_isr_withholding = fields.Monetary(
+        string="Monto con Retención ISR"
+    )
 
-    amount_with_isr_withholding = fields.Monetary(string="Monto con Retención ISR")
-
+    # ----------------------------------------------------------------------------------
+    # Constraints
+    # ----------------------------------------------------------------------------------
     @api.constrains("line_ids")
     def _check_isr_tax(self):
-        """Restringe más de una retención ISR o ITBIS por factura.
+        """
+        Restringe más de una retención ISR o ITBIS por factura.
 
         Usamos directamente ``line_ids`` en lugar de un helper inexistente
         (p. ej. ``_get_tax_line_ids``) para evitar errores de atributo
@@ -196,6 +191,75 @@ class AccountMove(models.Model):
             if len(tax_types) != len(set(tax_types)):
                 raise ValidationError(
                     _(
-                        "Una factura no puede tener múltiples retenciones fiscales (ISR/ITBIS)."
+                        "Una factura no puede tener múltiples "
+                        "retenciones fiscales (ISR/ITBIS)."
                     )
                 )
+
+    # ----------------------------------------------------------------------------------
+    # Métodos compute (IMPLEMENTA AQUÍ TU LÓGICA REAL SI YA LA TENÍAS)
+    # Lo que sigue son stubs seguros para que el módulo cargue sin romper.
+    # ----------------------------------------------------------------------------------
+
+    @api.depends("invoice_line_ids.price_subtotal")
+    def _compute_amount_fields(self):
+        for move in self:
+            # TODO: reemplazar por lógica real de separación Bienes/Servicios
+            move.service_total_amount = 0.0
+            move.good_total_amount = sum(
+                move.invoice_line_ids.mapped("price_subtotal") or [0.0]
+            )
+
+    @api.depends("invoice_line_ids.tax_ids", "invoice_line_ids.price_subtotal")
+    def _compute_invoiced_itbis(self):
+        for move in self:
+            # TODO: implementar cálculo real de ITBIS facturado
+            move.invoiced_itbis = 0.0
+
+    @api.depends("line_ids.tax_line_id", "line_ids.credit", "line_ids.debit")
+    def _compute_withheld_taxes(self):
+        for move in self:
+            # TODO: implementar cálculo real de retenciones
+            move.withholded_itbis = 0.0
+            move.income_withholding = 0.0
+            move.third_withheld_itbis = 0.0
+            move.third_income_withholding = 0.0
+
+    @api.depends("invoice_line_ids.tax_ids", "invoice_date", "payment_state")
+    def _compute_taxes_fields(self):
+        for move in self:
+            # TODO: implementar lógica real DGII
+            move.payment_date = move.invoice_date
+            move.proportionality_tax = 0.0
+            move.cost_itbis = 0.0
+            move.selective_tax = 0.0
+            move.other_taxes = 0.0
+            move.legal_tip = 0.0
+
+    @api.depends("invoice_line_ids.tax_ids")
+    def _compute_advance_itbis(self):
+        for move in self:
+            # TODO: implementar cálculo real de ITBIS por adelantar
+            move.advance_itbis = 0.0
+
+    @api.depends("line_ids.tax_line_id")
+    def _compute_isr_withholding_type(self):
+        for move in self:
+            # TODO: establecer tipo de retención según impuestos aplicados
+            move.isr_withholding_type = False
+
+    @api.depends("payment_state", "invoice_payments_widget")
+    def _compute_in_invoice_payment_form(self):
+        for move in self:
+            # TODO: inferir forma de pago real desde los pagos
+            move.payment_form = False
+
+    @api.depends("partner_id.country_id")
+    def _compute_is_exterior(self):
+        for move in self:
+            # Consideramos "exterior" si el país del partner != país de la compañía
+            company_country = move.company_id.country_id
+            move.is_exterior = (
+                bool(move.partner_id.country_id)
+                and move.partner_id.country_id != company_country
+            )
