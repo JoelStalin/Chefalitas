@@ -1,31 +1,33 @@
-name: Deploy to Production
+name: Deploy
 
 on:
   push:
     branches:
-      - main # Este workflow se ejecuta cuando se hace push a la rama 'main'
+      - '**'   # Escucha todos los branches; los jobs filtran con if
 
 jobs:
-  deploy:
+  deploy-production:
+    name: Deploy to Production
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'   # Solo cuando es el branch main
     environment:
       name: production
-      url: https://chefalitas.com.do/ # URL de tu instancia Odoo en producción
+      url: https://chefalitas.com.do/     # URL de tu instancia Odoo en producción
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Ensure target directory exists
+      - name: Ensure target directory exists (prod)
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.PROD_SSH_HOST }}      # IP pública de tu servidor
-          username: ${{ secrets.PROD_SSH_USER }}  # Usuario del servidor (p.ej. ubuntu)
-          key: ${{ secrets.PROD_SSH_KEY }}        # Llave privada para SSH
+          host: ${{ secrets.PROD_SSH_HOST }}      # IP pública de tu servidor PROD
+          username: ${{ secrets.PROD_SSH_USER }}  # Usuario del servidor PROD
+          key: ${{ secrets.PROD_SSH_KEY }}        # Llave privada para SSH PROD
           script: |
             mkdir -p ~/odoo18
 
-      - name: Upload project files
+      - name: Upload project files (prod)
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.PROD_SSH_HOST }}
@@ -34,7 +36,7 @@ jobs:
           source: .
           target: ~/odoo18
 
-      - name: Restart services
+      - name: Restart services (prod)
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.PROD_SSH_HOST }}
@@ -43,7 +45,7 @@ jobs:
           script: |
             set -e  # si algo falla, el step revienta
 
-            echo ">> Entrando al directorio del proyecto"
+            echo ">> Entrando al directorio del proyecto (producción)"
             cd ~/odoo18
 
             echo ">> Directorio actual:"
@@ -68,3 +70,68 @@ jobs:
             bash ./restart.sh
 
             echo ">> restart.sh terminó correctamente 🎉"
+
+  # deploy-qa:
+  #   name: Deploy to QA
+  #   runs-on: ubuntu-latest
+  #   if: github.ref != 'refs/heads/main'   # Cualquier branch distinto de main
+  #   environment:
+  #     name: qa
+  #     url: https://qa.chefalitas.com.do/  # Ajusta esta URL a tu entorno QA
+
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+
+  #     - name: Ensure target directory exists (qa)
+  #       uses: appleboy/ssh-action@master
+  #       with:
+  #         host: ${{ secrets._QA_SSH_HOST }}      # IP/host QA
+  #         username: ${{ secrets._QA_SSH_USER }}  # Usuario QA
+  #         key: ${{ secrets._QA_SSH_KEY }}        # Llave QA
+  #         script: |
+  #           mkdir -p ~/odoo18_qa
+
+  #     - name: Upload project files (qa)
+  #       uses: appleboy/scp-action@master
+  #       with:
+  #         host: ${{ secrets._QA_SSH_HOST }}
+  #         username: ${{ secrets._QA_SSH_USER }}
+  #         key: ${{ secrets._QA_SSH_KEY }}
+  #         source: .
+  #         target: ~/odoo18_qa
+
+  #     - name: Restart services (qa)
+  #       uses: appleboy/ssh-action@master
+  #       with:
+  #         host: ${{ secrets._QA_SSH_HOST }}
+  #         username: ${{ secrets._QA_SSH_USER }}
+  #         key: ${{ secrets._QA_SSH_KEY }}
+  #         script: |
+  #           set -e  # si algo falla, el step revienta
+
+  #           echo ">> Entrando al directorio del proyecto (QA)"
+  #           cd ~/odoo18_qa
+
+  #           echo ">> Directorio actual:"
+  #           pwd
+
+  #           echo ">> Listando archivos en ~/odoo18_qa:"
+  #           ls -la
+
+  #           echo ">> Verificando que restart_qa.sh exista:"
+  #           ls -la restart_qa.sh || (echo "ERROR: restart_qa.sh NO existe en ~/odoo18_qa" && exit 1)
+
+  #           echo ">> Normalizando saltos de línea (CRLF -> LF) en restart_qa.sh..."
+  #           dos2unix restart_qa.sh || sed -i 's/\r$//' restart_qa.sh
+
+  #           echo ">> Marcando restart_qa.sh como ejecutable..."
+  #           chmod +x restart_qa.sh
+
+  #           echo ">> Primera línea (shebang) de restart_qa.sh:"
+  #           head -n 1 restart_qa.sh
+
+  #           echo ">> Ejecutando restart_qa.sh con bash..."
+  #           bash ./restart_qa.sh
+
+  #           echo ">> restart_qa.sh terminó correctamente 🎉"
