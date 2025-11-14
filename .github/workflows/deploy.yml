@@ -41,6 +41,30 @@ jobs:
           username: ${{ secrets.PROD_SSH_USER }}
           key: ${{ secrets.PROD_SSH_KEY }}
           script: |
+            set -e  # si algo falla, el step revienta
+
+            echo ">> Entrando al directorio del proyecto"
             cd ~/odoo18
+
+            echo ">> Directorio actual:"
+            pwd
+
+            echo ">> Listando archivos en ~/odoo18:"
+            ls -la
+
+            echo ">> Verificando que restart.sh exista:"
+            ls -la restart.sh || (echo "ERROR: restart.sh NO existe en ~/odoo18" && exit 1)
+
+            echo ">> Normalizando saltos de línea (CRLF -> LF) en restart.sh..."
+            dos2unix restart.sh || sed -i 's/\r$//' restart.sh
+
+            echo ">> Marcando restart.sh como ejecutable..."
             chmod +x restart.sh
-            ./restart.sh
+
+            echo ">> Primera línea (shebang) de restart.sh:"
+            head -n 1 restart.sh
+
+            echo ">> Ejecutando restart.sh con bash..."
+            bash ./restart.sh
+
+            echo ">> restart.sh terminó correctamente 🎉"
