@@ -287,6 +287,8 @@ msgid ""
 "<br/>\n"
 "                        <strong>Código Modificación:</strong>"
 msgstr ""
+"<br/>\n"
+"                        <strong>Código Modificación:</strong>"
 
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.informations
@@ -294,6 +296,8 @@ msgid ""
 "<br/>\n"
 "                    <strong>Contacto:</strong>"
 msgstr ""
+"<br/>\n"
+"                    <strong>Contacto:</strong>"
 
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.report_invoice_document_inherited
@@ -310,6 +314,17 @@ msgid ""
 "                        <br/>\n"
 "                        <br/>"
 msgstr ""
+"<span>\n"
+"                            <strong>Original:</strong>\n"
+"                            Cliente\n"
+"                        </span>\n"
+"                        <br/>\n"
+"                        <span>\n"
+"                            <strong>Copia:</strong>\n"
+"                            Vendedor\n"
+"                        </span>\n"
+"                        <br/>\n"
+"                        <br/>"
 
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.report_invoice_document_inherited
@@ -318,71 +333,74 @@ msgid ""
 "                    <strong>E</strong>\n"
 "                </span>"
 msgstr ""
+"<span>\n"
+"                    <strong>E</strong>\n"
+"                </span>"
 
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.informations
 msgid "<span>/</span>"
-msgstr ""
+msgstr "<span>/</span>"
 
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.report_invoice_document_inherited
 msgid "<span>Monto descuento</span>"
-msgstr ""
+msgstr "<span>Monto descuento</span>"
 
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.informations
 msgid "<strong>Cel.:</strong>"
-msgstr ""
+msgstr "<strong>Cel.:</strong>"
 
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.report_invoice_document_inherited
 msgid "<strong>Código de Seguridad:</strong>"
-msgstr ""
+msgstr "<strong>Código de Seguridad:</strong>"
 
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.informations
 msgid "<strong>Fecha Emisión:</strong>"
-msgstr ""
+msgstr "<strong>Fecha Emisión:</strong>"
 
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.report_invoice_document_inherited
 msgid "<strong>Fecha Firma Digital:</strong>"
-msgstr ""
+msgstr "<strong>Fecha Firma Digital:</strong>"
 
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.informations
 msgid "<strong>NCF modificado:</strong>"
-msgstr ""
+msgstr "<strong>NCF modificado:</strong>"
 
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.informations
 msgid "<strong>Origen:</strong>"
-msgstr ""
+msgstr "<strong>Origen:</strong>"
 
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.informations
 msgid "<strong>RNC:</strong>"
-msgstr ""
+msgstr "<strong>RNC:</strong>"
 
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.informations
 msgid "<strong>Referencia:</strong>"
-msgstr ""
+msgstr "<strong>Referencia:</strong>"
 
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.informations
 msgid "<strong>Tel.:</strong>"
-msgstr ""
+msgstr "<strong>Tel.:</strong>"
 
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.document_tax_totals
 msgid "<strong>Total</strong>"
-msgstr ""
+msgstr "<strong>Total</strong>"
 
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.informations
 msgid "<strong>Vence:</strong>"
-msgstr ""
+msgstr "<strong>Vence:</strong>"
 
 #. module: l10n_do_accounting
 #. odoo-python
@@ -523,7 +541,7 @@ msgid "Cancel the Selected Invoice"
 msgstr "Cancelar las Facturas Seleccionadas"
 
 #. module: l10n_do_accounting
-#: model_terms:ir.ui.view,arch_db:l10n_do_accounting.view_move_form
+#: model_terms:ir.ui.view,arch_db:l10n_do_accounting.account_move_cancel_view
 msgid ""
 "Cancellation Reason:\n"
 "                    <br/>"
@@ -588,22 +606,22 @@ msgstr "Empresa relacionada con este diario"
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,name:l10n_do_accounting.ecf_informal_supplier
 msgid "Compras Electrónica"
-msgstr ""
+msgstr "Compras Electrónica"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,name:l10n_do_accounting.ncf_informal_supplier
 msgid "Comprobante de Compra"
-msgstr ""
+msgstr "Comprobante de Compra"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,name:l10n_do_accounting.ncf_consumer_supplier
 msgid "Consumo"
-msgstr ""
+msgstr "Consumo"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,name:l10n_do_accounting.ecf_consumer_supplier
 msgid "Consumo Electrónica"
-msgstr ""
+msgstr "Consumo Electrónica"
 
 #. module: l10n_do_accounting
 #: model:ir.model,name:l10n_do_accounting.model_res_partner
@@ -668,22 +686,22 @@ msgstr "Tarjeta Crédito / Débito"
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,name:l10n_do_accounting.ncf_fiscal_client
 msgid "Crédito Fiscal"
-msgstr ""
+msgstr "Crédito Fiscal"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,name:l10n_do_accounting.ecf_fiscal_client
 msgid "Crédito Fiscal Electrónica"
-msgstr ""
+msgstr "Crédito Fiscal Electrónica"
 
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.informations
 msgid "Cédula:"
-msgstr ""
+msgstr "Cédula:"
 
 #. module: l10n_do_accounting
 #: model:ir.ui.menu,name:l10n_do_accounting.menu_dgii_config
 msgid "DGII"
-msgstr ""
+msgstr "DGII"
 
 #. module: l10n_do_accounting
 #. odoo-python
@@ -809,99 +827,99 @@ msgstr "Fecha de Expiración"
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,name:l10n_do_accounting.ncf_export_client
 msgid "Exportación"
-msgstr ""
+msgstr "Exportación"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,name:l10n_do_accounting.ecf_export_client
 msgid "Exportación Electrónica"
-msgstr ""
+msgstr "Exportación Electrónica"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,report_name:l10n_do_accounting.ecf_minor_supplier
 msgid "Factura Gasto Menor Electrónica"
-msgstr ""
+msgstr "Factura Gasto Menor Electrónica"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,name:l10n_do_accounting.ncf_gov_client
 #: model:l10n_latam.document.type,report_name:l10n_do_accounting.ncf_gov_client
 msgid "Factura Gubernamental"
-msgstr ""
+msgstr "Factura Gubernamental"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,name:l10n_do_accounting.ecf_gov_client
 #: model:l10n_latam.document.type,report_name:l10n_do_accounting.ecf_gov_client
 msgid "Factura Gubernamental Electrónica"
-msgstr ""
+msgstr "Factura Gubernamental Electrónica"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,report_name:l10n_do_accounting.ncf_informal_supplier
 msgid "Factura de Compra"
-msgstr ""
+msgstr "Factura de Compra"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,report_name:l10n_do_accounting.ecf_informal_supplier
 msgid "Factura de Compra Electrónica"
-msgstr ""
+msgstr "Factura de Compra Electrónica"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,report_name:l10n_do_accounting.ncf_consumer_supplier
 msgid "Factura de Consumo"
-msgstr ""
+msgstr "Factura de Consumo"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,report_name:l10n_do_accounting.ecf_consumer_supplier
 msgid "Factura de Consumo Electrónica"
-msgstr ""
+msgstr "Factura de Consumo Electrónica"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,report_name:l10n_do_accounting.ncf_fiscal_client
 msgid "Factura de Crédito Fiscal"
-msgstr ""
+msgstr "Factura de Crédito Fiscal"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,report_name:l10n_do_accounting.ecf_fiscal_client
 msgid "Factura de Crédito Fiscal Electrónica"
-msgstr ""
+msgstr "Factura de Crédito Fiscal Electrónica"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,report_name:l10n_do_accounting.ncf_export_client
 msgid "Factura de Exportación"
-msgstr ""
+msgstr "Factura de Exportación"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,report_name:l10n_do_accounting.ecf_export_client
 msgid "Factura de Exportación Electrónica"
-msgstr ""
+msgstr "Factura de Exportación Electrónica"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,report_name:l10n_do_accounting.non_fiscal_import_supplier
 msgid "Factura de Importación"
-msgstr ""
+msgstr "Factura de Importación"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,report_name:l10n_do_accounting.ncf_exterior_supplier
 msgid "Factura de Pago al Exterior"
-msgstr ""
+msgstr "Factura de Pago al Exterior"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,report_name:l10n_do_accounting.ecf_exterior_supplier
 msgid "Factura de Pago al Exterior Electrónica"
-msgstr ""
+msgstr "Factura de Pago al Exterior Electrónica"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,report_name:l10n_do_accounting.ncf_special_client
 msgid "Factura de Régimen Especial"
-msgstr ""
+msgstr "Factura de Régimen Especial"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,report_name:l10n_do_accounting.ecf_special_client
 msgid "Factura de Régimen Especial Electrónica"
-msgstr ""
+msgstr "Factura de Régimen Especial Electrónica"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,report_name:l10n_do_accounting.ncf_unique_client
 msgid "Factura de Único Ingreso"
-msgstr ""
+msgstr "Factura de Único Ingreso"
 
 #. module: l10n_do_accounting
 #: model:ir.model.fields,field_description:l10n_do_accounting.field_account_bank_statement_line__l10n_do_fiscal_number
@@ -962,12 +980,12 @@ msgstr "Reembolso completo"
 #: model:l10n_latam.document.type,name:l10n_do_accounting.ncf_minor_supplier
 #: model:l10n_latam.document.type,report_name:l10n_do_accounting.ncf_minor_supplier
 msgid "Gasto Menor"
-msgstr ""
+msgstr "Gasto Menor"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,name:l10n_do_accounting.ecf_minor_supplier
 msgid "Gasto Menor Electrónica"
-msgstr ""
+msgstr "Gasto Menor Electrónica"
 
 #. module: l10n_do_accounting
 #. odoo-python
@@ -994,7 +1012,7 @@ msgstr "Identificación"
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.informations
 msgid "ID Cliente:"
-msgstr ""
+msgstr "ID Cliente:"
 
 #. module: l10n_do_accounting
 #: model:ir.model.fields,field_description:l10n_do_accounting.field_account_move_line__l10n_do_itbis_amount
@@ -1013,7 +1031,7 @@ msgstr ""
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,name:l10n_do_accounting.non_fiscal_import_supplier
 msgid "Importación"
-msgstr ""
+msgstr "Importación"
 
 #. module: l10n_do_accounting
 #: model:ir.model.fields,field_description:l10n_do_accounting.field_account_bank_statement_line__l10n_do_income_type
@@ -1115,7 +1133,7 @@ msgstr "Tipo de Comprobante"
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.custom_header
 msgid "Logo"
-msgstr ""
+msgstr "Logo"
 
 #. module: l10n_do_accounting
 #: model:ir.model.fields,field_description:l10n_do_accounting.field_account_bank_statement_line__l10n_latam_manual_document_number
@@ -1134,12 +1152,12 @@ msgstr "Afecta a"
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.document_tax_totals
 msgid "Monto Exento"
-msgstr ""
+msgstr "Monto Exento"
 
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.document_tax_totals
 msgid "Monto Gravado"
-msgstr ""
+msgstr "Monto Gravado"
 
 #. module: l10n_do_accounting
 #. odoo-python
@@ -1178,7 +1196,7 @@ msgstr ""
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.informations
 msgid "NCF:"
-msgstr ""
+msgstr "NCF:"
 
 #. module: l10n_do_accounting
 #. odoo-python
@@ -1191,7 +1209,7 @@ msgstr "No se encontró facturas para esta operación"
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.informations
 msgid "Nombre:"
-msgstr ""
+msgstr "Nombre:"
 
 #. module: l10n_do_accounting
 #. odoo-python
@@ -1213,25 +1231,25 @@ msgstr "Sin fines de lucro"
 #: model:l10n_latam.document.type,name:l10n_do_accounting.ncf_credit_note_client
 #: model:l10n_latam.document.type,report_name:l10n_do_accounting.ncf_credit_note_client
 msgid "Nota de Crédito"
-msgstr ""
+msgstr "Nota de Crédito"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,name:l10n_do_accounting.ecf_credit_note_client
 #: model:l10n_latam.document.type,report_name:l10n_do_accounting.ecf_credit_note_client
 msgid "Nota de Crédito Electrónica"
-msgstr ""
+msgstr "Nota de Crédito Electrónica"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,name:l10n_do_accounting.ncf_debit_note_client
 #: model:l10n_latam.document.type,report_name:l10n_do_accounting.ncf_debit_note_client
 msgid "Nota de Débito"
-msgstr ""
+msgstr "Nota de Débito"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,name:l10n_do_accounting.ecf_debit_note_client
 #: model:l10n_latam.document.type,report_name:l10n_do_accounting.ecf_debit_note_client
 msgid "Nota de Débito Electrónica"
-msgstr ""
+msgstr "Nota de Débito Electrónica"
 
 #. module: l10n_do_accounting
 #: model_terms:ir.actions.act_window,help:l10n_do_accounting.action_invoice_out_debit_note
@@ -1271,12 +1289,12 @@ msgstr "Otras Formas de Venta"
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,name:l10n_do_accounting.ncf_exterior_supplier
 msgid "Pago al Exterior"
-msgstr ""
+msgstr "Pago al Exterior"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,name:l10n_do_accounting.ecf_exterior_supplier
 msgid "Pago al Exterior Electrónica"
-msgstr ""
+msgstr "Pago al Exterior Electrónica"
 
 #. module: l10n_do_accounting
 #. odoo-python
@@ -1314,12 +1332,12 @@ msgstr "Porcentaje"
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.informations
 msgid "RNC:"
-msgstr ""
+msgstr "RNC:"
 
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.informations
 msgid "Razón Social:"
-msgstr ""
+msgstr "Razón Social:"
 
 #. module: l10n_do_accounting
 #: model_terms:ir.actions.act_window,help:l10n_do_accounting.action_vendor_in_debit_note
@@ -1342,12 +1360,12 @@ msgstr "Haga de nuevo la secuencia de asientos contables."
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,name:l10n_do_accounting.ncf_special_client
 msgid "Régimen Especial"
-msgstr ""
+msgstr "Régimen Especial"
 
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,name:l10n_do_accounting.ecf_special_client
 msgid "Régimen Especial Electrónica"
-msgstr ""
+msgstr "Régimen Especial Electrónica"
 
 #. module: l10n_do_accounting
 #. odoo-python
@@ -1474,7 +1492,7 @@ msgstr "Válida hasta"
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.informations
 msgid "Vencimiento e-NCF:"
-msgstr ""
+msgstr "Vencimiento e-NCF:"
 
 #. module: l10n_do_accounting
 #: model:ir.actions.act_window,name:l10n_do_accounting.action_vendor_in_debit_note
@@ -1495,7 +1513,7 @@ msgstr ""
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.informations
 msgid "Válida hasta:"
-msgstr ""
+msgstr "Válida hasta:"
 
 #. module: l10n_do_accounting
 #: model:ir.model.fields,help:l10n_do_accounting.field_res_company__l10n_do_ecf_issuer
@@ -1625,7 +1643,7 @@ msgstr "Fecha Firmado e-CF"
 #. module: l10n_do_accounting
 #: model_terms:ir.ui.view,arch_db:l10n_do_accounting.informations
 msgid "e-NCF:"
-msgstr ""
+msgstr "e-NCF:"
 
 #. module: l10n_do_accounting
 #. odoo-python
@@ -1638,4 +1656,4 @@ msgstr "Exento"
 #. module: l10n_do_accounting
 #: model:l10n_latam.document.type,name:l10n_do_accounting.ncf_unique_client
 msgid "Único Ingreso"
-msgstr "Código de barras"
+msgstr "Único Ingreso"
