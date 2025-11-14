@@ -1,4 +1,4 @@
-echo "__pycache__/
+__pycache__/
 *.pyc
 *.log
 *.swp
@@ -6,4 +6,8 @@ echo "__pycache__/
 *.egg-info/
 .idea/
 .vscode/
-.env" > .gitignore
+.env
+nginx/ssl/*
+!nginx/ssl/.gitkeep
+backups/*.tgz
+backups/*.sql.gz
