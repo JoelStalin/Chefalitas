@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
-import json
-
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 
 
 class InvoiceServiceTypeDetail(models.Model):
-    _name = "invoice.service_type.detail"
+    _name = "invoice.service.type.detail"  # <-- nombre del modelo
     _description = "Invoice Service Type Detail"
 
     name = fields.Char(string="Name", required=True)
@@ -17,7 +15,7 @@ class InvoiceServiceTypeDetail(models.Model):
         (
             "invoice_service_type_detail_code_unique",
             "unique (code)",
-            "El código debe ser único.",  # ← SIN _(), texto plano
+            "El código debe ser único.",  # SIN _(), texto plano (no traducible)
         ),
     ]
 
@@ -159,7 +157,7 @@ class AccountMove(models.Model):
         string="Tipo de Servicio",
     )
     service_type_detail = fields.Many2one(
-        "invoice.service.type.detail",
+        "invoice.service.type.detail",      # <-- coincide con _name arriba
         string="Detalle del Tipo de Servicio",
     )
 
