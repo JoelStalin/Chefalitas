@@ -1,15 +1,7 @@
 
-/** @odoo-module */
+/** @odoo-module **/
 
-import { patch } from "@web/core/utils/patch";
-import { PosGlobalState } from "point_of_sale.models";
-import { localPrinterService } from "./local_printer_service";
-
-patch(PosGlobalState.prototype, {
-    async _service_local_printer(config) {
-        if (config.enable_local_printing) {
-            return localPrinterService;
-        }
-        return this._super(...arguments);
-    },
-});
+// This file is intentionally left blank in this version.
+// The service is now self-registering within its own file.
+// For Odoo 15/16, you might need to patch PosGlobalState here,
+// but in Odoo 18, service registration is cleaner.

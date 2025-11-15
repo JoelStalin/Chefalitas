@@ -1,73 +1,82 @@
 
-/** @odoo-module */
+/** @odoo-module **/
 
 import { registry } from "@web/core/registry";
 import { EventBus } from "@odoo/owl";
 
-export const localPrinterService = {
-    dependencies: ["rpc"],
-    start(env, { rpc }) {
-        const bus = new EventBus();
-        let socket = null;
+const localPrinterService = {
+    dependencies: [],
+    start(env) {
+        const state = reactive({
+            isConnected: false,
+        });
 
-        function connect() {
-            console.log("Intentando conectar al agente de impresión local...");
-            socket = new WebSocket("ws://localhost:8080");
+        let socket;
+        const socketUrl = "ws://localhost:8080";
+
+        const connect = () => {
+            console.log("LocalPrinter: Attempting to connect...");
+            socket = new WebSocket(socketUrl);
 
             socket.onopen = () => {
-                console.log("Conexión con el agente de impresión establecida.");
-                bus.trigger("status-changed", { status: "connected" });
+                console.log("LocalPrinter: WebSocket connection established.");
+                state.isConnected = true;
             };
 
-            socket.onclose = () => {
-                console.log("Conexión con el agente de impresión perdida. Reintentando en 5 segundos...");
-                bus.trigger("status-changed", { status: "disconnected" });
+            socket.onclose = (event) => {
+                console.log("LocalPrinter: WebSocket connection closed.", event);
+                state.isConnected = false;
+                // Automatic reconnection attempt after 5 seconds
                 setTimeout(connect, 5000);
             };
 
             socket.onerror = (error) => {
-                console.error("Error en la conexión WebSocket:", error);
-                bus.trigger("status-changed", { status: "error" });
+                console.error("LocalPrinter: WebSocket error:", error);
+                state.isConnected = false;
+                // Ensure the socket is closed before retrying
                 socket.close();
             };
 
             socket.onmessage = (event) => {
-                const response = JSON.parse(event.data);
-                if (response.status === 'ok') {
-                    console.log('Respuesta del agente:', response);
-                } else {
-                    console.error('Error del agente:', response.message);
+                try {
+                    const response = JSON.parse(event.data);
+                    console.log("LocalPrinter: Message from agent:", response);
+                    // You can add logic here to handle specific responses,
+                    // for example, updating a list of printers.
+                } catch (e) {
+                    console.error("LocalPrinter: Failed to parse message:", event.data, e);
                 }
             };
-        }
+        };
 
+        // Initial connection attempt
         connect();
 
+        const _send = (payload) => {
+            if (!state.isConnected) {
+                console.error("LocalPrinter: Cannot send message, not connected.");
+                return Promise.reject("Not Connected");
+            }
+            const jsonPayload = JSON.stringify(payload);
+            socket.send(jsonPayload);
+            return Promise.resolve();
+        };
+
         return {
-            bus,
-            get isConnected() {
-                return socket && socket.readyState === WebSocket.OPEN;
-            },
+            state,
 
-            listPrinters() {
-                if (!this.isConnected) {
-                    console.error("No se pueden listar las impresoras. El agente no está conectado.");
-                    return;
-                }
-                socket.send(JSON.stringify({ command: "list_printers" }));
-            },
-
-            printReceipt(printerName, receipt) {
-                if (!this.isConnected) {
-                    console.error("No se puede imprimir. El agente no está conectado.");
-                    return;
-                }
-                const payload = {
+            printReceipt(printerName, data) {
+                return _send({
                     command: "print_receipt",
                     printer_name: printerName,
-                    receipt: receipt,
-                };
-                socket.send(JSON.stringify(payload));
+                    data: data,
+                });
+            },
+
+            getPrinters() {
+                return _send({
+                    command: "list_printers",
+                });
             },
         };
     },

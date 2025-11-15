@@ -1,4 +1,3 @@
-
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
@@ -8,24 +7,26 @@
             <field name="inherit_id" ref="point_of_sale.pos_config_view_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//div[@id='other_devices']" position="after">
-                    <div class="col-12 col-lg-6 o_setting_box" id="local_printing">
+                    <div class="col-12 col-lg-6 o_setting_box" id="local_printing_settings">
                         <div class="o_setting_left_pane">
                             <field name="enable_local_printing"/>
                         </div>
                         <div class="o_setting_right_pane">
                             <label for="enable_local_printing"/>
                             <div class="text-muted">
-                                Permite la impresión directa en una impresora local a través de un agente.
+                                Permite la impresión directa a una impresora en la PC del cajero a través de un agente local.
                             </div>
                             <div class="content-group mt16" attrs="{'invisible': [('enable_local_printing', '=', False)]}">
                                 <div class="row">
-                                    <label class="col-lg-3 o_light_label" for="local_printer_name"/>
+                                    <label class="col-lg-4 o_light_label" for="local_printer_name"/>
                                     <field name="local_printer_name" attrs="{'required': [('enable_local_printing', '=', True)]}"/>
                                 </div>
                                 <div class="mt16">
-                                    <a href="/pos_any_printer_local/static/download/LocalPrinterAgent-Setup.exe" class="btn btn-primary">
-                                        <i class="fa fa-download"/>
-                                        Descargar Agente para Windows
+                                    <p class="o_form_label">
+                                        Instale el agente en la PC del cajero para habilitar la conexión.
+                                    </p>
+                                    <a href="/pos_any_printer_local/static/download/LocalPrinterAgent-Setup.exe" class="btn btn-primary" download="LocalPrinterAgent-Setup.exe">
+                                        <i class="fa fa-download"/> Descargar Agente (Windows)
                                     </a>
                                 </div>
                             </div>
