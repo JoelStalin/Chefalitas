@@ -1,8 +1,0 @@
-<odoo>
-  <template id="assets_pos" inherit_id="point_of_sale.assets" name="pos any printer local assets">
-    <xpath expr="." position="inside">
-      <script type="text/javascript" src="/pos_any_printer_local/static/src/js/pos_local_printer.js"/>
-      <script type="text/javascript" src="/pos_any_printer_local/static/src/js/pos_printer_selector.js"/>
-    </xpath>
-  </template>
-</odoo>
