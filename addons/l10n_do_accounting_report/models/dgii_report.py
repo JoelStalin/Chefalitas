@@ -287,7 +287,7 @@ class DgiiReport(models.Model):
     csmr_ncf_total_lgl_tip = fields.Monetary("Legal Tip Total", copy=False)
 
     # General Summary of Consumer Invoices - Sale Form
-    csmr_cash = fields.Monetary("Cash", copy=False)
+    csmr_cash = fields.Monetary("Cash (Consumo)", copy=False)
     csmr_bank = fields.Monetary("Check / Transfer / Deposit", copy=False)
     csmr_card = fields.Monetary("Credit Card / Debit Card", copy=False)
     csmr_credit = fields.Monetary("Credit", copy=False)

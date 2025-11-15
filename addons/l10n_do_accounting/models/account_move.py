@@ -181,11 +181,12 @@ class AccountMove(models.Model):
                      .mapped('balance')
             ))
     
-    # _sql_constraints = [
-    #     ("account_move_unique_l10n_do_fiscal_number_sales",
-    #      "UNIQUE(l10n_do_fiscal_number, company_id)",
-    #      "Ya existe otro documento con ese NCF en esta empresa."),
-    # ]
+    _sql_constraints = [
+        ("unique_l10n_do_fiscal_number_sales",
+         "unique (company_id, partner_id, l10n_do_fiscal_number)",
+         "Another document with the same fiscal number already exists."),
+    ]
+
     
     def _compute_tax_totals(self):
         super()._compute_tax_totals()

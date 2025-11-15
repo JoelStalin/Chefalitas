@@ -134,7 +134,7 @@ class AccountMove(models.Model):
             ("06", "Nota de Crédito"),
             ("07", "Mixto"),
         ],
-        string="Forma de Pago",
+        string="Forma de Pago (DGII)",
         compute="_compute_in_invoice_payment_form",
         store=True,
     )
