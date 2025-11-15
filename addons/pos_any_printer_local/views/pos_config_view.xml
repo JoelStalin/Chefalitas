@@ -1,0 +1,12 @@
+<odoo>
+  <record id="view_pos_config_form_inherit_local_printer" model="ir.ui.view">
+    <field name="name">pos.config.form.local.printer</field>
+    <field name="model">pos.config</field>
+    <field name="inherit_id">point_of_sale.view_pos_pos_config_form</field>
+    <field name="arch" type="xml">
+      <xpath expr="//group[fieldset]" position="inside">
+        <field name="local_printer_name"/>
+      </xpath>
+    </field>
+  </record>
+</odoo>
