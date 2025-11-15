@@ -1,29 +1,38 @@
+
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-  <record id="view_pos_config_form_inherit_local_printer" model="ir.ui.view">
-    <field name="name">pos.config.form.local.printer</field>
-    <field name="model">pos.config</field>
-    <field name="inherit_id">point_of_sale.view_pos_pos_config_form</field>
-    <field name="arch" type="xml">
-      <xpath expr="//div[@id='hw_proxy_options']" position="after">
-        <div class="col-xs-12 col-md-6 o_setting_box">
-            <div class="o_setting_left_pane">
-                <field name="enable_local_printing"/>
-            </div>
-            <div class="o_setting_right_pane">
-                <label for="enable_local_printing"/>
-                <div class="text-muted">
-                    Habilita la impresión directa en una impresora local a través de un agente.
-                </div>
-                <div class="content-group mt16" attrs="{'invisible': [('enable_local_printing', '=', False)]}">
-                    <div class="row">
-                        <label class="col-lg-3 o_light_label" string="Nombre de la Impresora" for="local_printer_name"/>
-                        <field name="local_printer_name" attrs="{'required': [('enable_local_printing', '=', True)]}"/>
+    <data>
+        <record id="pos_config_view_form_inherit_local_printer" model="ir.ui.view">
+            <field name="name">pos.config.form.inherit.local.printer</field>
+            <field name="model">pos.config</field>
+            <field name="inherit_id" ref="point_of_sale.pos_config_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[@id='other_devices']" position="after">
+                    <div class="col-12 col-lg-6 o_setting_box" id="local_printing">
+                        <div class="o_setting_left_pane">
+                            <field name="enable_local_printing"/>
+                        </div>
+                        <div class="o_setting_right_pane">
+                            <label for="enable_local_printing"/>
+                            <div class="text-muted">
+                                Permite la impresión directa en una impresora local a través de un agente.
+                            </div>
+                            <div class="content-group mt16" attrs="{'invisible': [('enable_local_printing', '=', False)]}">
+                                <div class="row">
+                                    <label class="col-lg-3 o_light_label" for="local_printer_name"/>
+                                    <field name="local_printer_name" attrs="{'required': [('enable_local_printing', '=', True)]}"/>
+                                </div>
+                                <div class="mt16">
+                                    <a href="/pos_any_printer_local/static/download/LocalPrinterAgent-Setup.exe" class="btn btn-primary">
+                                        <i class="fa fa-download"/>
+                                        Descargar Agente para Windows
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <button type="button" class="btn btn-primary" id="test_local_printer_connection">Probar Conexión / Detectar Impresoras</button>
-                </div>
-            </div>
-        </div>
-      </xpath>
-    </field>
-  </record>
+                </xpath>
+            </field>
+        </record>
+    </data>
 </odoo>

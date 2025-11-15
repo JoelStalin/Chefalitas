@@ -1,73 +1,76 @@
-/** @odoo-module **/
+
+/** @odoo-module */
 
 import { registry } from "@web/core/registry";
-import { reactive } from "@odoo/owl";
+import { EventBus } from "@odoo/owl";
 
 export const localPrinterService = {
     dependencies: ["rpc"],
-    async start(env, { rpc }) {
-        const state = reactive({
-            isConnected: false,
-            printers: [],
-        });
+    start(env, { rpc }) {
+        const bus = new EventBus();
+        let socket = null;
 
-        let socket;
-        const socketUrl = "ws://localhost:8080";
-
-        const connect = () => {
-            socket = new WebSocket(socketUrl);
+        function connect() {
+            console.log("Intentando conectar al agente de impresión local...");
+            socket = new WebSocket("ws://localhost:8080");
 
             socket.onopen = () => {
-                console.log("WebSocket connected");
-                state.isConnected = true;
-                getPrinters();
+                console.log("Conexión con el agente de impresión establecida.");
+                bus.trigger("status-changed", { status: "connected" });
             };
 
             socket.onclose = () => {
-                console.log("WebSocket disconnected, reconnecting...");
-                state.isConnected = false;
-                setTimeout(connect, 3000);
+                console.log("Conexión con el agente de impresión perdida. Reintentando en 5 segundos...");
+                bus.trigger("status-changed", { status: "disconnected" });
+                setTimeout(connect, 5000);
             };
 
             socket.onerror = (error) => {
-                console.error("WebSocket error:", error);
+                console.error("Error en la conexión WebSocket:", error);
+                bus.trigger("status-changed", { status: "error" });
                 socket.close();
             };
 
             socket.onmessage = (event) => {
                 const response = JSON.parse(event.data);
-                if (response.command === "list_printers") {
-                    state.printers = response.printers;
+                if (response.status === 'ok') {
+                    console.log('Respuesta del agente:', response);
+                } else {
+                    console.error('Error del agente:', response.message);
                 }
             };
-        };
-
-        const getPrinters = () => {
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({ command: "list_printers" }));
-            }
-        };
-
-        const printReceipt = (receipt, printer_name) => {
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({
-                    command: "print_receipt",
-                    printer_name: printer_name,
-                    data: receipt,
-                }));
-            } else {
-                console.error("WebSocket is not connected.");
-            }
-        };
+        }
 
         connect();
 
         return {
-            state,
-            getPrinters,
-            printReceipt,
+            bus,
+            get isConnected() {
+                return socket && socket.readyState === WebSocket.OPEN;
+            },
+
+            listPrinters() {
+                if (!this.isConnected) {
+                    console.error("No se pueden listar las impresoras. El agente no está conectado.");
+                    return;
+                }
+                socket.send(JSON.stringify({ command: "list_printers" }));
+            },
+
+            printReceipt(printerName, receipt) {
+                if (!this.isConnected) {
+                    console.error("No se puede imprimir. El agente no está conectado.");
+                    return;
+                }
+                const payload = {
+                    command: "print_receipt",
+                    printer_name: printerName,
+                    receipt: receipt,
+                };
+                socket.send(JSON.stringify(payload));
+            },
         };
     },
 };
 
-registry.category("services").add("localPrinterService", localPrinterService);
+registry.category("services").add("local_printer_service", localPrinterService);
