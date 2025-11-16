@@ -6,7 +6,7 @@
             <field name="model">pos.config</field>
             <field name="inherit_id" ref="point_of_sale.pos_config_view_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//div[@id='other_devices']" position="after">
+                <xpath expr="//div[hasclass('o_setting_container') and div/div/field[@name='iotbox_printer_ip']]" position="after">
                     <div class="col-12 col-lg-6 o_setting_box" id="local_printing_settings">
                         <div class="o_setting_left_pane">
                             <field name="enable_local_printing"/>
