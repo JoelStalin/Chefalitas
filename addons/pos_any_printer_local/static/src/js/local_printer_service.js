@@ -2,7 +2,7 @@
 /** @odoo-module **/
 
 import { registry } from "@web/core/registry";
-import { reactive } from "@odoo/owl";
+import { EventBus } from "@odoo/owl";
 
 const localPrinterService = {
     dependencies: [],
