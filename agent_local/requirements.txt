@@ -1,0 +1,8 @@
+# Dependencias para el Agente Local de Impresión
+
+# Requerido para la comunicación por WebSocket
+websockets
+
+# Requerido para la interacción con la API de impresión de Windows
+# (incluye win32print)
+pywin32
