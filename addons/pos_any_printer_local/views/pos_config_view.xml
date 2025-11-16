@@ -30,7 +30,7 @@
                                     <p class="o_form_label">
                                         Instale el agente en la PC del cajero para habilitar la conexión.
                                     </p>
-                                    <a href="/pos_any_printer_local/static/download/LocalPrinterAgent-Setup.exe" class="btn btn-primary" download="LocalPrinterAgent-Setup.exe">
+                                    <a href="/download/agent" class="btn btn-primary">
                                         <i class="fa fa-download"/> Descargar Agente (Windows)
                                     </a>
                                 </div>

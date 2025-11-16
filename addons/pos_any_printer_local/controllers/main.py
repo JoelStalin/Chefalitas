@@ -1,28 +1,20 @@
-from odoo import http, api, SUPERUSER_ID
+# -*- coding: utf-8 -*-
+from odoo import http
 from odoo.http import request
 
-class PosPrintProxy(http.Controller):
-    @http.route('/pos_local_printer/ping', type='json', auth='user')
-    def ping(self):
-        return {'result': 'ok'}
+class RedirectDownloadController(http.Controller):
 
-    # Save selected printer name for a given pos.config id
-    @http.route('/pos_local_printer/save_printer', type='json', auth='user', methods=['POST'])
-    def save_printer(self, pos_config_id=None, printer_name=None):
-        if not pos_config_id or not printer_name:
-            return {'result': 'error', 'error': 'Falta pos_config_id o printer_name'}
-        try:
-            env = request.env
-            cfg = env['pos.config'].sudo().browse(int(pos_config_id))
-            if not cfg.exists():
-                return {'result': 'error', 'error': 'pos.config no encontrado'}
-            cfg.sudo().write({'local_printer_name': printer_name})
-            return {'result': 'ok'}
-        except Exception as e:
-            return {'result': 'error', 'error': str(e)}
+    @http.route('/download/agent', type='http', auth='user', website=True)
+    def redirect_to_agent_installer(self, **kw):
+        """
+        Este controlador redirige de forma inteligente a la URL estática del instalador.
+        Esta es la forma eficiente y recomendada de gestionar una URL de descarga
+        personalizada en Odoo.
+        """
 
-    # Nota: no usamos este endpoint para imprimir localmente. Es sólo de control/fallback si lo deseas.
-    @http.route('/pos_local_printer/server_print', type='json', auth='user')
-    def server_print(self, data):
-        # Ejemplo: permitir al servidor imprimir si config lo requiere
-        return {'result': 'server_not_implemented'}
+        # La URL estática apunta al instalador completo, no al .exe crudo.
+        static_url = "/pos_any_printer_local/static/download/LocalPrinterAgent-Setup.exe"
+
+        # Devuelve una redirección HTTP 302 (temporal), que es el estándar
+        # para este tipo de operaciones.
+        return request.redirect(static_url)
