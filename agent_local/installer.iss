@@ -4,8 +4,8 @@
 
 #define MyAppName "Local Printer Agent"
 #define MyAppVersion "1.0.0"
-#define MyAppPublisher "Your Company"
-#define MyAppURL "https://www.yourcompany.com"
+#define MyAppPublisher "GETUPSOFT"
+#define MyAppURL "https://getupsoft.com"
 #define MyAppExeName "LocalPrinterAgent.exe"
 
 [Setup]
