@@ -1,6 +1,7 @@
+
 /** @odoo-module **/
 
-import { registry } from "@web/core/registry";
-import { localPrinterService } from "./local_printer_service";
-
-registry.category("services").add("localPrinterService", localPrinterService);
+// This file is intentionally left blank in this version.
+// The service is now self-registering within its own file.
+// For Odoo 15/16, you might need to patch PosGlobalState here,
+// but in Odoo 18, service registration is cleaner.

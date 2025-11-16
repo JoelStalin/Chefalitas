@@ -1,13 +1,14 @@
+
 {
-    'name': 'POS Local Printer (search by name)',
-    'version': '1.0.0',
+    'name': 'POS Any Printer Local',
+    'version': '18.0.1.0.0',
     'category': 'Point of Sale',
-    'summary': 'Impresión local: busca impresora por nombre en la máquina cliente y envía trabajos al agente local',
-    'description': 'Usa un agente local (127.0.0.1:9100) para listar impresoras del cliente y enviar trabajos por nombre.',
+    'summary': 'Permite imprimir recibos en cualquier impresora local desde el TPV de Odoo a través de un agente WebSocket.',
+    'author': 'Your Name',
+    'website': 'https://www.yourwebsite.com',
     'depends': ['point_of_sale'],
     'data': [
         'views/pos_config_view.xml',
-        'security/ir.model.access.csv',
     ],
     'assets': {
         'point_of_sale.assets': [
@@ -18,4 +19,5 @@
     },
     'installable': True,
     'application': False,
+    'license': 'LGPL-3',
 }
