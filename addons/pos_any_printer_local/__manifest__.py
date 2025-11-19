@@ -7,7 +7,7 @@
     'author': 'Your Name',
     'website': 'https://www.yourwebsite.com',
     'depends': ['point_of_sale'],
-    'secuence': 2,
+    'secuence': 3,
     'data': [
         'views/pos_config_view.xml',
     ],
