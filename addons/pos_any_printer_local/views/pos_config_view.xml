@@ -6,12 +6,41 @@
             <field name="model">pos.config</field>
             <field name="inherit_id" ref="point_of_sale.pos_config_view_form"/>
             <field name="arch" type="xml">
-                <!--
-                    El XPath anterior falló. Este nuevo XPath busca el contenedor de configuración
-                    de la impresora de la IoT Box de una manera más genérica.
-                    Esto es más robusto ante cambios menores en la estructura de la vista.
-                -->
-                <xpath expr="//div[hasclass('o_setting_container')]//div[hasclass('o_setting_right_pane') and descendant::field[@name='iotbox_printer_ip']]" position="after">
+
+                <!-- 1) Inserción dentro de 'other_devices' para Epson local -->
+                <xpath expr="//setting[@id='other_devices']" position="inside">
+                    <div class="content-group" invisible="not other_devices">
+                        <field name="epson_printer_ip" placeholder="Epson Receipt Printer IP Address"/>
+                        <div class="row" invisible="epson_printer_ip in [False, '']">
+                            <div class="col-lg-5 o_light_label">
+                                <label string="Cashdrawer" for="iface_cashdrawer"/>
+                            </div>
+                            <div class="col-lg-7">
+                                <field name="iface_cashdrawer"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div role="alert" class="alert alert-warning" invisible="not iface_print_via_proxy or not other_devices or epson_printer_ip in [False, '']">
+                        The Epson receipt printer will be used instead of the receipt printer connected to the IoT Box.
+                    </div>
+                </xpath>
+
+                <!-- 2) Reemplazo del bloque de warning_text_employees por controles de derechos -->
+                <xpath expr="//div[@id='warning_text_employees']" position="replace">
+                    <field name="company_id" invisible="1"/>
+                    <div class="row">
+                        <label for="basic_employee_ids" string="Basic rights" class="col-lg-5 o_light_label"/>
+                        <field name="basic_employee_ids" widget="many2many_tags" placeholder="All Employees" domain="[(\'company_id\', '=', company_id)]"/>
+                    </div>
+                    <div class="row">
+                        <label for="advanced_employee_ids" string="Advanced rights" class="col-lg-5 o_light_label"/>
+                        <field name="advanced_employee_ids" widget="many2many_tags" placeholder="Select Employee(s)" domain="[(\'company_id\', '=', company_id)]"/>
+                    </div>
+                </xpath>
+
+                <!-- 3) Inserción de configuración de impresión local junto al contenedor de IoT Box -->
+                <!-- Usamos como ancla el campo proxy_ip (presente en la vista original) y subimos al contenedor pos_iot_config -->
+                <xpath expr="//field[@name='proxy_ip']/ancestor::div[hasclass('pos_iot_config')][1]" position="after">
                     <div class="col-12 col-lg-6 o_setting_box" id="local_printing_settings">
                         <div class="o_setting_left_pane">
                             <field name="enable_local_printing"/>
@@ -31,13 +60,15 @@
                                         Instale el agente en la PC del cajero para habilitar la conexión.
                                     </p>
                                     <a href="/download/agent" class="btn btn-primary">
-                                        <i class="fa fa-download"/> Descargar Agente (Windows)
+                                        <i class="fa fa-download"/>
+                                        Descargar Agente (Windows)
                                     </a>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </xpath>
+
             </field>
         </record>
     </data>
