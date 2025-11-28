@@ -3,11 +3,18 @@
     <data>
         <record id="pos_config_view_form_inherit_local_printer" model="ir.ui.view">
             <field name="name">pos.config.form.inherit.local.printer</field>
-            <field name="model">pos.config</field>
-            <field name="inherit_id" ref="point_of_sale.pos_config_view_form"/>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="point_of_sale.res_config_settings_view_form"/>
             <field name="arch" type="xml">
 
-                <!-- 1) Inserción dentro de 'other_devices' para Epson local -->
+                <!--
+                     COMENTADO: Bloques incompatibles con Odoo 18.0 o faltantes de campos.
+                     El campo 'epson_printer_ip' y los campos de empleados ('basic_employee_ids')
+                     no existen en el modelo base ni en este módulo.
+                -->
+
+                <!-- 1) Inserción dentro de 'other_devices' para Epson local (Deshabilitado) -->
+                <!--
                 <xpath expr="//setting[@id='other_devices']" position="inside">
                     <div class="content-group" invisible="not other_devices">
                         <field name="epson_printer_ip" placeholder="Epson Receipt Printer IP Address"/>
@@ -24,8 +31,10 @@
                         The Epson receipt printer will be used instead of the receipt printer connected to the IoT Box.
                     </div>
                 </xpath>
+                -->
 
-                <!-- 2) Reemplazo del bloque de warning_text_employees por controles de derechos -->
+                <!-- 2) Reemplazo del bloque de warning_text_employees (Deshabilitado) -->
+                <!--
                 <xpath expr="//div[@id='warning_text_employees']" position="replace">
                     <field name="company_id" invisible="1"/>
                     <div class="row">
@@ -37,23 +46,25 @@
                         <field name="advanced_employee_ids" widget="many2many_tags" placeholder="Select Employee(s)" domain="[(\'company_id\', '=', company_id)]"/>
                     </div>
                 </xpath>
+                -->
 
-                <!-- 3) Inserción de configuración de impresión local junto al contenedor de IoT Box -->
-                <!-- Usamos como ancla el campo proxy_ip (presente en la vista original) y subimos al contenedor pos_iot_config -->
-                <xpath expr="//field[@name='proxy_ip']/ancestor::div[hasclass('pos_iot_config')][1]" position="after">
+                <!-- 3) Inserción de configuración de impresión local -->
+                <!-- Usamos pos_proxy_ip y subimos al contenedor pos_iot_config -->
+                <!-- En Odoo 18 res.config.settings, pos_proxy_ip está dentro de div.pos_iot_config -->
+                <xpath expr="//field[@name='pos_proxy_ip']/ancestor::div[hasclass('pos_iot_config')][1]" position="after">
                     <div class="col-12 col-lg-6 o_setting_box" id="local_printing_settings">
                         <div class="o_setting_left_pane">
-                            <field name="enable_local_printing"/>
+                            <field name="pos_enable_local_printing"/>
                         </div>
                         <div class="o_setting_right_pane">
-                            <label for="enable_local_printing"/>
+                            <label for="pos_enable_local_printing"/>
                             <div class="text-muted">
                                 Permite la impresión directa a una impresora en la PC del cajero a través de un agente local.
                             </div>
-                            <div class="content-group mt16" attrs="{'invisible': [('enable_local_printing', '=', False)]}">
+                            <div class="content-group mt16" invisible="not pos_enable_local_printing">
                                 <div class="row">
-                                    <label class="col-lg-4 o_light_label" for="local_printer_name"/>
-                                    <field name="local_printer_name" attrs="{'required': [('enable_local_printing', '=', True)]}"/>
+                                    <label class="col-lg-4 o_light_label" for="pos_local_printer_name"/>
+                                    <field name="pos_local_printer_name" required="pos_enable_local_printing"/>
                                 </div>
                                 <div class="mt16">
                                     <p class="o_form_label">
