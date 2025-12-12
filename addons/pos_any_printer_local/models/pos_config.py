@@ -43,6 +43,12 @@ class PosConfig(models.Model):
             .get_param("pos_any_printer_local.pos_local_printer_name", "")
         )
 
+    def _loader_params_pos_config(self):
+        """Asegura que los nuevos campos estén disponibles en el frontend del POS."""
+        params = super()._loader_params_pos_config()
+        params["fields"].extend(["enable_local_printing", "local_printer_name"])
+        return params
+
 
 class ResConfigSettings(models.TransientModel):
     _inherit = "res.config.settings"
