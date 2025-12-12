@@ -28,7 +28,7 @@ class FileDownloadController(http.Controller):
             'static',
             'download',
             'agent_local',
-            'dist',
+            # 'dist',
             'LocalPrinterAgent.exe'
         )
 
