@@ -7,8 +7,9 @@
     'author': 'Your Name',
     'website': 'https://www.yourwebsite.com',
     'depends': ['point_of_sale'],
-    'secuence': 3,
+    'sequence': 3,
     'data': [
+        'security/ir.model.access.csv',
         'views/pos_config_view.xml',
     ],
     'assets': {
