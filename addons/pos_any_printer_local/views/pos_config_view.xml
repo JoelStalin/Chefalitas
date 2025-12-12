@@ -27,7 +27,8 @@
                             </div>
                         </div>
                     </div>
-                    <div role="alert" class="alert alert-warning" invisible="not iface_print_via_proxy or not other_devices or epson_printer_ip in [False, '']">
+                    <div role="alert" class="alert alert-warning" invisible="not iface_print_via_proxy or not other_devices or eps
+on_printer_ip in [False, '']">
                         The Epson receipt printer will be used instead of the receipt printer connected to the IoT Box.
                     </div>
                 </xpath>
@@ -39,11 +40,13 @@
                     <field name="company_id" invisible="1"/>
                     <div class="row">
                         <label for="basic_employee_ids" string="Basic rights" class="col-lg-5 o_light_label"/>
-                        <field name="basic_employee_ids" widget="many2many_tags" placeholder="All Employees" domain="[(\'company_id\', '=', company_id)]"/>
+                        <field name="basic_employee_ids" widget="many2many_tags" placeholder="All Employees" domain="[(\'company_i
+d\', '=', company_id)]"/>
                     </div>
                     <div class="row">
                         <label for="advanced_employee_ids" string="Advanced rights" class="col-lg-5 o_light_label"/>
-                        <field name="advanced_employee_ids" widget="many2many_tags" placeholder="Select Employee(s)" domain="[(\'company_id\', '=', company_id)]"/>
+                        <field name="advanced_employee_ids" widget="many2many_tags" placeholder="Select Employee(s)" domain="[(\'co
+mpany_id\', '=', company_id)]"/>
                     </div>
                 </xpath>
                 -->
@@ -54,17 +57,17 @@
                 <xpath expr="//field[@name='pos_proxy_ip']/ancestor::div[hasclass('pos_iot_config')][1]" position="after">
                     <div class="col-12 col-lg-6 o_setting_box" id="local_printing_settings">
                         <div class="o_setting_left_pane">
-                            <field name="pos_enable_local_printing"/>
+                            <field name="pos_enable_local_printing" widget="boolean_toggle"/>
                         </div>
                         <div class="o_setting_right_pane">
                             <label for="pos_enable_local_printing"/>
                             <div class="text-muted">
                                 Permite la impresión directa a una impresora en la PC del cajero a través de un agente local.
                             </div>
-                            <div class="content-group mt16" invisible="not pos_enable_local_printing">
+                            <div class="content-group mt16">
                                 <div class="row">
                                     <label class="col-lg-4 o_light_label" for="pos_local_printer_name"/>
-                                    <field name="pos_local_printer_name" required="pos_enable_local_printing"/>
+                                    <field name="pos_local_printer_name" placeholder="EPSON TM-T20II"/>
                                 </div>
                                 <div class="mt16">
                                     <p class="o_form_label">
