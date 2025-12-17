@@ -49,81 +49,93 @@
                             </group>
 
                             <div class="row">
-                                <div class="col-md-3">
-                                    <div
-                                        class="d-flex justify-content-between align-items-center mb-2">
-                                        <h4 class="my-0">Format 606</h4>
-                                        <button name="get_606_tree_view" type="object"
-                                            class="btn btn-sm btn-light fa fa-list-ul"
-                                            title="View 606 Details" aria-label="View 606 Details" />
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-baseline mb-2">
+                                            <h5 class="mb-0 flex-grow-1">Format 606</h5>
+                                            <button name="get_606_tree_view" type="object"
+                                                class="btn btn-sm btn-outline-secondary ms-2 flex-shrink-0"
+                                                title="View 606 Details" aria-label="View 606 Details">
+                                                <span class="fa fa-list-ul" />
+                                            </button>
+                                        </div>
+                                        <group col="2">
+                                            <field name="purchase_records" readonly="1" />
+                                            <field name="purchase_invoiced_amount" readonly="1" />
+                                            <field name="service_total_amount" readonly="1" />
+                                            <field name="good_total_amount" readonly="1" />
+                                            <separator colspan="2" />
+                                            <field name="purchase_invoiced_itbis" readonly="1" />
+                                            <field name="purchase_withholded_itbis" readonly="1" />
+                                            <field name="cost_itbis" readonly="1" />
+                                            <field name="advance_itbis" readonly="1" />
+                                            <separator colspan="2" />
+                                            <field name="income_withholding" readonly="1" />
+                                            <separator colspan="2" />
+                                            <field name="purchase_selective_tax" readonly="1" />
+                                            <field name="purchase_other_taxes" readonly="1" />
+                                            <field name="purchase_legal_tip" readonly="1" />
+                                        </group>
                                     </div>
-                                    <group col="2">
-                                        <field name="purchase_records" readonly="1" />
-                                        <field name="purchase_invoiced_amount" readonly="1" />
-                                        <field name="service_total_amount" readonly="1" />
-                                        <field name="good_total_amount" readonly="1" />
-                                        <separator colspan="2" />
-                                        <field name="purchase_invoiced_itbis" readonly="1" />
-                                        <field name="purchase_withholded_itbis" readonly="1" />
-                                        <field name="cost_itbis" readonly="1" />
-                                        <field name="advance_itbis" readonly="1" />
-                                        <separator colspan="2" />
-                                        <field name="income_withholding" readonly="1" />
-                                        <separator colspan="2" />
-                                        <field name="purchase_selective_tax" readonly="1" />
-                                        <field name="purchase_other_taxes" readonly="1" />
-                                        <field name="purchase_legal_tip" readonly="1" />
-                                    </group>
                                 </div>
-                                <div class="col-md-3">
-                                    <div
-                                        class="d-flex justify-content-between align-items-center mb-2">
-                                        <h4 class="my-0">Format 607</h4>
-                                        <button name="get_607_list_view" type="object"
-                                            class="btn btn-sm btn-light fa fa-list-ul"
-                                            title="View 607 Details" aria-label="View 607 Details" />
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-baseline mb-2">
+                                            <h5 class="mb-0 flex-grow-1">Format 607</h5>
+                                            <button name="get_607_list_view" type="object"
+                                                class="btn btn-sm btn-outline-secondary ms-2 flex-shrink-0"
+                                                title="View 607 Details" aria-label="View 607 Details">
+                                                <span class="fa fa-list-ul" />
+                                            </button>
+                                        </div>
+                                        <group col="2">
+                                            <field name="sale_records" readonly="1" />
+                                            <field name="sale_invoiced_amount" readonly="1" />
+                                            <separator colspan="2" />
+                                            <field name="sale_invoiced_itbis" readonly="1" />
+                                            <field name="sale_withholded_itbis" readonly="1" />
+                                            <separator colspan="2" />
+                                            <field name="sale_withholded_isr" readonly="1" />
+                                            <separator colspan="2" />
+                                            <field name="sale_selective_tax" readonly="1" />
+                                            <field name="sale_other_taxes" readonly="1" />
+                                            <field name="sale_legal_tip" readonly="1" />
+                                        </group>
                                     </div>
-                                    <group col="2">
-                                        <field name="sale_records" readonly="1" />
-                                        <field name="sale_invoiced_amount" readonly="1" />
-                                        <separator colspan="2" />
-                                        <field name="sale_invoiced_itbis" readonly="1" />
-                                        <field name="sale_withholded_itbis" readonly="1" />
-                                        <separator colspan="2" />
-                                        <field name="sale_withholded_isr" readonly="1" />
-                                        <separator colspan="2" />
-                                        <field name="sale_selective_tax" readonly="1" />
-                                        <field name="sale_other_taxes" readonly="1" />
-                                        <field name="sale_legal_tip" readonly="1" />
-                                    </group>
                                 </div>
-                                <div class="col-md-3">
-                                    <div
-                                        class="d-flex justify-content-between align-items-center mb-2">
-                                        <h4 class="my-0">Format 608</h4>
-                                        <button name="get_608_list_view" type="object"
-                                            class="btn btn-sm btn-light fa fa-list-ul"
-                                            title="View 608 Details" aria-label="View 608 Details" />
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-baseline mb-2">
+                                            <h5 class="mb-0 flex-grow-1">Format 608</h5>
+                                            <button name="get_608_list_view" type="object"
+                                                class="btn btn-sm btn-outline-secondary ms-2 flex-shrink-0"
+                                                title="View 608 Details" aria-label="View 608 Details">
+                                                <span class="fa fa-list-ul" />
+                                            </button>
+                                        </div>
+                                        <group col="2">
+                                            <field name="cancel_records" readonly="1" />
+                                        </group>
                                     </div>
-                                    <group col="2">
-                                        <field name="cancel_records" readonly="1" />
-                                    </group>
                                 </div>
-                                <div class="col-md-3">
-                                    <div
-                                        class="d-flex justify-content-between align-items-center mb-2">
-                                        <h4 class="my-0">Format 609</h4>
-                                        <button name="get_609_tree_view" type="object"
-                                            class="btn btn-sm btn-light fa fa-list-ul"
-                                            title="View 609 Details" aria-label="View 609 Details" />
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-baseline mb-2">
+                                            <h5 class="mb-0 flex-grow-1">Format 609</h5>
+                                            <button name="get_609_tree_view" type="object"
+                                                class="btn btn-sm btn-outline-secondary ms-2 flex-shrink-0"
+                                                title="View 609 Details" aria-label="View 609 Details">
+                                                <span class="fa fa-list-ul" />
+                                            </button>
+                                        </div>
+                                        <group col="2">
+                                            <field name="exterior_records" readonly="1" />
+                                            <field name="exterior_invoiced_amount" readonly="1" />
+                                            <separator colspan="2" />
+                                            <field name="presumed_income" readonly="1" />
+                                            <field name="exterior_withholded_isr" readonly="1" />
+                                        </group>
                                     </div>
-                                    <group col="2">
-                                        <field name="exterior_records" readonly="1" />
-                                        <field name="exterior_invoiced_amount" readonly="1" />
-                                        <separator colspan="2" />
-                                        <field name="presumed_income" readonly="1" />
-                                        <field name="exterior_withholded_isr" readonly="1" />
-                                    </group>
                                 </div>
                             </div>
                         </page>
