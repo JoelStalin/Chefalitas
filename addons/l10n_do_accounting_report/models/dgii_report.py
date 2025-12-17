@@ -99,7 +99,7 @@ class DgiiReport(models.Model):
         (
             "name_unique",
             "UNIQUE(name, company_id)",
-            _lt("You cannot have more than one report by period."),
+            "You cannot have more than one report by period.",
         )
     ]
 
