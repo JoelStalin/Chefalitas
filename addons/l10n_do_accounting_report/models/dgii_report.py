@@ -628,8 +628,13 @@ class DgiiReport(models.Model):
         Payment = self.env["account.payment"]
       
         if invoice_id.move_type == "out_invoice":
-            for payment in invoice_id._get_invoice_payment_widget():
-                payment_id = Payment.browse(payment["account_payment_id"])
+            # En Odoo 18, usar account.payment buscar pagos vinculados a la factura
+            payments = Payment.search([
+                ("state", "=", "posted"),
+                ("invoice_ids", "in", invoice_id.id),
+            ])
+            
+            for payment_id in payments:
                 if payment_id:
                     key = payment_id.journal_id.l10n_do_payment_form
                     if key:
@@ -637,25 +642,31 @@ class DgiiReport(models.Model):
                             payments_dict[key] += self._convert_to_user_currency(
                                 invoice_id.currency_id,
                                 invoice_id.date,
-                                payment["amount"],
+                                payment_id.amount,
                             )
                         else:
                             payments_dict["credit"] += self._convert_to_user_currency(
                                 invoice_id.currency_id,
                                 invoice_id.date,
-                                payment["amount"],
+                                payment_id.amount,
                             )
                 else:
                     payments_dict["swap"] += self._convert_to_user_currency(
-                        invoice_id.currency_id, invoice_id.date, payment["amount"]
+                        invoice_id.currency_id, invoice_id.date, payment_id.amount
                     )
             payments_dict["credit"] += self._convert_to_user_currency(
                 invoice_id.currency_id, invoice_id.date, invoice_id.amount_residual
             )
         else:
-            for payment in invoice_id._get_invoice_payment_widget():
+            # En Odoo 18, para facturas que no son out_invoice
+            payments = Payment.search([
+                ("state", "=", "posted"),
+                ("invoice_ids", "in", invoice_id.id),
+            ])
+            
+            for payment_id in payments:
                 payments_dict["swap"] += self._convert_to_user_currency(
-                    invoice_id.currency_id, invoice_id.date, payment["amount"]
+                    invoice_id.currency_id, invoice_id.date, payment_id.amount
                 )
             payments_dict["credit"] += self._convert_to_user_currency(
                 invoice_id.currency_id, invoice_id.date, invoice_id.amount_residual
