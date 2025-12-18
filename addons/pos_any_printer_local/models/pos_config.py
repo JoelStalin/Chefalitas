@@ -1,13 +1,13 @@
-﻿from odoo import api, fields, models
+from odoo import api, fields, models
 
 
 class PosConfig(models.Model):
     _inherit = "pos.config"
 
     enable_local_printing = fields.Boolean(
-        string="Activar ImpresiÃ³n Local (WebSocket)",
+        string="Activar Impresión Local",
         help=(
-            "Habilita la comunicaciÃ³n con el agente de impresiÃ³n local para impresiones directas. "
+            "Habilita la comunicación con el agente de impresión local para impresiones directas. "
             "El valor por defecto se toma de los ajustes generales."
         ),
         default=lambda self: self._get_default_enable_local_printing(),
@@ -21,24 +21,10 @@ class PosConfig(models.Model):
         default=lambda self: self._get_default_local_printer_name(),
     )
 
-    # URL y token del agente (globales por compañía)
-    pos_agent_url = fields.Char(
-        string="URL del agente local",
-        help="Dirección base del agente (http://127.0.0.1:9060)",
-        config_parameter="pos_any_printer_local.pos_agent_url",
-        default="http://127.0.0.1:9060",
-    )
-    pos_agent_token = fields.Char(
-        string="Token del agente local",
-        help="Token opcional para Authorization: Bearer <token>.",
-        config_parameter="pos_any_printer_local.pos_agent_token",
-        default="",
-    )
-
     # URL del agente HTTP local (por defecto http://127.0.0.1:9060)
     agent_url = fields.Char(
         string="URL del Agente Local",
-        help="DirecciÃ³n base del agente local (ej.: http://127.0.0.1:9060)",
+        help="Dirección base del agente local (ej.: http://127.0.0.1:9060)",
         default=lambda self: self._get_default_agent_url(),
     )
 
@@ -51,10 +37,6 @@ class PosConfig(models.Model):
 
     @api.model
     def _get_default_enable_local_printing(self):
-        """
-        Obtiene el valor por defecto desde el parÃ¡metro de sistema.
-        Se usa al crear nuevos TPVs para mantener consistencia con Ajustes.
-        """
         param_value = (
             self.env["ir.config_parameter"]
             .sudo()
@@ -64,7 +46,6 @@ class PosConfig(models.Model):
 
     @api.model
     def _get_default_local_printer_name(self):
-        """Recupera el nombre de impresora configurado en Ajustes."""
         return (
             self.env["ir.config_parameter"]
             .sudo()
@@ -88,7 +69,6 @@ class PosConfig(models.Model):
         )
 
     def _loader_params_pos_config(self):
-        """Asegura que los nuevos campos estÃ©n disponibles en el frontend del POS."""
         params = super()._loader_params_pos_config()
         params["fields"].extend([
             "enable_local_printing",
@@ -102,30 +82,38 @@ class PosConfig(models.Model):
 class ResConfigSettings(models.TransientModel):
     _inherit = "res.config.settings"
 
-    # OpciÃ³n global para habilitar la impresiÃ³n local en TPV.
     pos_enable_local_printing = fields.Boolean(
-        string="Habilitar impresiÃ³n local en TPV",
+        string="Habilitar impresión local en TPV",
         help=(
-            "Activa la impresiÃ³n directa a una impresora conectada al equipo del cajero "
-            "a travÃ©s del agente local."
+            "Activa la impresión directa a una impresora conectada al equipo del cajero "
+            "a través del agente local."
         ),
         config_parameter="pos_any_printer_local.pos_enable_local_printing",
         default=False,
     )
-    # Nombre de la impresora local a utilizar de forma predeterminada.
     pos_local_printer_name = fields.Char(
         string="Nombre predeterminado de impresora local",
-        help="Se guarda como parÃ¡metro del sistema para reutilizarlo en nuevos TPV.",
+        help="Se guarda como parámetro de sistema para reutilizarlo en nuevos TPV.",
         config_parameter="pos_any_printer_local.pos_local_printer_name",
+        default="",
+    )
+
+    # Parámetros globales del agente local (expuestos en Ajustes)
+    pos_agent_url = fields.Char(
+        string="URL del agente local",
+        help="Dirección base del agente (http://127.0.0.1:9060)",
+        config_parameter="pos_any_printer_local.pos_agent_url",
+        default="http://127.0.0.1:9060",
+    )
+    pos_agent_token = fields.Char(
+        string="Token del agente local",
+        help="Token opcional para Authorization: Bearer <token>.",
+        config_parameter="pos_any_printer_local.pos_agent_token",
         default="",
     )
 
     @api.model
     def get_values(self):
-        """
-        Compatibilidad multi-versiÃ³n: en v16+ config_parameter gestiona la
-        persistencia, pero mantenemos get/set para instalaciones v15.
-        """
         res = super().get_values()
         icp = self.env["ir.config_parameter"].sudo()
         res.update(
@@ -166,7 +154,7 @@ class ResConfigSettings(models.TransientModel):
                 record.pos_agent_token or "",
             )
 
-        # TambiÃ©n sincronizamos el valor por defecto en pos.config para futuros TPV.
+        # También sincronizamos el valor por defecto en pos.config para futuros TPV.
         for record in self:
             self.env["pos.config"].sudo().search([]).write(
                 {
