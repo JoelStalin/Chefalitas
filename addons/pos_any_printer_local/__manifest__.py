@@ -13,7 +13,7 @@
         'views/pos_config_view.xml',
     ],
     'assets': {
-        'point_of_sale.assets': [
+        'point_of_sale._assets_pos': [
             'pos_any_printer_local/static/src/js/main.js',
             'pos_any_printer_local/static/src/js/local_printer_service.js',
             'pos_any_printer_local/static/src/js/Screens/ReceiptScreen/ReceiptScreen.js',

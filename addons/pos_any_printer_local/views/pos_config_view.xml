@@ -69,6 +69,14 @@ mpany_id\', '=', company_id)]"/>
                                     <label class="col-lg-4 o_light_label" for="pos_local_printer_name"/>
                                     <field name="pos_local_printer_name" placeholder="EPSON TM-T20II"/>
                                 </div>
+                                <div class="row mt8">
+                                    <label class="col-lg-4 o_light_label" for="pos_agent_url"/>
+                                    <field name="pos_agent_url" placeholder="http://127.0.0.1:9060"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label class="col-lg-4 o_light_label" for="pos_agent_token"/>
+                                    <field name="pos_agent_token" placeholder="(opcional)" password="True"/>
+                                </div>
                                 <div class="mt16">
                                     <p class="o_form_label">
                                         Instale el agente en la PC del cajero para habilitar la conexión.

@@ -1,4 +1,4 @@
-
+﻿
 /** @odoo-module **/
 
 import { ReceiptScreen } from "@point_of_sale/app/screens/receipt_screen/receipt_screen";
@@ -17,10 +17,10 @@ patch(ReceiptScreen.prototype, {
         const isLocalPrintingEnabled = this.pos.config.enable_local_printing;
 
         if (isLocalPrintingEnabled) {
-            if (!this.printerService.state.isConnected) {
+            if (!this.printerService.state.online) {
                 await this.popup.add(ErrorPopup, {
-                    title: "Error de Impresión",
-                    body: "No se pudo conectar con el agente de impresión local. Asegúrese de que esté instalado y en ejecución.",
+                    title: "Error de ImpresiÃ³n",
+                    body: "No se pudo conectar con el agente de impresiÃ³n local. AsegÃºrese de que estÃ© instalado y en ejecuciÃ³n.",
                 });
                 return;
             }
@@ -38,8 +38,8 @@ patch(ReceiptScreen.prototype, {
 
             } catch (error) {
                 await this.popup.add(ErrorPopup, {
-                    title: "Error de Impresión Local",
-                    body: `Ocurrió un error al enviar el recibo a la impresora: ${error}`,
+                    title: "Error de ImpresiÃ³n Local",
+                    body: `OcurriÃ³ un error al enviar el recibo a la impresora: ${error}`,
                 });
             }
         } else {
@@ -71,3 +71,4 @@ patch(ReceiptScreen.prototype, {
         return text;
     }
 });
+

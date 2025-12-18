@@ -8,75 +8,54 @@ const localPrinterService = {
     dependencies: [],
     start(env) {
         const state = reactive({
-            isConnected: false,
+            online: false,
+            printers: [],
         });
 
-        let socket;
-        const socketUrl = "ws://localhost:8080";
+        const config = env.services.pos?.config || {};
+        const baseUrl = (config.agent_url || 'http://127.0.0.1:9060').replace(/\/$/, '');
+        const token = config.agent_token || '';
 
-        const connect = () => {
-            console.log("LocalPrinter: Attempting to connect...");
-            socket = new WebSocket(socketUrl);
+        const headers = () => token ? { 'Authorization': `Bearer ${token}` } : {};
 
-            socket.onopen = () => {
-                console.log("LocalPrinter: WebSocket connection established.");
-                state.isConnected = true;
-            };
-
-            socket.onclose = (event) => {
-                console.log("LocalPrinter: WebSocket connection closed.", event);
-                state.isConnected = false;
-                // Automatic reconnection attempt after 5 seconds
-                setTimeout(connect, 5000);
-            };
-
-            socket.onerror = (error) => {
-                console.error("LocalPrinter: WebSocket error:", error);
-                state.isConnected = false;
-                // Ensure the socket is closed before retrying
-                socket.close();
-            };
-
-            socket.onmessage = (event) => {
-                try {
-                    const response = JSON.parse(event.data);
-                    console.log("LocalPrinter: Message from agent:", response);
-                    // You can add logic here to handle specific responses,
-                    // for example, updating a list of printers.
-                } catch (e) {
-                    console.error("LocalPrinter: Failed to parse message:", event.data, e);
-                }
-            };
+        const getJSON = async (path, opts={}) => {
+            const res = await fetch(`${baseUrl}${path}`, { ...opts, headers: { 'Content-Type': 'application/json', ...headers() } });
+            if (!res.ok) throw new Error(`${res.status}`);
+            return res.json();
         };
 
-        // Initial connection attempt
-        connect();
-
-        const _send = (payload) => {
-            if (!state.isConnected) {
-                console.error("LocalPrinter: Cannot send message, not connected.");
-                return Promise.reject("Not Connected");
+        const ping = async () => {
+            try {
+                await getJSON('/health');
+                state.online = true;
+            } catch {
+                state.online = false;
             }
-            const jsonPayload = JSON.stringify(payload);
-            socket.send(jsonPayload);
-            return Promise.resolve();
         };
+
+        const refreshPrinters = async () => {
+            try {
+                const data = await getJSON('/printers');
+                state.printers = data.printers || [];
+            } catch (e) {
+                state.printers = [];
+            }
+        };
+
+        // boot
+        ping();
+        refreshPrinters();
+        setInterval(ping, 3000);
 
         return {
             state,
-
-            printReceipt(printerName, data) {
-                return _send({
-                    command: "print_receipt",
-                    printer_name: printerName,
-                    data: data,
-                });
+            async printReceipt(printerName, dataText) {
+                const payload = { type: 'raw', printer: printerName, data: btoa(unescape(encodeURIComponent(dataText || ''))) };
+                await getJSON('/print', { method: 'POST', body: JSON.stringify(payload) });
             },
-
-            getPrinters() {
-                return _send({
-                    command: "list_printers",
-                });
+            async getPrinters() {
+                await refreshPrinters();
+                return state.printers;
             },
         };
     },

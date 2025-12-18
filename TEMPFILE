@@ -21,34 +21,6 @@ class PosConfig(models.Model):
         default=lambda self: self._get_default_local_printer_name(),
     )
 
-    # URL y token del agente (globales por compañía)
-    pos_agent_url = fields.Char(
-        string="URL del agente local",
-        help="Dirección base del agente (http://127.0.0.1:9060)",
-        config_parameter="pos_any_printer_local.pos_agent_url",
-        default="http://127.0.0.1:9060",
-    )
-    pos_agent_token = fields.Char(
-        string="Token del agente local",
-        help="Token opcional para Authorization: Bearer <token>.",
-        config_parameter="pos_any_printer_local.pos_agent_token",
-        default="",
-    )
-
-    # URL del agente HTTP local (por defecto http://127.0.0.1:9060)
-    agent_url = fields.Char(
-        string="URL del Agente Local",
-        help="DirecciÃ³n base del agente local (ej.: http://127.0.0.1:9060)",
-        default=lambda self: self._get_default_agent_url(),
-    )
-
-    # Token opcional para Authorization: Bearer <token>
-    agent_token = fields.Char(
-        string="Token del Agente",
-        help="Token opcional para autenticar contra el agente local.",
-        default=lambda self: self._get_default_agent_token(),
-    )
-
     @api.model
     def _get_default_enable_local_printing(self):
         """
@@ -71,31 +43,10 @@ class PosConfig(models.Model):
             .get_param("pos_any_printer_local.pos_local_printer_name", "")
         )
 
-    @api.model
-    def _get_default_agent_url(self):
-        return (
-            self.env["ir.config_parameter"].sudo().get_param(
-                "pos_any_printer_local.pos_agent_url", "http://127.0.0.1:9060"
-            )
-        )
-
-    @api.model
-    def _get_default_agent_token(self):
-        return (
-            self.env["ir.config_parameter"].sudo().get_param(
-                "pos_any_printer_local.pos_agent_token", ""
-            )
-        )
-
     def _loader_params_pos_config(self):
         """Asegura que los nuevos campos estÃ©n disponibles en el frontend del POS."""
         params = super()._loader_params_pos_config()
-        params["fields"].extend([
-            "enable_local_printing",
-            "local_printer_name",
-            "agent_url",
-            "agent_token",
-        ])
+        params["fields"].extend(["enable_local_printing", "local_printer_name"])
         return params
 
 
@@ -136,12 +87,6 @@ class ResConfigSettings(models.TransientModel):
             pos_local_printer_name=icp.get_param(
                 "pos_any_printer_local.pos_local_printer_name", ""
             ),
-            pos_agent_url=icp.get_param(
-                "pos_any_printer_local.pos_agent_url", "http://127.0.0.1:9060"
-            ),
-            pos_agent_token=icp.get_param(
-                "pos_any_printer_local.pos_agent_token", ""
-            ),
         )
         return res
 
@@ -157,14 +102,6 @@ class ResConfigSettings(models.TransientModel):
                 "pos_any_printer_local.pos_local_printer_name",
                 record.pos_local_printer_name or "",
             )
-            icp.set_param(
-                "pos_any_printer_local.pos_agent_url",
-                record.pos_agent_url or "http://127.0.0.1:9060",
-            )
-            icp.set_param(
-                "pos_any_printer_local.pos_agent_token",
-                record.pos_agent_token or "",
-            )
 
         # TambiÃ©n sincronizamos el valor por defecto en pos.config para futuros TPV.
         for record in self:
@@ -172,8 +109,6 @@ class ResConfigSettings(models.TransientModel):
                 {
                     "enable_local_printing": record.pos_enable_local_printing,
                     "local_printer_name": record.pos_local_printer_name or "",
-                    "agent_url": record.pos_agent_url or "http://127.0.0.1:9060",
-                    "agent_token": record.pos_agent_token or "",
                 }
             )
 

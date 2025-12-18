@@ -1,12 +1,9 @@
-# Core WebSocket server
-websockets>=12.0,<14.0
-
-# Windows printing (win32print) and Windows API access
 pywin32>=306
+Pillow>=10.2.0
+PyPDF2>=3.0.0
+requests>=2.31.0
 
-# GUI tray/controller icon support (if you usas pystray + Pillow)
-pystray>=0.19.5
-Pillow>=10.0.0
-
-# Packaging (optional, for building .exe)
-pyinstaller>=6.0
+# Notas:
+# - 'tkinter' (tk) y 'ssl' vienen con Python en Windows; no se instalan por pip.
+# - Dependencias transitivas de 'requests' (certifi, urllib3, idna, charset-normalizer)
+#   no deben fijarse aquí a menos que sea estrictamente necesario.
