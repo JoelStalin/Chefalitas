@@ -28,12 +28,7 @@ class PosConfig(models.Model):
         default=lambda self: self._get_default_agent_url(),
     )
 
-    # Token opcional para Authorization: Bearer <token>
-    agent_token = fields.Char(
-        string="Token del Agente",
-        help="Token opcional para autenticar contra el agente local.",
-        default=lambda self: self._get_default_agent_token(),
-    )
+    # Token eliminado: conexión sin Authorization
 
     @api.model
     def _get_default_enable_local_printing(self):
@@ -62,11 +57,7 @@ class PosConfig(models.Model):
 
     @api.model
     def _get_default_agent_token(self):
-        return (
-            self.env["ir.config_parameter"].sudo().get_param(
-                "pos_any_printer_local.pos_agent_token", ""
-            )
-        )
+        return ""
 
     def _loader_params_pos_config(self):
         params = super()._loader_params_pos_config()
@@ -74,7 +65,7 @@ class PosConfig(models.Model):
             "enable_local_printing",
             "local_printer_name",
             "agent_url",
-            "agent_token",
+            # token eliminado
         ])
         return params
 
@@ -105,12 +96,6 @@ class ResConfigSettings(models.TransientModel):
         config_parameter="pos_any_printer_local.pos_agent_url",
         default="http://127.0.0.1:9060",
     )
-    pos_agent_token = fields.Char(
-        string="Token del agente local",
-        help="Token opcional para Authorization: Bearer <token>.",
-        config_parameter="pos_any_printer_local.pos_agent_token",
-        default="",
-    )
 
     @api.model
     def get_values(self):
@@ -126,9 +111,6 @@ class ResConfigSettings(models.TransientModel):
             ),
             pos_agent_url=icp.get_param(
                 "pos_any_printer_local.pos_agent_url", "http://127.0.0.1:9060"
-            ),
-            pos_agent_token=icp.get_param(
-                "pos_any_printer_local.pos_agent_token", ""
             ),
         )
         return res
@@ -149,10 +131,7 @@ class ResConfigSettings(models.TransientModel):
                 "pos_any_printer_local.pos_agent_url",
                 record.pos_agent_url or "http://127.0.0.1:9060",
             )
-            icp.set_param(
-                "pos_any_printer_local.pos_agent_token",
-                record.pos_agent_token or "",
-            )
+            # token eliminado
 
         # También sincronizamos el valor por defecto en pos.config para futuros TPV.
         for record in self:
@@ -161,7 +140,5 @@ class ResConfigSettings(models.TransientModel):
                     "enable_local_printing": record.pos_enable_local_printing,
                     "local_printer_name": record.pos_local_printer_name or "",
                     "agent_url": record.pos_agent_url or "http://127.0.0.1:9060",
-                    "agent_token": record.pos_agent_token or "",
                 }
             )
-

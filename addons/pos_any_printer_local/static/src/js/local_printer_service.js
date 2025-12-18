@@ -14,9 +14,7 @@ const localPrinterService = {
 
         const config = env.services.pos?.config || {};
         const baseUrl = (config.agent_url || 'http://127.0.0.1:9060').replace(/\/$/, '');
-        const token = config.agent_token || '';
-
-        const headers = () => token ? { 'Authorization': `Bearer ${token}` } : {};
+        const headers = () => ({});
 
         const getJSON = async (path, opts={}) => {
             const res = await fetch(`${baseUrl}${path}`, { ...opts, headers: { 'Content-Type': 'application/json', ...headers() } });
