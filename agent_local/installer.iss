@@ -1,44 +1,37 @@
-
-; Inno Setup Script for Local Printer Agent
-; This script creates a professional installer for the agent.
-
-#define MyAppName "Local Printer Agent"
-#define MyAppVersion "1.0.0"
-#define MyAppPublisher "GETUPSOFT"
-#define MyAppURL "https://getupsoft.com"
-#define MyAppExeName "LocalPrinterAgent.exe"
-
 [Setup]
-AppId={{C6BA5655-23A2-4AF8-A1E4-741275987A2E}
-AppName={#MyAppName}
-AppVersion={#MyAppVersion}
-AppPublisher={#MyAppPublisher}
-AppPublisherURL={#MyAppURL}
-AppSupportURL={#MyAppURL}
-DefaultDirName={autopf}\{#MyAppName}
-DefaultGroupName={#MyAppName}
-DisableProgramGroupPage=yes
+AppName=LocalPrinterAgent
+AppVersion=1.0.0
+DefaultDirName={commonpf}\LocalPrinterAgent
+DefaultGroupName=LocalPrinterAgent
+PrivilegesRequired=admin
 OutputBaseFilename=LocalPrinterAgent-Setup
-OutputDir=./
 Compression=lzma
 SolidCompression=yes
-WizardStyle=modern
-PrivilegesRequired=admin
-
-[Languages]
-Name: "english"; MessagesFile: "compiler:Default.isl"
-Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
+ArchitecturesAllowed=x64compatible
+ArchitecturesInstallIn64BitMode=x64
+DisableDirPage=no
+SetupIconFile=assets\LocalPrinterAgent.ico
 
 [Files]
-; Source path is relative to the location of this .iss script
-Source: "dist\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-
-[Icons]
-; Add a shortcut to the common startup folder to run the agent on login
-Name: "{commonstartup}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
-; Add an uninstaller shortcut in the Start Menu
-Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
+Source: "LocalPrinterAgent.py"; DestDir: "{app}"; Flags: ignoreversion
+Source: "requirements.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "install.bat"; DestDir: "{app}"; Flags: ignoreversion
+Source: "install.ps1"; DestDir: "{app}"; Flags: ignoreversion
+Source: "launch_gui.bat"; DestDir: "{app}"; Flags: ignoreversion
+Source: "service_install.bat"; DestDir: "{app}"; Flags: ignoreversion
+Source: "service_remove.bat"; DestDir: "{app}"; Flags: ignoreversion
+Source: "INSTALLATION_GUIDE.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "README.md"; DestDir: "{app}"; Flags: ignoreversion
+; Icon is optional
+Source: "assets\LocalPrinterAgent.ico"; DestDir: "{app}"; Flags: ignoreversion; Check: FileExists(ExpandConstant('{src}\assets\LocalPrinterAgent.ico'))
 
 [Run]
-; Launch the application after the installation is complete
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+; Instala dependencias y registra pywin32 (usa el script incluido)
+Filename: "powershell.exe"; Parameters: "-ExecutionPolicy Bypass -File \"{app}\install.ps1\""; StatusMsg: "Instalando dependencias..."; Flags: runhidden waituntilterminated
+
+[Icons]
+Name: "{group}\LocalPrinterAgent GUI"; Filename: "{app}\launch_gui.bat"; WorkingDir: "{app}"; IconFilename: "{app}\LocalPrinterAgent.ico"; Check: FileExists(ExpandConstant('{app}\launch_gui.bat'))
+Name: "{group}\Instalar/Reinstalar Servicio"; Filename: "{app}\service_install.bat"; WorkingDir: "{app}"; IconFilename: "{app}\LocalPrinterAgent.ico"; Check: FileExists(ExpandConstant('{app}\service_install.bat'))
+Name: "{group}\Detener/Eliminar Servicio"; Filename: "{app}\service_remove.bat"; WorkingDir: "{app}"; IconFilename: "{app}\LocalPrinterAgent.ico"; Check: FileExists(ExpandConstant('{app}\service_remove.bat'))
+Name: "{group}\Desinstalar LocalPrinterAgent"; Filename: "{uninstallexe}"
+
