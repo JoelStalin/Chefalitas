@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from odoo import api, fields, models
 
 
@@ -5,140 +6,103 @@ class PosConfig(models.Model):
     _inherit = "pos.config"
 
     enable_local_printing = fields.Boolean(
-        string="Activar Impresión Local",
+        string="Activar impresión local (Agente Windows)",
         help=(
-            "Habilita la comunicación con el agente de impresión local para impresiones directas. "
-            "El valor por defecto se toma de los ajustes generales."
+            "Habilita la comunicación con el agente de impresión local "
+            "para impresiones directas desde el POS."
         ),
         default=lambda self: self._get_default_enable_local_printing(),
     )
-    local_printer_name = fields.Char(
-        string="Nombre de la Impresora Local",
-        help=(
-            "Nombre de la impresora en el sistema operativo del cliente (por ejemplo, "
-            '"EPSON TM-T20II"), tomado de los ajustes generales.'
-        ),
-        default=lambda self: self._get_default_local_printer_name(),
+
+    # Caja (recibo)
+    local_cashier_printer_name = fields.Char(
+        string="Impresora local (Caja)",
+        help="Nombre EXACTO de la impresora en Windows (Panel de control > Impresoras).",
+        default=lambda self: self._get_default_cashier_printer_name(),
     )
 
-    # URL del agente HTTP local (por defecto http://127.0.0.1:9060)
+    # Cocina (comandas) — usado por impresoras de pedido / order printers
+    local_kitchen_printer_name = fields.Char(
+        string="Impresora local (Cocina)",
+        help="Nombre EXACTO de la impresora de cocina en Windows.",
+        default=lambda self: self._get_default_kitchen_printer_name(),
+    )
+
+    # Retro-compatibilidad con versiones previas del módulo
+    local_printer_name = fields.Char(
+        string="(DEPRECADO) Impresora local",
+        help="Campo legado. Se mantiene por compatibilidad; use 'Impresora local (Caja)'.",
+        compute="_compute_local_printer_name",
+        inverse="_inverse_local_printer_name",
+        store=True,
+        readonly=False,
+    )
+
     agent_url = fields.Char(
-        string="URL del Agente Local",
-        help="Dirección base del agente local (ej.: http://127.0.0.1:9060)",
+        string="URL del agente local",
+        help="Dirección base del agente local (ej.: http://127.0.0.1:9060 o https://PC:9060).",
         default=lambda self: self._get_default_agent_url(),
     )
 
-    # Token eliminado: conexión sin Authorization
+    @api.depends("local_cashier_printer_name")
+    def _compute_local_printer_name(self):
+        for rec in self:
+            rec.local_printer_name = rec.local_cashier_printer_name or ""
 
+    def _inverse_local_printer_name(self):
+        for rec in self:
+            # Si alguien escribe el campo legado, lo reflejamos en 'caja'
+            rec.local_cashier_printer_name = rec.local_printer_name or ""
+
+    # ---------- Defaults desde parámetros del sistema ----------
     @api.model
     def _get_default_enable_local_printing(self):
-        param_value = (
-            self.env["ir.config_parameter"]
-            .sudo()
-            .get_param("pos_any_printer_local.pos_enable_local_printing", "False")
-        )
-        return param_value in ("True", "1", True)
+        icp = self.env["ir.config_parameter"].sudo()
+        return icp.get_param("pos_any_printer_local.pos_enable_local_printing", "False") in ("True", "1", True)
 
     @api.model
-    def _get_default_local_printer_name(self):
-        return (
-            self.env["ir.config_parameter"]
-            .sudo()
-            .get_param("pos_any_printer_local.pos_local_printer_name", "")
-        )
+    def _get_default_cashier_printer_name(self):
+        icp = self.env["ir.config_parameter"].sudo()
+        # Compat: si solo existía pos_local_printer_name, úsalo como caja
+        return icp.get_param("pos_any_printer_local.pos_local_cashier_printer_name",
+                             icp.get_param("pos_any_printer_local.pos_local_printer_name", ""))
+
+    @api.model
+    def _get_default_kitchen_printer_name(self):
+        icp = self.env["ir.config_parameter"].sudo()
+        return icp.get_param("pos_any_printer_local.pos_local_kitchen_printer_name", "")
 
     @api.model
     def _get_default_agent_url(self):
-        return (
-            self.env["ir.config_parameter"].sudo().get_param(
-                "pos_any_printer_local.pos_agent_url", "http://127.0.0.1:9060"
-            )
-        )
-
-    @api.model
-    def _get_default_agent_token(self):
-        return ""
-
-    def _loader_params_pos_config(self):
-        params = super()._loader_params_pos_config()
-        params["fields"].extend([
-            "enable_local_printing",
-            "local_printer_name",
-            "agent_url",
-            # token eliminado
-        ])
-        return params
+        icp = self.env["ir.config_parameter"].sudo()
+        return icp.get_param("pos_any_printer_local.pos_agent_url", "http://127.0.0.1:9060")
 
 
 class ResConfigSettings(models.TransientModel):
     _inherit = "res.config.settings"
 
     pos_enable_local_printing = fields.Boolean(
-        string="Habilitar impresión local en TPV",
-        help=(
-            "Activa la impresión directa a una impresora conectada al equipo del cajero "
-            "a través del agente local."
-        ),
+        string="TPV: habilitar impresión local por defecto",
+        help="Valor por defecto aplicado al crear nuevos TPV (pos.config).",
         config_parameter="pos_any_printer_local.pos_enable_local_printing",
         default=False,
     )
-    pos_local_printer_name = fields.Char(
-        string="Nombre predeterminado de impresora local",
+
+    pos_local_cashier_printer_name = fields.Char(
+        string="TPV: impresora por defecto (Caja)",
         help="Se guarda como parámetro de sistema para reutilizarlo en nuevos TPV.",
-        config_parameter="pos_any_printer_local.pos_local_printer_name",
-        default="",
+        config_parameter="pos_any_printer_local.pos_local_cashier_printer_name",
     )
 
-    # Parámetros globales del agente local (expuestos en Ajustes)
+    pos_local_kitchen_printer_name = fields.Char(
+        string="TPV: impresora por defecto (Cocina)",
+        help="Se guarda como parámetro de sistema para reutilizarlo en nuevos TPV.",
+        config_parameter="pos_any_printer_local.pos_local_kitchen_printer_name",
+    )
+
     pos_agent_url = fields.Char(
-        string="URL del agente local",
-        help="Dirección base del agente (http://127.0.0.1:9060)",
+        string="TPV: URL por defecto del agente",
+        help="Se guarda como parámetro de sistema para reutilizarlo en nuevos TPV.",
         config_parameter="pos_any_printer_local.pos_agent_url",
         default="http://127.0.0.1:9060",
     )
-
-    @api.model
-    def get_values(self):
-        res = super().get_values()
-        icp = self.env["ir.config_parameter"].sudo()
-        res.update(
-            pos_enable_local_printing=icp.get_param(
-                "pos_any_printer_local.pos_enable_local_printing", "False"
-            )
-            in ("True", "1", True),
-            pos_local_printer_name=icp.get_param(
-                "pos_any_printer_local.pos_local_printer_name", ""
-            ),
-            pos_agent_url=icp.get_param(
-                "pos_any_printer_local.pos_agent_url", "http://127.0.0.1:9060"
-            ),
-        )
-        return res
-
-    def set_values(self):
-        super().set_values()
-        icp = self.env["ir.config_parameter"].sudo()
-        for record in self:
-            icp.set_param(
-                "pos_any_printer_local.pos_enable_local_printing",
-                record.pos_enable_local_printing,
-            )
-            icp.set_param(
-                "pos_any_printer_local.pos_local_printer_name",
-                record.pos_local_printer_name or "",
-            )
-            icp.set_param(
-                "pos_any_printer_local.pos_agent_url",
-                record.pos_agent_url or "http://127.0.0.1:9060",
-            )
-            # token eliminado
-
-        # También sincronizamos el valor por defecto en pos.config para futuros TPV.
-        for record in self:
-            self.env["pos.config"].sudo().search([]).write(
-                {
-                    "enable_local_printing": record.pos_enable_local_printing,
-                    "local_printer_name": record.pos_local_printer_name or "",
-                    "agent_url": record.pos_agent_url or "http://127.0.0.1:9060",
-                }
-            )

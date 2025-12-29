@@ -1,95 +1,44 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data>
-        <record id="pos_config_view_form_inherit_local_printer" model="ir.ui.view">
-            <field name="name">pos.config.form.inherit.local.printer</field>
-            <field name="model">res.config.settings</field>
-            <field name="inherit_id" ref="point_of_sale.res_config_settings_view_form"/>
-            <field name="arch" type="xml">
+  <data>
 
-                <!--
-                     COMENTADO: Bloques incompatibles con Odoo 18.0 o faltantes de campos.
-                     El campo 'epson_printer_ip' y los campos de empleados ('basic_employee_ids')
-                     no existen en el modelo base ni en este módulo.
-                -->
+    <!-- Ajustes globales (valores por defecto para nuevos TPV) -->
+    <record id="pos_res_config_settings_view_form_inherit_local_printer" model="ir.ui.view">
+      <field name="name">pos.res.config.settings.inherit.local.printer</field>
+      <field name="model">res.config.settings</field>
+      <field name="inherit_id" ref="point_of_sale.res_config_settings_view_form"/>
+      <field name="arch" type="xml">
+        <xpath expr="//setting[@id='other_devices']" position="inside">
+          <setting id="pos_any_printer_local_setting"
+                   string="Impresión local (Agente Windows)"
+                   help="Imprime desde el POS hacia impresoras de Windows mediante el agente local (HTTP/HTTPS).">
+            <div class="content-group">
+              <field name="pos_enable_local_printing"/>
+              <field name="pos_agent_url" placeholder="http://127.0.0.1:9060"/>
+              <field name="pos_local_cashier_printer_name" placeholder="Caja: Epson TM-T20III"/>
+              <field name="pos_local_kitchen_printer_name" placeholder="Cocina: HP LaserJet"/>
+            </div>
+          </setting>
+        </xpath>
+      </field>
+    </record>
 
-                <!-- 1) Inserción dentro de 'other_devices' para Epson local (Deshabilitado) -->
-                <!--
-                <xpath expr="//setting[@id='other_devices']" position="inside">
-                    <div class="content-group" invisible="not other_devices">
-                        <field name="epson_printer_ip" placeholder="Epson Receipt Printer IP Address"/>
-                        <div class="row" invisible="epson_printer_ip in [False, '']">
-                            <div class="col-lg-5 o_light_label">
-                                <label string="Cashdrawer" for="iface_cashdrawer"/>
-                            </div>
-                            <div class="col-lg-7">
-                                <field name="iface_cashdrawer"/>
-                            </div>
-                        </div>
-                    </div>
-                    <div role="alert" class="alert alert-warning" invisible="not iface_print_via_proxy or not other_devices or eps
-on_printer_ip in [False, '']">
-                        The Epson receipt printer will be used instead of the receipt printer connected to the IoT Box.
-                    </div>
-                </xpath>
-                -->
+    <!-- Configuración por TPV -->
+    <record id="pos_config_view_form_inherit_local_printer" model="ir.ui.view">
+      <field name="name">pos.config.form.inherit.local.printer</field>
+      <field name="model">pos.config</field>
+      <field name="inherit_id" ref="point_of_sale.view_pos_config_form"/>
+      <field name="arch" type="xml">
+        <xpath expr="//field[@name='name']" position="after">
+          <group string="Impresión local (Agente Windows)">
+            <field name="enable_local_printing"/>
+            <field name="agent_url" placeholder="http://127.0.0.1:9060"/>
+            <field name="local_cashier_printer_name" placeholder="Caja: Epson TM-T20III"/>
+            <field name="local_kitchen_printer_name" placeholder="Cocina: HP LaserJet"/>
+          </group>
+        </xpath>
+      </field>
+    </record>
 
-                <!-- 2) Reemplazo del bloque de warning_text_employees (Deshabilitado) -->
-                <!--
-                <xpath expr="//div[@id='warning_text_employees']" position="replace">
-                    <field name="company_id" invisible="1"/>
-                    <div class="row">
-                        <label for="basic_employee_ids" string="Basic rights" class="col-lg-5 o_light_label"/>
-                        <field name="basic_employee_ids" widget="many2many_tags" placeholder="All Employees" domain="[(\'company_i
-d\', '=', company_id)]"/>
-                    </div>
-                    <div class="row">
-                        <label for="advanced_employee_ids" string="Advanced rights" class="col-lg-5 o_light_label"/>
-                        <field name="advanced_employee_ids" widget="many2many_tags" placeholder="Select Employee(s)" domain="[(\'co
-mpany_id\', '=', company_id)]"/>
-                    </div>
-                </xpath>
-                -->
-
-                <!-- 3) Inserción de configuración de impresión local -->
-                <!-- Usamos pos_proxy_ip y subimos al contenedor pos_iot_config -->
-                <!-- En Odoo 18 res.config.settings, pos_proxy_ip está dentro de div.pos_iot_config -->
-                <xpath expr="//field[@name='pos_proxy_ip']/ancestor::div[hasclass('pos_iot_config')][1]" position="after">
-                    <div class="col-12 col-lg-6 o_setting_box" id="local_printing_settings">
-                        <div class="o_setting_left_pane">
-                            <field name="pos_enable_local_printing" widget="boolean_toggle"/>
-                        </div>
-                        <div class="o_setting_right_pane">
-                            <label for="pos_enable_local_printing"/>
-                            <div class="text-muted">
-                                Permite la impresión directa a una impresora en la PC del cajero a través de un agente local.
-                            </div>
-                            <div class="content-group mt16">
-                                <div class="row">
-                                    <label class="col-lg-4 o_light_label" for="pos_local_printer_name"/>
-                                    <field name="pos_local_printer_name" placeholder="EPSON TM-T20II"/>
-                                </div>
-                                <div class="row mt8">
-                                    <label class="col-lg-4 o_light_label" for="pos_agent_url"/>
-                                    <field name="pos_agent_url" placeholder="http://127.0.0.1:9060"/>
-                                </div>
-                                
-                                <div class="mt16">
-                                    <p class="o_form_label">
-                                        Instale el agente en la PC del cajero para habilitar la conexión.
-                                    </p>
-                                    <a href="/download/agent" class="btn btn-primary">
-                                        <i class="fa fa-download"/>
-                                        Descargar Agente (Windows)
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </xpath>
-
-            </field>
-        </record>
-    </data>
+  </data>
 </odoo>
-
