@@ -1,4 +1,3 @@
-
 /** @odoo-module **/
 
 import { registry } from "@web/core/registry";
@@ -10,33 +9,49 @@ const localPrinterService = {
         const state = reactive({
             online: false,
             printers: [],
+            lastError: null,
         });
 
-        const config = env.services.pos?.config || {};
-        const baseUrl = (config.agent_url || 'http://127.0.0.1:9060').replace(/\/$/, '');
-        const headers = () => ({});
+        const getBaseUrl = () => {
+            const config = env.services.pos?.config || {};
+            return (config.agent_url || "http://127.0.0.1:9060").replace(/\/$/, "");
+        };
 
-        const getJSON = async (path, opts={}) => {
-            const res = await fetch(`${baseUrl}${path}`, { ...opts, headers: { 'Content-Type': 'application/json', ...headers() } });
-            if (!res.ok) throw new Error(`${res.status}`);
-            return res.json();
+        const fetchJSON = async (path, opts = {}) => {
+            const baseUrl = getBaseUrl();
+            const res = await fetch(`${baseUrl}${path}`, {
+                ...opts,
+                headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
+            });
+            const txt = await res.text();
+            if (!res.ok) {
+                throw new Error(txt || `HTTP ${res.status}`);
+            }
+            try {
+                return txt ? JSON.parse(txt) : {};
+            } catch {
+                return {};
+            }
         };
 
         const ping = async () => {
             try {
-                await getJSON('/health');
+                await fetchJSON("/health", { method: "GET" });
                 state.online = true;
-            } catch {
+                state.lastError = null;
+            } catch (e) {
                 state.online = false;
+                state.lastError = e?.message || String(e);
             }
         };
 
         const refreshPrinters = async () => {
             try {
-                const data = await getJSON('/printers');
+                const data = await fetchJSON("/printers", { method: "GET" });
                 state.printers = data.printers || [];
             } catch (e) {
-                state.printers = [];
+                // No bloquear: solo registrar
+                state.lastError = e?.message || String(e);
             }
         };
 
@@ -45,15 +60,26 @@ const localPrinterService = {
         refreshPrinters();
         setInterval(ping, 3000);
 
+        const b64utf8 = (s) => btoa(unescape(encodeURIComponent(s || "")));
+
         return {
             state,
-            async printReceipt(printerName, dataText) {
-                const payload = { type: 'raw', printer: printerName, data: btoa(unescape(encodeURIComponent(dataText || ''))) };
-                await getJSON('/print', { method: 'POST', body: JSON.stringify(payload) });
-            },
             async getPrinters() {
                 await refreshPrinters();
                 return state.printers;
+            },
+            async printRaw(printerName, rawBase64) {
+                const payload = { type: "raw", printer: printerName, data: rawBase64 };
+                await fetchJSON("/print", { method: "POST", body: JSON.stringify(payload) });
+            },
+            async printReceipt(printerName, dataText) {
+                await this.printRaw(printerName, b64utf8(dataText));
+            },
+            async printImage(printerName, imgBase64) {
+                // imgBase64: sin prefijo data:image/png;base64,...
+                const clean = (imgBase64 || "").includes("base64,") ? imgBase64.split("base64,")[1] : imgBase64;
+                const payload = { type: "image", printer: printerName, data: clean };
+                await fetchJSON("/print", { method: "POST", body: JSON.stringify(payload) });
             },
         };
     },

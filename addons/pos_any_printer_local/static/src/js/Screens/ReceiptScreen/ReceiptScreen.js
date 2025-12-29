@@ -1,4 +1,3 @@
-﻿
 /** @odoo-module **/
 
 import { ReceiptScreen } from "@point_of_sale/app/screens/receipt_screen/receipt_screen";
@@ -9,66 +8,68 @@ import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
 patch(ReceiptScreen.prototype, {
     setup() {
         super.setup(...arguments);
-        this.printerService = useService("local_printer_service");
+        this.localPrinter = useService("local_printer_service");
         this.popup = useService("popup");
     },
 
+    /**
+     * Imprime el recibo en la impresora de CAJA (configurable).
+     * Nota: para cocina se recomienda usar impresoras de pedido (pos.printer) con tipo 'local_agent'.
+     */
     async printReceipt() {
-        const isLocalPrintingEnabled = this.pos.config.enable_local_printing;
+        const config = this.pos.config || {};
+        const enabled = !!config.enable_local_printing;
+        const printerName = (config.local_cashier_printer_name || config.local_printer_name || "").trim();
 
-        if (isLocalPrintingEnabled) {
-            if (!this.printerService.state.online) {
-                await this.popup.add(ErrorPopup, {
-                    title: "Error de ImpresiÃ³n",
-                    body: "No se pudo conectar con el agente de impresiÃ³n local. AsegÃºrese de que estÃ© instalado y en ejecuciÃ³n.",
-                });
-                return;
-            }
-
-            try {
-                const printerName = this.pos.config.local_printer_name;
-                // Get the raw receipt data.
-                // In a real scenario, you'd format this into ESC/POS commands.
-                // For this example, we send a simplified text version.
-                const receipt = this.pos.get_order().export_for_printing();
-                const receiptText = this.formatReceiptToText(receipt);
-
-                console.log(`Sending to local printer '${printerName}':\n`, receiptText);
-                await this.printerService.printReceipt(printerName, receiptText);
-
-            } catch (error) {
-                await this.popup.add(ErrorPopup, {
-                    title: "Error de ImpresiÃ³n Local",
-                    body: `OcurriÃ³ un error al enviar el recibo a la impresora: ${error}`,
-                });
-            }
-        } else {
-            // Fallback to the original printing method
+        if (!enabled) {
             return super.printReceipt(...arguments);
+        }
+        if (!printerName) {
+            await this.popup.add(ErrorPopup, {
+                title: "Impresora no configurada",
+                body: "Configura la impresora local de CAJA en la configuración del TPV.",
+            });
+            return;
+        }
+        try {
+            const text = this._buildReceiptText();
+            await this.localPrinter.printReceipt(printerName, text);
+            await this.popup.add(ErrorPopup, {
+                title: "Impresión enviada",
+                body: `Se envió el recibo a: ${printerName}`,
+            });
+        } catch (error) {
+            await this.popup.add(ErrorPopup, {
+                title: "Error imprimiendo",
+                body: error?.message || String(error),
+            });
         }
     },
 
-    /**
-     * Helper function to format the receipt object into a simple string.
-     * In a real-world application, this would be a more complex function
-     * that generates a specific printer language (like ESC/POS).
-     */
-    formatReceiptToText(receipt) {
-        let text = `${receipt.company.name}\n`;
-        text += `${receipt.company.street || ''}\n\n`;
-        text += `Order: ${receipt.name}\n`;
-        text += `Date: ${receipt.date.localestring}\n\n`;
+    _buildReceiptText() {
+        const order = this.currentOrder;
+        const r = order.export_for_printing();
 
-        receipt.orderlines.forEach(line => {
-            text += `${line.product_name} (${line.quantity})`.padEnd(20);
-            text += `${line.price_with_tax.toFixed(2)}\n`;
-        });
+        const pad = (s, n) => (String(s || "").slice(0, n)).padEnd(n, " ");
+        let out = "";
 
-        text += '\n' + 'Subtotal:'.padEnd(20) + `${receipt.subtotal.toFixed(2)}\n`;
-        text += 'Tax:'.padEnd(20) + `${receipt.total_tax.toFixed(2)}\n`;
-        text += 'TOTAL:'.padEnd(20) + `${receipt.total_with_tax.toFixed(2)}\n`;
+        out += `${r.company?.name || ""}\n`;
+        out += `${r.name || ""}\n`;
+        out += `------------------------------\n`;
 
-        return text;
-    }
+        for (const line of (r.orderlines || [])) {
+            const name = line.product_name || "";
+            const qty = line.quantity || 0;
+            const price = (line.price_with_tax || 0).toFixed(2);
+            out += `${pad(name, 20)}${pad(qty, 4)}${pad(price, 6)}\n`;
+        }
+
+        out += `------------------------------\n`;
+        out += `${pad("Subtotal:", 20)}${(r.subtotal || 0).toFixed(2)}\n`;
+        out += `${pad("Impuestos:", 20)}${(r.total_tax || 0).toFixed(2)}\n`;
+        out += `${pad("TOTAL:", 20)}${(r.total_with_tax || 0).toFixed(2)}\n`;
+        out += `\n\n`;
+
+        return out;
+    },
 });
-
