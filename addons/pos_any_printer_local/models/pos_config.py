@@ -37,6 +37,30 @@ class PosConfig(models.Model):
         default=lambda self: self._get_default_agent_url(),
     )
 
+    local_printer_cashier_name = fields.Char(
+        string="Nombre de la Impresora de Caja",
+        help=(
+            "Nombre de la impresora de caja en el sistema operativo del cliente "
+            '(por ejemplo, "EPSON TM-T20II"), tomado de los ajustes generales.'
+        ),
+        default=lambda self: self._get_default_local_printer_cashier_name(),
+    )
+
+    local_printer_kitchen_name = fields.Char(
+        string="Nombre de la Impresora de Cocina",
+        help=(
+            "Nombre de la impresora de cocina en el sistema operativo del cliente "
+            '(por ejemplo, "EPSON TM-U220"), tomado de los ajustes generales.'
+        ),
+        default=lambda self: self._get_default_local_printer_kitchen_name(),
+    )
+
+    local_printer_agent_url = fields.Char(
+        string="URL del Agente Local",
+        help="Dirección base del agente local (ej.: http://127.0.0.1:9060)",
+        default=lambda self: self._get_default_local_printer_agent_url(),
+    )
+
     # Token eliminado: conexión sin Authorization
 
     @api.model
@@ -74,6 +98,39 @@ class PosConfig(models.Model):
         )
 
     @api.model
+    def _get_default_local_printer_cashier_name(self):
+        return (
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param(
+                "pos_any_printer_local.pos_local_printer_cashier_name",
+                self._get_default_local_printer_name(),
+            )
+        )
+
+    @api.model
+    def _get_default_local_printer_kitchen_name(self):
+        return (
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param(
+                "pos_any_printer_local.pos_local_printer_kitchen_name",
+                self._get_default_kitchen_printer_name(),
+            )
+        )
+
+    @api.model
+    def _get_default_local_printer_agent_url(self):
+        return (
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param(
+                "pos_any_printer_local.pos_local_printer_agent_url",
+                self._get_default_agent_url(),
+            )
+        )
+
+    @api.model
     def _get_default_agent_token(self):
         return ""
 
@@ -82,7 +139,11 @@ class PosConfig(models.Model):
         params["fields"].extend([
             "enable_local_printing",
             "local_printer_name",
+            "local_printer_cashier_name",
             "agent_url",
+            "local_printer_agent_url",
+            "kitchen_printer_name",
+            "local_printer_kitchen_name",
             # token eliminado
         ])
         return params
@@ -114,11 +175,32 @@ class ResConfigSettings(models.TransientModel):
         default="",
     )
 
+    pos_local_printer_cashier_name = fields.Char(
+        string="Nombre predeterminado de impresora de caja",
+        help="Se guarda como parámetro de sistema para reutilizarlo en nuevos TPV.",
+        config_parameter="pos_any_printer_local.pos_local_printer_cashier_name",
+        default="",
+    )
+
+    pos_local_printer_kitchen_name = fields.Char(
+        string="Nombre predeterminado de impresora de cocina",
+        help="Se guarda como parámetro de sistema para reutilizarlo en nuevos TPV.",
+        config_parameter="pos_any_printer_local.pos_local_printer_kitchen_name",
+        default="",
+    )
+
     # Parámetros globales del agente local (expuestos en Ajustes)
     pos_agent_url = fields.Char(
         string="URL del agente local",
         help="Dirección base del agente (http://127.0.0.1:9060)",
         config_parameter="pos_any_printer_local.pos_agent_url",
+        default="http://127.0.0.1:9060",
+    )
+
+    pos_local_printer_agent_url = fields.Char(
+        string="URL del agente local (TPV)",
+        help="Dirección base del agente (http://127.0.0.1:9060)",
+        config_parameter="pos_any_printer_local.pos_local_printer_agent_url",
         default="http://127.0.0.1:9060",
     )
 
@@ -139,6 +221,16 @@ class ResConfigSettings(models.TransientModel):
             ),
             pos_agent_url=icp.get_param(
                 "pos_any_printer_local.pos_agent_url", "http://127.0.0.1:9060"
+            ),
+            pos_local_printer_cashier_name=icp.get_param(
+                "pos_any_printer_local.pos_local_printer_cashier_name", ""
+            ),
+            pos_local_printer_kitchen_name=icp.get_param(
+                "pos_any_printer_local.pos_local_printer_kitchen_name", ""
+            ),
+            pos_local_printer_agent_url=icp.get_param(
+                "pos_any_printer_local.pos_local_printer_agent_url",
+                "http://127.0.0.1:9060",
             ),
         )
         return res
@@ -163,6 +255,18 @@ class ResConfigSettings(models.TransientModel):
                 "pos_any_printer_local.pos_agent_url",
                 record.pos_agent_url or "http://127.0.0.1:9060",
             )
+            icp.set_param(
+                "pos_any_printer_local.pos_local_printer_cashier_name",
+                record.pos_local_printer_cashier_name or "",
+            )
+            icp.set_param(
+                "pos_any_printer_local.pos_local_printer_kitchen_name",
+                record.pos_local_printer_kitchen_name or "",
+            )
+            icp.set_param(
+                "pos_any_printer_local.pos_local_printer_agent_url",
+                record.pos_local_printer_agent_url or "http://127.0.0.1:9060",
+            )
             # token eliminado
 
         # También sincronizamos el valor por defecto en pos.config para futuros TPV.
@@ -173,5 +277,14 @@ class ResConfigSettings(models.TransientModel):
                     "local_printer_name": record.pos_local_printer_name or "",
                     "kitchen_printer_name": record.pos_kitchen_printer_name or "",
                     "agent_url": record.pos_agent_url or "http://127.0.0.1:9060",
+                    "local_printer_cashier_name": record.pos_local_printer_cashier_name
+                    or record.pos_local_printer_name
+                    or "",
+                    "local_printer_kitchen_name": record.pos_local_printer_kitchen_name
+                    or record.pos_kitchen_printer_name
+                    or "",
+                    "local_printer_agent_url": record.pos_local_printer_agent_url
+                    or record.pos_agent_url
+                    or "http://127.0.0.1:9060",
                 }
             )
