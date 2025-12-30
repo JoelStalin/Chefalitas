@@ -21,6 +21,15 @@ class PosConfig(models.Model):
         default=lambda self: self._get_default_local_printer_name(),
     )
 
+    kitchen_printer_name = fields.Char(
+        string="Nombre de la Impresora de Cocina",
+        help=(
+            "Nombre de la impresora de cocina en el sistema operativo del cliente "
+            '(por ejemplo, "EPSON TM-U220"), tomado de los ajustes generales.'
+        ),
+        default=lambda self: self._get_default_kitchen_printer_name(),
+    )
+
     # URL del agente HTTP local (por defecto http://127.0.0.1:9060)
     agent_url = fields.Char(
         string="URL del Agente Local",
@@ -53,6 +62,15 @@ class PosConfig(models.Model):
             self.env["ir.config_parameter"].sudo().get_param(
                 "pos_any_printer_local.pos_agent_url", "http://127.0.0.1:9060"
             )
+        )
+
+
+    @api.model
+    def _get_default_kitchen_printer_name(self):
+        return (
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param("pos_any_printer_local.pos_kitchen_printer_name", "")
         )
 
     @api.model
@@ -89,6 +107,13 @@ class ResConfigSettings(models.TransientModel):
         default="",
     )
 
+    pos_kitchen_printer_name = fields.Char(
+        string="Nombre de la Impresora de Cocina",
+        help="Nombre exacto de la impresora de cocina en el sistema operativo del cliente.",
+        config_parameter="pos_any_printer_local.pos_kitchen_printer_name",
+        default="",
+    )
+
     # Parámetros globales del agente local (expuestos en Ajustes)
     pos_agent_url = fields.Char(
         string="URL del agente local",
@@ -109,6 +134,9 @@ class ResConfigSettings(models.TransientModel):
             pos_local_printer_name=icp.get_param(
                 "pos_any_printer_local.pos_local_printer_name", ""
             ),
+            pos_kitchen_printer_name=icp.get_param(
+                "pos_any_printer_local.pos_kitchen_printer_name", ""
+            ),
             pos_agent_url=icp.get_param(
                 "pos_any_printer_local.pos_agent_url", "http://127.0.0.1:9060"
             ),
@@ -128,6 +156,10 @@ class ResConfigSettings(models.TransientModel):
                 record.pos_local_printer_name or "",
             )
             icp.set_param(
+                "pos_any_printer_local.pos_kitchen_printer_name",
+                record.pos_kitchen_printer_name or "",
+            )
+            icp.set_param(
                 "pos_any_printer_local.pos_agent_url",
                 record.pos_agent_url or "http://127.0.0.1:9060",
             )
@@ -139,6 +171,7 @@ class ResConfigSettings(models.TransientModel):
                 {
                     "enable_local_printing": record.pos_enable_local_printing,
                     "local_printer_name": record.pos_local_printer_name or "",
+                    "kitchen_printer_name": record.pos_kitchen_printer_name or "",
                     "agent_url": record.pos_agent_url or "http://127.0.0.1:9060",
                 }
             )

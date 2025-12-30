@@ -35,6 +35,14 @@ patch(ReceiptScreen.prototype, {
 
                 console.log(`Sending to local printer '${printerName}':\n`, receiptText);
                 await this.printerService.printReceipt(printerName, receiptText);
+                // Kitchen printing (optional)
+                const kitchenPrinter = (this.pos.config.kitchen_printer_name || "").trim();
+                if (kitchenPrinter && kitchenPrinter !== printerName) {
+                    const kitchenText = this.formatKitchenToText(receipt);
+                    console.log(`Sending to kitchen printer '${kitchenPrinter}':\n`, kitchenText);
+                    await this.printerService.printReceipt(kitchenPrinter, kitchenText);
+                }
+
 
             } catch (error) {
                 await this.popup.add(ErrorPopup, {
