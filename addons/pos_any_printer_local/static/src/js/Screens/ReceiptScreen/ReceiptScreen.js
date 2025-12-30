@@ -1,4 +1,3 @@
-﻿
 /** @odoo-module **/
 
 import { ReceiptScreen } from "@point_of_sale/app/screens/receipt_screen/receipt_screen";
@@ -19,14 +18,16 @@ patch(ReceiptScreen.prototype, {
         if (isLocalPrintingEnabled) {
             if (!this.printerService.state.online) {
                 await this.popup.add(ErrorPopup, {
-                    title: "Error de ImpresiÃ³n",
-                    body: "No se pudo conectar con el agente de impresiÃ³n local. AsegÃºrese de que estÃ© instalado y en ejecuciÃ³n.",
+                    title: "Error de Impresión",
+                    body: "No se pudo conectar con el agente de impresión local. Asegúrese de que esté instalado y en ejecución.",
                 });
                 return;
             }
 
             try {
-                const printerName = this.pos.config.local_printer_name;
+                const printerName =
+                    this.pos.config.local_printer_cashier_name ||
+                    this.pos.config.local_printer_name;
                 // Get the raw receipt data.
                 // In a real scenario, you'd format this into ESC/POS commands.
                 // For this example, we send a simplified text version.
@@ -36,7 +37,11 @@ patch(ReceiptScreen.prototype, {
                 console.log(`Sending to local printer '${printerName}':\n`, receiptText);
                 await this.printerService.printReceipt(printerName, receiptText);
                 // Kitchen printing (optional)
-                const kitchenPrinter = (this.pos.config.kitchen_printer_name || "").trim();
+                const kitchenPrinter = (
+                    this.pos.config.local_printer_kitchen_name ||
+                    this.pos.config.kitchen_printer_name ||
+                    ""
+                ).trim();
                 if (kitchenPrinter && kitchenPrinter !== printerName) {
                     const kitchenText = this.formatKitchenToText(receipt);
                     console.log(`Sending to kitchen printer '${kitchenPrinter}':\n`, kitchenText);
@@ -46,8 +51,8 @@ patch(ReceiptScreen.prototype, {
 
             } catch (error) {
                 await this.popup.add(ErrorPopup, {
-                    title: "Error de ImpresiÃ³n Local",
-                    body: `OcurriÃ³ un error al enviar el recibo a la impresora: ${error}`,
+                    title: "Error de Impresión Local",
+                    body: `Ocurrió un error al enviar el recibo a la impresora: ${error}`,
                 });
             }
         } else {
@@ -77,6 +82,22 @@ patch(ReceiptScreen.prototype, {
         text += 'TOTAL:'.padEnd(20) + `${receipt.total_with_tax.toFixed(2)}\n`;
 
         return text;
-    }
-});
+    },
 
+    formatKitchenToText(receipt) {
+        let text = `Cocina - ${receipt.name}\n`;
+        if (receipt.table) {
+            text += `Mesa: ${receipt.table}\n`;
+        }
+        text += `Fecha: ${receipt.date.localestring}\n\n`;
+
+        receipt.orderlines.forEach(line => {
+            text += `${line.product_name} x${line.quantity}\n`;
+            if (line.note) {
+                text += `  Nota: ${line.note}\n`;
+            }
+        });
+
+        return text;
+    },
+});

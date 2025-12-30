@@ -13,7 +13,11 @@ const localPrinterService = {
         });
 
         const config = env.services.pos?.config || {};
-        const baseUrl = (config.agent_url || 'http://127.0.0.1:9060').replace(/\/$/, '');
+        const baseUrl = (
+            config.local_printer_agent_url ||
+            config.agent_url ||
+            'http://127.0.0.1:9060'
+        ).replace(/\/$/, '');
         const headers = () => ({});
 
         const getJSON = async (path, opts={}) => {
