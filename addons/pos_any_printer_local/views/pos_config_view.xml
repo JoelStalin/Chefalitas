@@ -15,6 +15,8 @@
             <field name="local_printer_agent_url" placeholder="http://127.0.0.1:9060"/>
             <field name="local_printer_cashier_name" string="Impresora (Caja)" placeholder="EPSON TM-T20II"/>
             <field name="local_printer_kitchen_name" string="Impresora (Cocina)" placeholder="EPSON TM-U220"/>
+            <field name="local_printer_print_as_image"/>
+            <field name="local_printer_image_width" placeholder="576"/>
             <span class="o_form_label">Nota:</span>
             <div class="text-muted">
               Configure el agente en la PC y use el nombre EXACTO de la impresora (según /printers del agente).
