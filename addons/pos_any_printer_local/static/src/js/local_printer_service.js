@@ -55,6 +55,17 @@ const localPrinterService = {
                 const payload = { type: 'raw', printer: printerName, data: btoa(unescape(encodeURIComponent(dataText || ''))) };
                 await getJSON('/print', { method: 'POST', body: JSON.stringify(payload) });
             },
+            async printReceiptImage(printerName, imagePayload) {
+                const payload = {
+                    type: 'image',
+                    printer: printerName,
+                    data: imagePayload.data,
+                    mime: imagePayload.mime || 'image/png',
+                    width: imagePayload.width,
+                    height: imagePayload.height,
+                };
+                await getJSON('/print', { method: 'POST', body: JSON.stringify(payload) });
+            },
             async getPrinters() {
                 await refreshPrinters();
                 return state.printers;

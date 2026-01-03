@@ -61,6 +61,21 @@ class PosConfig(models.Model):
         default=lambda self: self._get_default_local_printer_agent_url(),
     )
 
+    local_printer_print_as_image = fields.Boolean(
+        string="Imprimir recibo como imagen",
+        help=(
+            "Convierte el recibo del TPV a una imagen PNG antes de enviarlo al agente local. "
+            "Útil para impresoras que no soportan comandos ESC/POS."
+        ),
+        default=lambda self: self._get_default_local_printer_print_as_image(),
+    )
+
+    local_printer_image_width = fields.Integer(
+        string="Ancho de imagen (px)",
+        help="Ancho máximo del recibo en píxeles (58mm≈384, 80mm≈576).",
+        default=lambda self: self._get_default_local_printer_image_width(),
+    )
+
     # Token eliminado: conexión sin Authorization
 
     @api.model
@@ -131,6 +146,23 @@ class PosConfig(models.Model):
         )
 
     @api.model
+    def _get_default_local_printer_print_as_image(self):
+        param_value = (
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param("pos_any_printer_local.pos_local_printer_print_as_image", "False")
+        )
+        return param_value in ("True", "1", True)
+
+    @api.model
+    def _get_default_local_printer_image_width(self):
+        return int(
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param("pos_any_printer_local.pos_local_printer_image_width", "576")
+        )
+
+    @api.model
     def _get_default_agent_token(self):
         return ""
 
@@ -144,6 +176,8 @@ class PosConfig(models.Model):
             "local_printer_agent_url",
             "kitchen_printer_name",
             "local_printer_kitchen_name",
+            "local_printer_print_as_image",
+            "local_printer_image_width",
             # token eliminado
         ])
         return params
@@ -204,6 +238,20 @@ class ResConfigSettings(models.TransientModel):
         default="http://127.0.0.1:9060",
     )
 
+    pos_local_printer_print_as_image = fields.Boolean(
+        string="Imprimir recibo como imagen",
+        help="Convierte el recibo a PNG antes de enviarlo al agente local.",
+        config_parameter="pos_any_printer_local.pos_local_printer_print_as_image",
+        default=False,
+    )
+
+    pos_local_printer_image_width = fields.Integer(
+        string="Ancho del recibo en píxeles",
+        help="Ancho máximo para el PNG (58mm≈384, 80mm≈576).",
+        config_parameter="pos_any_printer_local.pos_local_printer_image_width",
+        default=576,
+    )
+
     @api.model
     def get_values(self):
         res = super().get_values()
@@ -231,6 +279,13 @@ class ResConfigSettings(models.TransientModel):
             pos_local_printer_agent_url=icp.get_param(
                 "pos_any_printer_local.pos_local_printer_agent_url",
                 "http://127.0.0.1:9060",
+            ),
+            pos_local_printer_print_as_image=icp.get_param(
+                "pos_any_printer_local.pos_local_printer_print_as_image", "False"
+            )
+            in ("True", "1", True),
+            pos_local_printer_image_width=int(
+                icp.get_param("pos_any_printer_local.pos_local_printer_image_width", "576")
             ),
         )
         return res
@@ -267,6 +322,14 @@ class ResConfigSettings(models.TransientModel):
                 "pos_any_printer_local.pos_local_printer_agent_url",
                 record.pos_local_printer_agent_url or "http://127.0.0.1:9060",
             )
+            icp.set_param(
+                "pos_any_printer_local.pos_local_printer_print_as_image",
+                record.pos_local_printer_print_as_image,
+            )
+            icp.set_param(
+                "pos_any_printer_local.pos_local_printer_image_width",
+                record.pos_local_printer_image_width or 576,
+            )
             # token eliminado
 
         # También sincronizamos el valor por defecto en pos.config para futuros TPV.
@@ -286,5 +349,8 @@ class ResConfigSettings(models.TransientModel):
                     "local_printer_agent_url": record.pos_local_printer_agent_url
                     or record.pos_agent_url
                     or "http://127.0.0.1:9060",
+                    "local_printer_print_as_image": record.pos_local_printer_print_as_image,
+                    "local_printer_image_width": record.pos_local_printer_image_width
+                    or 576,
                 }
             )
