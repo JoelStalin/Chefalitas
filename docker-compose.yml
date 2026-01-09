@@ -1,6 +1,11 @@
 services:
   odoo:
-    image: odoo:18.0
+    image: chefalitas-odoo:18.0
+    build:
+      context: .
+      dockerfile: odoo/Dockerfile
+      args:
+        ODOO_IMAGE: odoo:18.0
     depends_on:
       - db
     env_file: .env

@@ -23,6 +23,12 @@ nginx/
 
 Los archivos en `nginx/` se montan como volúmenes dentro del contenedor, por lo que cualquier cambio se refleja tras recargar Nginx.
 
+## Nota sobre la imagen de Odoo
+
+El servicio `odoo` ahora se construye con `odoo/Dockerfile` para aplicar un fix reproducible en el archivo
+`/usr/lib/python3/dist-packages/odoo/addons/base/data/res_lang_data.xml`. Este patch ajusta el `url_code`
+de `base.lang_es_419` a `es-419` y evita el choque con `es` durante la carga del modulo `base` en bases nuevas.
+
 ## Puesta en marcha básica
 
 1. Copia el `.env` correspondiente y define las variables para Odoo, PostgreSQL y pgAdmin.
