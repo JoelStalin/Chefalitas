@@ -1,19 +1,18 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-echo ">> Bajando contenedores..."
-docker compose down
+COMPOSE="docker compose"
+ODOO_SERVICE="${ODOO_SERVICE:-odoo}"
 
-echo ">> Levantando contenedores en segundo plano..."
-docker compose up -d
+echo ">> Construyendo imagen de Odoo (si aplica)..."
+$COMPOSE build "$ODOO_SERVICE"
 
-echo ">> Instalando dependencias en /mnt/extra-addons dentro del contenedor odoo18-odoo-1..."
-docker exec -u root odoo18-odoo-1 bash -c "
-  cd /mnt/extra-addons && \
-  pip3 install --break-system-packages -r requirements.txt
-"
+echo ">> Levantando/actualizando solo el servicio de Odoo (sin tocar la DB)..."
+$COMPOSE up -d --no-deps "$ODOO_SERVICE"
 
-echo ">> Reiniciando servicios de Docker Compose..."
-docker compose restart
+echo ">> Dependencias: instaladas en build (skipping runtime pip install)."
 
-echo '>> Todo OK ✅'
+echo ">> Reiniciando solo Odoo para aplicar cambios..."
+$COMPOSE restart "$ODOO_SERVICE"
+
+echo ">> Todo OK."

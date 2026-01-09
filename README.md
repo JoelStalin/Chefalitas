@@ -28,6 +28,7 @@ Los archivos en `nginx/` se montan como volúmenes dentro del contenedor, por lo
 El servicio `odoo` ahora se construye con `odoo/Dockerfile` para aplicar un fix reproducible en el archivo
 `/usr/lib/python3/dist-packages/odoo/addons/base/data/res_lang_data.xml`. Este patch ajusta el `url_code`
 de `base.lang_es_419` a `es-419` y evita el choque con `es` durante la carga del modulo `base` en bases nuevas.
+Ademas instala `addons/requirements.txt` en build para evitar `pip install` en runtime.
 
 ## Puesta en marcha básica
 

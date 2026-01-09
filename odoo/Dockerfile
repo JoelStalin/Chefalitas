@@ -27,4 +27,9 @@ if match.group(2) != "es-419":
     path.write_text(text, encoding="utf-8")
 PY
 
+# Install addon Python dependencies at build time for production safety.
+COPY addons/requirements.txt /tmp/requirements.txt
+RUN pip3 install --break-system-packages -r /tmp/requirements.txt \
+    && rm /tmp/requirements.txt
+
 USER odoo
