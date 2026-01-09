@@ -4,7 +4,7 @@ FROM ${ODOO_IMAGE}
 USER root
 
 # Patch lang url_code to avoid duplicate 'es' during base module load.
-RUN python - <<'PY'
+RUN python3 - <<'PY'
 import pathlib
 import re
 import sys
