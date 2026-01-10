@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="seq_pos_client_printer_token" model="ir.sequence">
+        <field name="name">POS Client Printer Token</field>
+        <field name="code">pos_client_printer.printer.token</field>
+        <field name="prefix">PCP</field>
+        <field name="padding">8</field>
+    </record>
+</odoo>
