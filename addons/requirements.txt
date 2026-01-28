@@ -1,3 +1,8 @@
- debugpy>=1.6.3
- werkzeug>=2.1.0
- pycountry>=20.0.0
+# Dependencies for Odoo addons (server runs on Ubuntu).
+# Installed in the Docker image via: pip install -r addons/requirements.txt
+debugpy>=1.6.3
+werkzeug>=2.1.0
+pycountry>=20.0.0
+
+# pos_printing_suite: no extra server deps (uses stdlib + Odoo/mail).
+# Agent (Windows) build deps are in addons/pos_printing_suite/agent_src/local_printer_agent/requirements-windows.txt

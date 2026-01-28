@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_pos_print_device_user,pos.print.device.user,pos_printing_suite.model_pos_print_device,point_of_sale.group_pos_user,1,0,0,0
+access_pos_print_device_manager,pos.print.device.manager,pos_printing_suite.model_pos_print_device,point_of_sale.group_pos_manager,1,1,1,1
+access_build_agent_wizard_user,build.agent.wizard.user,pos_printing_suite.model_build_agent_wizard,point_of_sale.group_pos_user,1,0,0,0
+access_build_agent_wizard_manager,build.agent.wizard.manager,pos_printing_suite.model_build_agent_wizard,point_of_sale.group_pos_manager,1,1,1,1

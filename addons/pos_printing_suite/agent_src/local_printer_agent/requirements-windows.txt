@@ -1,0 +1,7 @@
+# Dependencies to build the Local Printer Agent on **Windows only**.
+# Do not install on Ubuntu: pywin32 is Windows-specific.
+# Usage (on Windows): pip install -r requirements-windows.txt
+# Then run: installer\build.bat or installer\build.ps1
+
+pyinstaller>=6.0.0
+pywin32>=306

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_pos_printer_form_printing_suite" model="ir.ui.view">
+        <field name="name">pos.printer.form.printing.suite</field>
+        <field name="model">pos.printer</field>
+        <field name="inherit_id" ref="point_of_sale.view_pos_printer_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group" position="inside">
+                <group string="Printing Suite">
+                    <field name="printer_type"/>
+                    <field name="local_printer_name" help="Windows printer name used by Local Agent mode."/>
+                    <field name="hw_proxy_ip" help="Only for HW Proxy mode (legacy)."/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>
