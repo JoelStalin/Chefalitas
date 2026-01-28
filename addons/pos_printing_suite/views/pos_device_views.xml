@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_pos_print_device_tree" model="ir.ui.view">
+        <field name="name">pos.print.device.tree</field>
+        <field name="model">pos.print.device</field>
+        <field name="arch" type="xml">
+            <list string="POS Print Devices" create="1" delete="1">
+                <field name="name"/>
+                <field name="pos_config_id"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="state"/>
+                <field name="agent_version"/>
+                <field name="last_seen"/>
+                <button name="action_activate" type="object" string="Activate" icon="fa-check" invisible="state != 'draft'"/>
+                <button name="action_revoke" type="object" string="Revoke" icon="fa-ban" invisible="state != 'active'"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_pos_print_device_form" model="ir.ui.view">
+        <field name="name">pos.print.device.form</field>
+        <field name="model">pos.print.device</field>
+        <field name="arch" type="xml">
+            <form string="POS Print Device">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="pos_config_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="state" widget="statusbar" statusbar_visible="draft,active,revoked"/>
+                            <field name="token" password="True" readonly="1"/>
+                            <field name="agent_version" readonly="1"/>
+                            <field name="last_seen" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Download">
+                        <div class="alert alert-info">
+                            Install the agent on the PC that runs the POS browser. Build the installer (on Windows) with this device token, then upload it below so users can download it.
+                        </div>
+                        <button name="action_upload_installer_wizard" string="Upload installer" type="object" class="btn-primary"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    <record id="action_pos_print_device" model="ir.actions.act_window">
+        <field name="name">POS Print Devices</field>
+        <field name="res_model">pos.print.device</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create a POS Print Device for each PC/terminal that will run the Local Printer Agent.</p>
+            <p>Then generate a token and build the installer (on Windows) with that token, and upload it here so users can download it.</p>
+        </field>
+    </record>
+    <menuitem
+        id="menu_pos_print_device"
+        name="POS Print Devices"
+        parent="point_of_sale.menu_point_of_sale_configuration"
+        action="action_pos_print_device"
+        sequence="50"/>
+</odoo>
