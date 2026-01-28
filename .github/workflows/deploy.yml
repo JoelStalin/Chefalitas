@@ -3,13 +3,13 @@ name: Deploy
 on:
   push:
     branches:
-      - '**'   # Escucha todos los branches; los jobs filtran con if
+      - 'main-full'   # Solo ejecuta deploy cuando el branch es main-full
 
 jobs:
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'   # Solo cuando es el branch main
+    if: github.ref == 'refs/heads/main-full'   # Solo cuando es el branch main-full
     environment:
       name: production
       url: https://chefalitas.com.do/     # URL de tu instancia Odoo en producción
