@@ -3,9 +3,75 @@ name: Deploy
 on:
   push:
     branches:
-      - 'main-full'   # Solo ejecuta deploy cuando el branch es main-full
+      - 'main'        # Solo actualiza addons cuando el branch es main
+      - 'main-full'   # Actualiza todo cuando el branch es main-full
 
 jobs:
+  deploy-addons:
+    name: Deploy Addons Only
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'   # Solo cuando es el branch main
+    environment:
+      name: production
+      url: https://chefalitas.com.do/     # URL de tu instancia Odoo en producción
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Ensure target directory exists (prod)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}      # IP pública de tu servidor PROD
+          username: ${{ secrets.PROD_SSH_USER }}  # Usuario del servidor PROD
+          key: ${{ secrets.PROD_SSH_KEY }}        # Llave privada para SSH PROD
+          script: |
+            mkdir -p ~/odoo18/addons
+
+      - name: Upload addons only (prod)
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}
+          username: ${{ secrets.PROD_SSH_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          source: addons
+          target: ~/odoo18
+
+      - name: Restart services (prod)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}
+          username: ${{ secrets.PROD_SSH_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            set -e  # si algo falla, el step revienta
+
+            echo ">> Entrando al directorio del proyecto (producción)"
+            cd ~/odoo18
+
+            echo ">> Directorio actual:"
+            pwd
+
+            echo ">> Listando archivos en ~/odoo18:"
+            ls -la
+
+            echo ">> Verificando que restart.sh exista:"
+            ls -la restart.sh || (echo "ERROR: restart.sh NO existe en ~/odoo18" && exit 1)
+
+            echo ">> Normalizando saltos de línea (CRLF -> LF) en restart.sh..."
+            dos2unix restart.sh || sed -i 's/\r$//' restart.sh
+
+            echo ">> Marcando restart.sh como ejecutable..."
+            chmod +x restart.sh
+
+            echo ">> Primera línea (shebang) de restart.sh:"
+            head -n 1 restart.sh
+
+            echo ">> Ejecutando restart.sh con bash..."
+            bash ./restart.sh
+
+            echo ">> restart.sh terminó correctamente 🎉"
+
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
