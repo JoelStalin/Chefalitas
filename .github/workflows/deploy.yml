@@ -116,6 +116,17 @@ jobs:
           script: |
             mkdir -p ~/odoo18
 
+      - name: Clean target directory (prod full)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}      # IP pública de tu servidor PROD
+          username: ${{ secrets.PROD_SSH_USER }}  # Usuario del servidor PROD
+          key: ${{ secrets.PROD_SSH_KEY }}        # Llave privada para SSH PROD
+          script: |
+            set -e
+            mkdir -p ~/odoo18
+            find ~/odoo18 -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+
       - name: Upload project files (prod)
         uses: appleboy/scp-action@master
         with:
