@@ -5,7 +5,7 @@
     "license": "LGPL-3",
     "category": "Sales/Point of Sale",
     "summary": "Unified POS printing: Local Agent (Windows), HW Proxy, Self-Order",
-    "author": "Chefalitas",
+    "author": "GetUpSoft",
     "depends": ["point_of_sale", "mail"],
     "assets": {
         "point_of_sale._assets_pos": [
