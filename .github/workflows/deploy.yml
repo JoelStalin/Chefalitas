@@ -149,7 +149,7 @@ jobs:
             mv "$TEMP_DIR" "$TARGET"
 
             if [ -d "$BACKUP" ]; then
-              rm -rf "$BACKUP"
+              rm -rf "$BACKUP" || echo "WARN: no se pudo eliminar $BACKUP (permisos). Limpia manualmente si es necesario."
             fi
 
       - name: Restart services (prod)
