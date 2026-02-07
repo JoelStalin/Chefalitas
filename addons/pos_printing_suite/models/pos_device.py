@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, models
+from odoo import api, fields, models, _
+from odoo.exceptions import ValidationError
 import secrets
 
 
@@ -37,11 +38,14 @@ class PosPrintDevice(models.Model):
         ("token_uniq", "unique(token)", "Token must be unique."),
     ]
 
+    def _generate_token(self):
+        return secrets.token_urlsafe(32)
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
             if not vals.get("token"):
-                vals["token"] = secrets.token_urlsafe(32)
+                vals["token"] = self._generate_token()
         return super().create(vals_list)
 
     def action_activate(self):
@@ -49,6 +53,18 @@ class PosPrintDevice(models.Model):
 
     def action_revoke(self):
         self.write({"state": "revoked"})
+
+    def action_rotate_token(self):
+        for rec in self:
+            rec.write({"token": rec._generate_token()})
+
+    @api.constrains("company_id", "pos_config_id")
+    def _check_company_config(self):
+        for rec in self:
+            if rec.pos_config_id and rec.company_id and rec.pos_config_id.company_id != rec.company_id:
+                raise ValidationError(
+                    _("The POS Config company must match the device company.")
+                )
 
     def action_upload_installer_wizard(self):
         self.ensure_one()

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, models
+from odoo import api, fields, models, _
+from odoo.exceptions import ValidationError
 
 
 class PosConfig(models.Model):
@@ -52,3 +53,13 @@ class PosConfig(models.Model):
             "any_printer_ip",
         ])
         return params
+
+    @api.constrains("printing_mode", "print_device_id")
+    def _check_printing_mode_device(self):
+        for rec in self:
+            if rec.printing_mode == "local_agent" and not rec.print_device_id:
+                raise ValidationError(_("Local Agent mode requires a Local Agent Device."))
+            if rec.print_device_id and rec.print_device_id.pos_config_id != rec:
+                raise ValidationError(
+                    _("Selected Local Agent Device is linked to another POS config.")
+                )

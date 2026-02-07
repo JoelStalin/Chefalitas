@@ -19,6 +19,11 @@ assert "tkinter" not in sys.modules, "GUI not allowed in service"
 
 logger = None
 
+try:
+    from http.server import ThreadingHTTPServer as _ThreadingHTTPServer
+except Exception:
+    _ThreadingHTTPServer = HTTPServer
+
 
 def setup_logging(log_dir):
     global logger
@@ -45,9 +50,17 @@ class Handler(BaseHTTPRequestHandler):
 
     def _send_json(self, status, body):
         self.send_response(status)
+        self._set_cors_headers()
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.end_headers()
         self.wfile.write(json.dumps(body).encode("utf-8"))
+
+    def _set_cors_headers(self):
+        # Allow browser POS to call local agent with Authorization header.
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Authorization, Content-Type")
+        self.send_header("Access-Control-Max-Age", "86400")
 
     def _check_auth(self):
         auth = self.headers.get("Authorization")
@@ -55,6 +68,11 @@ class Handler(BaseHTTPRequestHandler):
             return False
         token = auth[7:].strip()
         return token and token == (self.config.get("token") or "")
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self._set_cors_headers()
+        self.end_headers()
 
     def do_GET(self):
         if self.path == "/health":
@@ -119,7 +137,7 @@ def run_server(config=None):
     host = config.get("host", DEFAULT_HOST)
     port = int(config.get("port", DEFAULT_PORT))
     Handler.config = config
-    server = HTTPServer((host, port), Handler)
+    server = _ThreadingHTTPServer((host, port), Handler)
     logger.info("Local Printer Agent listening on %s:%s", host, port)
     try:
         server.serve_forever()

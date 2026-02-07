@@ -68,11 +68,15 @@ class LocalPrinterAgentService(win32serviceutil.ServiceFramework):
 
     def _run_server_thread(self, config, ready):
         from http.server import HTTPServer
+        try:
+            from http.server import ThreadingHTTPServer
+        except Exception:
+            ThreadingHTTPServer = HTTPServer
         from agent_service import Handler, DEFAULT_HOST, DEFAULT_PORT
         Handler.config = config
         host = config.get("host", DEFAULT_HOST)
         port = int(config.get("port", 9060))
-        self._httpd = HTTPServer((host, port), Handler)
+        self._httpd = ThreadingHTTPServer((host, port), Handler)
         ready.set()
         try:
             self._httpd.serve_forever()

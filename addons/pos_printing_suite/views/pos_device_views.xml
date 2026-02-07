@@ -29,6 +29,9 @@
                             <field name="company_id" groups="base.group_multi_company"/>
                             <field name="state" widget="statusbar" statusbar_visible="draft,active,revoked"/>
                             <field name="token" password="True" readonly="1"/>
+                            <button name="action_rotate_token" type="object" string="Rotate Token" class="btn-secondary"
+                                    groups="point_of_sale.group_pos_manager"
+                                    confirm="This will invalidate the current token. Rebuild and reinstall the agent with the new token."/>
                             <field name="agent_version" readonly="1"/>
                             <field name="last_seen" readonly="1"/>
                         </group>

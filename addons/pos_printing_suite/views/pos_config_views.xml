@@ -8,12 +8,17 @@
             <xpath expr="//form/sheet" position="inside">
                 <group string="POS Printing Suite">
                     <field name="printing_mode"/>
-                    <field name="print_device_id" options="{'no_create': True}"/>
-                    <field name="local_printer_cashier_name" placeholder="e.g. EPSON TM-T20II"/>
-                    <field name="local_printer_kitchen_name" placeholder="e.g. Kitchen Receipt"/>
-                    <field name="local_printer_print_as_image"/>
-                    <field name="local_printer_image_width" invisible="not local_printer_print_as_image"/>
-                    <field name="any_printer_ip" help="Only for HW Proxy mode (legacy)."/>
+                    <field name="print_device_id" options="{'no_create': True}"
+                           domain="[('company_id', '=', company_id), ('pos_config_id', '=', id)]"
+                           invisible="printing_mode != 'local_agent'"/>
+                    <field name="local_printer_cashier_name" placeholder="e.g. EPSON TM-T20II"
+                           invisible="printing_mode != 'local_agent'"/>
+                    <field name="local_printer_kitchen_name" placeholder="e.g. Kitchen Receipt"
+                           invisible="printing_mode != 'local_agent'"/>
+                    <field name="local_printer_print_as_image" invisible="printing_mode != 'local_agent'"/>
+                    <field name="local_printer_image_width" invisible="printing_mode != 'local_agent' or not local_printer_print_as_image"/>
+                    <field name="any_printer_ip" help="Only for HW Proxy mode (legacy)."
+                           invisible="printing_mode != 'hw_proxy'"/>
                 </group>
             </xpath>
         </field>
