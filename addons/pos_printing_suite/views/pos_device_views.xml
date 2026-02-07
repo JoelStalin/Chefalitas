@@ -64,7 +64,7 @@
     <menuitem
         id="menu_pos_print_device"
         name="POS Print Devices"
-        parent="point_of_sale.menu_point_of_sale_configuration"
         action="action_pos_print_device"
-        sequence="50"/>
+        sequence="50"
+        groups="point_of_sale.group_pos_manager"/>
 </odoo>
