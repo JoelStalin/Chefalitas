@@ -2,8 +2,12 @@
 from odoo import api, SUPERUSER_ID
 
 
-def post_init_hook(cr, registry):
-    env = api.Environment(cr, SUPERUSER_ID, {})
+def post_init_hook(env_or_cr, registry=None):
+    # Odoo 18 calls post_init_hook(env). Older versions call (cr, registry).
+    if registry is None:
+        env = env_or_cr
+    else:
+        env = api.Environment(env_or_cr, SUPERUSER_ID, {})
     # Try to place menu under POS Configuration if it exists.
     candidates = [
         "point_of_sale.menu_point_of_sale_configuration",
