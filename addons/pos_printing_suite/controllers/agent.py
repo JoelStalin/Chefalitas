@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import base64
+import json
 
 from odoo import http, fields, _
 from odoo.exceptions import AccessError
@@ -51,7 +52,7 @@ class PosPrintingSuiteAgentController(http.Controller):
         return request.make_response(data, headers)
 
     @http.route("/pos_printing_suite/agent/ping", type="json", auth="public", csrf=False)
-    def agent_ping(self, token=None, version=None, status=None, pos_config_id=None, **kwargs):
+    def agent_ping(self, token=None, version=None, status=None, pos_config_id=None, printers=None, **kwargs):
         token = token or self._get_agent_token()
         if not token:
             return {"ok": False, "error": "missing_token"}
@@ -63,7 +64,38 @@ class PosPrintingSuiteAgentController(http.Controller):
             "agent_version": version or config.agent_version,
             "agent_enabled": True,
         })
+        if printers:
+            if isinstance(printers, str):
+                try:
+                    printers = json.loads(printers)
+                except Exception:
+                    printers = []
+            self._sync_agent_printers(config, printers)
         return {"ok": True}
+
+    def _sync_agent_printers(self, config, printers):
+        if not isinstance(printers, (list, tuple)):
+            return
+        names = [p for p in printers if isinstance(p, str) and p.strip()]
+        if not names:
+            return
+        Printer = request.env["pos.printing.agent.printer"].sudo()
+        existing = Printer.search([("pos_config_id", "=", config.id)])
+        existing_names = set(existing.mapped("name"))
+        now = fields.Datetime.now()
+        for name in names:
+            if name in existing_names:
+                existing.filtered(lambda r: r.name == name).write({"last_seen": now})
+            else:
+                Printer.create({
+                    "name": name,
+                    "pos_config_id": config.id,
+                    "last_seen": now,
+                })
+        # Remove printers no longer reported
+        to_remove = existing.filtered(lambda r: r.name not in set(names))
+        if to_remove:
+            to_remove.unlink()
 
     @http.route("/pos_printing_suite/agent/config", type="json", auth="public", csrf=False)
     def agent_config(self, token=None, **kwargs):

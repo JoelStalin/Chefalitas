@@ -1,2 +1,3 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_pos_printing_suite_agent_install_wizard,pos_printing_suite_agent_install_wizard,model_pos_printing_suite_agent_install_wizard,base.group_system,1,1,1,1
+access_pos_printing_agent_printer,pos_printing_agent_printer,model_pos_printing_agent_printer,point_of_sale.group_pos_manager,1,0,0,0

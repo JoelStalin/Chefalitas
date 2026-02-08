@@ -8,8 +8,14 @@
             <xpath expr="//form/sheet" position="inside">
                 <group string="POS Printing Suite">
                     <field name="printing_mode"/>
+                    <field name="local_printer_cashier_id" domain="[('pos_config_id', '=', id)]"
+                           placeholder="Select from agent printers"
+                           invisible="printing_mode != 'local_agent'"/>
                     <field name="local_printer_cashier_name" placeholder="e.g. EPSON TM-T20II"
                            invisible="printing_mode == 'odoo_default'"/>
+                    <field name="local_printer_kitchen_id" domain="[('pos_config_id', '=', id)]"
+                           placeholder="Select from agent printers"
+                           invisible="printing_mode != 'local_agent'"/>
                     <field name="local_printer_kitchen_name" placeholder="e.g. Kitchen Receipt"
                            invisible="printing_mode == 'odoo_default'"/>
                     <field name="local_agent_host" placeholder="127.0.0.1"
@@ -22,12 +28,22 @@
                            invisible="printing_mode != 'hw_proxy'"/>
                 </group>
                 <group string="Windows Agent" groups="base.group_system">
+                    <div class="alert alert-warning"
+                         invisible="agent_status == 'online'">
+                        The Windows Agent is not connected. Install and start the agent on the POS PC.
+                    </div>
                     <field name="agent_enabled"/>
                     <field name="agent_status" readonly="1"/>
                     <field name="agent_last_seen" readonly="1"/>
                     <field name="agent_version" readonly="1"/>
                     <field name="agent_download_url" readonly="1"/>
                     <field name="agent_token" password="True" readonly="1"/>
+                    <field name="agent_printer_ids" readonly="1">
+                        <list>
+                            <field name="name"/>
+                            <field name="last_seen"/>
+                        </list>
+                    </field>
                     <button name="action_regenerate_agent_token" type="object"
                             string="Regenerate Token" class="btn-secondary"/>
                     <button name="action_build_agent_installer" type="object"

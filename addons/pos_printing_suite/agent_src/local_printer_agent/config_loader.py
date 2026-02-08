@@ -40,6 +40,8 @@ def load_config(config_path=None):
         "token": "",
         "host": DEFAULT_HOST,
         "port": DEFAULT_PORT,
+        "server_url": "",
+        "ping_interval": 30,
         "config_dir": DEFAULT_CONFIG_DIR,
         "log_dir": DEFAULT_LOG_DIR,
     }

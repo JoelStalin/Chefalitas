@@ -87,6 +87,20 @@ class PosConfig(models.Model):
         string="Agent Download URL",
         groups="base.group_system",
     )
+    agent_printer_ids = fields.One2many(
+        "pos.printing.agent.printer",
+        "pos_config_id",
+        string="Agent Printers",
+        readonly=True,
+    )
+    local_printer_cashier_id = fields.Many2one(
+        "pos.printing.agent.printer",
+        string="Cashier Printer (Agent)",
+    )
+    local_printer_kitchen_id = fields.Many2one(
+        "pos.printing.agent.printer",
+        string="Kitchen Printer (Agent)",
+    )
 
     @api.depends("printing_mode")
     @api.depends_context("uid")
@@ -326,6 +340,16 @@ class PosConfig(models.Model):
     def _ensure_admin(self):
         if not self.env.user.has_group("base.group_system"):
             raise AccessError(_("Only administrators can perform this action."))
+
+    @api.onchange("local_printer_cashier_id")
+    def _onchange_local_printer_cashier_id(self):
+        if self.local_printer_cashier_id:
+            self.local_printer_cashier_name = self.local_printer_cashier_id.name
+
+    @api.onchange("local_printer_kitchen_id")
+    def _onchange_local_printer_kitchen_id(self):
+        if self.local_printer_kitchen_id:
+            self.local_printer_kitchen_name = self.local_printer_kitchen_id.name
 
     def _normalize_port_value(self, value, field_label):
         if value in (None, False, ""):

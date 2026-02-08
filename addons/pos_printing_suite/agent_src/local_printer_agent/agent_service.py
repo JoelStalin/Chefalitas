@@ -9,6 +9,9 @@ import json
 import logging
 import os
 import sys
+import threading
+import time
+import urllib.request
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 from config_loader import load_config, VERSION, DEFAULT_HOST, DEFAULT_PORT
@@ -149,12 +152,52 @@ def run_server(config=None):
     Handler.config = config
     server = _ThreadingHTTPServer((host, port), Handler)
     logger.info("Local Printer Agent listening on %s:%s", host, port)
+    _start_ping_thread(config)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         logger.info("Shutting down")
     finally:
         server.server_close()
+
+
+def _start_ping_thread(config):
+    thread = threading.Thread(target=_ping_loop, args=(config,), daemon=True)
+    thread.start()
+
+
+def _ping_loop(config):
+    while True:
+        try:
+            _send_ping(config)
+        except Exception as exc:
+            if logger:
+                logger.warning("Ping failed: %s", exc)
+        interval = config.get("ping_interval") or 30
+        try:
+            interval = int(interval)
+        except Exception:
+            interval = 30
+        time.sleep(max(10, interval))
+
+
+def _send_ping(config):
+    server_url = (config.get("server_url") or "").rstrip("/")
+    token = (config.get("token") or "").strip()
+    if not server_url or not token:
+        return
+    payload = {
+        "token": token,
+        "version": VERSION,
+        "status": "online",
+        "pos_config_id": config.get("pos_config_id"),
+        "printers": list_printers(),
+    }
+    url = f"{server_url}/pos_printing_suite/agent/ping"
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=5) as resp:
+        resp.read()
 
 
 if __name__ == "__main__":
