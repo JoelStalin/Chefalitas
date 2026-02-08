@@ -26,6 +26,19 @@ def list_printers():
         return []
 
 
+def resolve_printer_name(requested_name):
+    """Resolve a printer name (case-insensitive). Raises if not found."""
+    if not requested_name:
+        raise RuntimeError("Printer name is required")
+    names = list_printers()
+    if not names:
+        raise RuntimeError("No printers available on this system")
+    for name in names:
+        if name.lower() == requested_name.lower():
+            return name
+    raise RuntimeError(f"Printer not found: {requested_name}. Available: {', '.join(names)}")
+
+
 def print_raw(printer_name, data_b64):
     """Send raw bytes (e.g. ESC/POS) to the printer. data_b64 is base64-encoded."""
     if not win32print:

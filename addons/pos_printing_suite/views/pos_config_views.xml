@@ -8,13 +8,18 @@
             <xpath expr="//form/sheet" position="inside">
                 <group string="POS Printing Suite">
                     <field name="printing_mode"/>
-                    <field name="print_device_id" options="{'no_create': True}"
-                           domain="[('company_id', '=', company_id), ('pos_config_id', '=', id)]"
-                           invisible="printing_mode != 'local_agent'"/>
                     <field name="local_printer_cashier_name" placeholder="e.g. EPSON TM-T20II"
                            invisible="printing_mode == 'odoo_default'"/>
                     <field name="local_printer_kitchen_name" placeholder="e.g. Kitchen Receipt"
                            invisible="printing_mode == 'odoo_default'"/>
+                    <field name="local_agent_host" placeholder="127.0.0.1"
+                           invisible="printing_mode != 'local_agent'"/>
+                    <field name="local_agent_port" placeholder="9060"
+                           invisible="printing_mode != 'local_agent'"/>
+                    <field name="any_printer_ip" placeholder="127.0.0.1"
+                           invisible="printing_mode != 'hw_proxy'"/>
+                    <field name="any_printer_port" placeholder="8069"
+                           invisible="printing_mode != 'hw_proxy'"/>
                 </group>
             </xpath>
         </field>

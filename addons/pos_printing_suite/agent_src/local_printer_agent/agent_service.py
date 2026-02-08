@@ -12,7 +12,7 @@ import sys
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 from config_loader import load_config, VERSION, DEFAULT_HOST, DEFAULT_PORT
-from printer_backends import list_printers, print_raw, print_pdf, print_image
+from printer_backends import list_printers, resolve_printer_name, print_raw, print_pdf, print_image
 
 # Ensure no GUI imports
 assert "tkinter" not in sys.modules, "GUI not allowed in service"
@@ -63,6 +63,9 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Max-Age", "86400")
 
     def _check_auth(self):
+        # If no token is configured, allow local usage without auth.
+        if not (self.config.get("token") or "").strip():
+            return True
         auth = self.headers.get("Authorization")
         if not auth or not auth.startswith("Bearer "):
             return False
@@ -79,9 +82,6 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json(200, {"status": "ok", "version": VERSION})
             return
         if self.path == "/printers":
-            if not self._check_auth():
-                self._send_json(401, {"error": "Unauthorized"})
-                return
             try:
                 names = list_printers()
                 self._send_json(200, {"printers": names})
@@ -115,6 +115,7 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json(400, {"error": "printer and data required"})
             return
         try:
+            printer_name = resolve_printer_name(printer_name)
             if typ == "raw":
                 print_raw(printer_name, payload_b64)
             elif typ == "pdf":

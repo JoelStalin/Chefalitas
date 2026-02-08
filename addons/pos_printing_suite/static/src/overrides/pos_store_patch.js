@@ -6,36 +6,54 @@ import { HardwareProxy } from "@point_of_sale/app/hardware_proxy/hardware_proxy_
 import { LocalAgentPrinter } from "../app/printers/local_agent_printer";
 import { HwProxyPrinter } from "../app/printers/hw_proxy_printer";
 
-const LOCAL_AGENT_BASE_URL = "http://127.0.0.1:9060";
-const DEFAULT_HW_PROXY_URL = "http://127.0.0.1:8069";
+const DEFAULT_LOCAL_AGENT_HOST = "127.0.0.1";
+const DEFAULT_LOCAL_AGENT_PORT = 9060;
+const DEFAULT_HW_PROXY_HOST = "127.0.0.1";
+const DEFAULT_HW_PROXY_PORT = 8069;
 
-function normalizeUrl(raw, defaultPort = "8069") {
-    if (!raw) return "";
-    let url = raw.startsWith("http") ? raw : `http://${raw}`;
+function buildBaseUrl(host, port, fallbackHost, fallbackPort) {
+    const rawHost = (host || "").trim() || fallbackHost;
+    const safePort = port || fallbackPort;
+    let url = rawHost.startsWith("http") ? rawHost : `http://${rawHost}`;
     const hasPort = /:\d{2,5}(\/|$)/.test(url);
-    if (!hasPort) {
-        url = url.replace(/\/?$/, `:${defaultPort}`);
+    if (!hasPort && safePort) {
+        url = url.replace(/\/?$/, `:${safePort}`);
     }
     return url;
 }
 
+function getPosConfig(store) {
+    return store?.config || store?.pos?.config || null;
+}
+
 function getPrinterName(store, printer) {
-    const config = store.pos?.config;
+    const config = getPosConfig(store);
     if (printer?.role === "kitchen") {
         return config?.local_printer_kitchen_name || printer.local_printer_name || printer.name || "";
     }
     return config?.local_printer_cashier_name || printer.local_printer_name || printer.name || "";
 }
 
+function getLocalAgentBaseUrl(config) {
+    return buildBaseUrl(
+        config?.local_agent_host,
+        config?.local_agent_port,
+        DEFAULT_LOCAL_AGENT_HOST,
+        DEFAULT_LOCAL_AGENT_PORT
+    );
+}
+
 function getHwProxyBaseUrl(config) {
-    return normalizeUrl(
-        config?.any_printer_ip || config?.proxy_ip || DEFAULT_HW_PROXY_URL,
-        "8069"
+    return buildBaseUrl(
+        config?.any_printer_ip || config?.proxy_ip,
+        config?.any_printer_port,
+        DEFAULT_HW_PROXY_HOST,
+        DEFAULT_HW_PROXY_PORT
     );
 }
 
 function createPrintingSuitePrinter(store, printer) {
-    const config = store.pos?.config;
+    const config = getPosConfig(store);
     if (!config?.printing_suite_allowed) {
         return null;
     }
@@ -43,15 +61,9 @@ function createPrintingSuitePrinter(store, printer) {
         printer.printer_type ||
         (config.printing_mode === "local_agent" ? "local_agent" : "hw_proxy_any_printer");
     if (type === "local_agent") {
-        const token = config?.local_agent_token || null;
-        if (!token) {
-            console.warn("POS Printing Suite: Local Agent printer configured but no token.");
-            return null;
-        }
         return new LocalAgentPrinter({
             ...printer,
-            baseUrl: LOCAL_AGENT_BASE_URL,
-            token,
+            baseUrl: getLocalAgentBaseUrl(config),
             printerName: getPrinterName(store, printer),
         });
     }

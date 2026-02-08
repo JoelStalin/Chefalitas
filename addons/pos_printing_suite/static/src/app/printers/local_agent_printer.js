@@ -2,6 +2,7 @@
 
 import { BasePrinter } from "@point_of_sale/app/printer/base_printer";
 import { _t } from "@web/core/l10n/translation";
+import { ensureImagePayload } from "./image_utils";
 
 const LOCAL_AGENT_BASE_URL = "http://127.0.0.1:9060";
 
@@ -14,19 +15,21 @@ export class LocalAgentPrinter extends BasePrinter {
     }
 
     async sendPrintingJob(receiptB64) {
-        if (!this.token) {
-            throw new Error(_t("Local Agent: no token configured."));
+        const payload = await ensureImagePayload(this.env, receiptB64);
+        if (!payload) {
+            throw new Error(_t("Local Agent: empty receipt payload."));
+        }
+        const headers = { "Content-Type": "application/json" };
+        if (this.token) {
+            headers["Authorization"] = `Bearer ${this.token}`;
         }
         const res = await fetch(`${this.baseUrl}/print`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${this.token}`,
-            },
+            headers,
             body: JSON.stringify({
                 type: "image",
                 printer: this.printerName,
-                data: receiptB64,
+                data: payload,
             }),
         });
         if (!res.ok) {
