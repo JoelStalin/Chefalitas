@@ -34,41 +34,67 @@ function getRenderService(env) {
     );
 }
 
+function isOdooFontUrl(url) {
+    return /fonts\.odoocdn\.com\/fonts\/noto\/.+\.(woff2?|ttf)$/i.test(url || "");
+}
+
+async function withFontFetchPatched(fn) {
+    const originalFetch = globalThis.fetch;
+    if (typeof originalFetch !== "function") {
+        return await fn();
+    }
+    globalThis.fetch = (input, init) => {
+        const url = typeof input === "string" ? input : input?.url;
+        if (url && isOdooFontUrl(url)) {
+            const headers = new Headers({ "Content-Type": "font/woff2" });
+            return Promise.resolve(new Response(new ArrayBuffer(0), { status: 200, headers }));
+        }
+        return originalFetch(input, init);
+    };
+    try {
+        return await fn();
+    } finally {
+        globalThis.fetch = originalFetch;
+    }
+}
+
 async function renderElementToImage(env, element) {
-    const service = getRenderService(env);
-    const options = { skipFonts: true, cacheBust: true };
-    if (service) {
-        if (typeof service.renderToImage === "function") {
-            try {
-                return await service.renderToImage(element, options);
-            } catch (e) {
-                // fallback below
+    return await withFontFetchPatched(async () => {
+        const service = getRenderService(env);
+        const options = { skipFonts: true, cacheBust: true };
+        if (service) {
+            if (typeof service.renderToImage === "function") {
+                try {
+                    return await service.renderToImage(element, options);
+                } catch (e) {
+                    // fallback below
+                }
+            }
+            if (typeof service.toImage === "function") {
+                try {
+                    return await service.toImage(element, options);
+                } catch (e) {
+                    // fallback below
+                }
+            }
+            if (typeof service.toCanvas === "function") {
+                try {
+                    const canvas = await service.toCanvas(element, options);
+                    return canvas?.toDataURL ? canvas.toDataURL("image/png") : null;
+                } catch (e) {
+                    // fallback below
+                }
             }
         }
-        if (typeof service.toImage === "function") {
-            try {
-                return await service.toImage(element, options);
-            } catch (e) {
-                // fallback below
-            }
+        if (globalThis?.htmlToImage?.toPng) {
+            return await globalThis.htmlToImage.toPng(element, options);
         }
-        if (typeof service.toCanvas === "function") {
-            try {
-                const canvas = await service.toCanvas(element, options);
-                return canvas?.toDataURL ? canvas.toDataURL("image/png") : null;
-            } catch (e) {
-                // fallback below
-            }
+        if (globalThis?.html2canvas) {
+            const canvas = await globalThis.html2canvas(element, { useCORS: true, logging: false });
+            return canvas?.toDataURL ? canvas.toDataURL("image/png") : null;
         }
-    }
-    if (globalThis?.htmlToImage?.toPng) {
-        return await globalThis.htmlToImage.toPng(element, options);
-    }
-    if (globalThis?.html2canvas) {
-        const canvas = await globalThis.html2canvas(element, { useCORS: true, logging: false });
-        return canvas?.toDataURL ? canvas.toDataURL("image/png") : null;
-    }
-    throw new Error(_t("No image renderer available. Update Odoo POS or enable the render service."));
+        throw new Error(_t("No image renderer available. Update Odoo POS or enable the render service."));
+    });
 }
 
 async function htmlToImage(env, html) {

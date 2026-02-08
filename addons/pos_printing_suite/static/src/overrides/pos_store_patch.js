@@ -57,6 +57,10 @@ function createPrintingSuitePrinter(store, printer) {
     if (!config?.printing_suite_allowed) {
         return null;
     }
+    const printerName = getPrinterName(store, printer);
+    if (!printerName) {
+        return null;
+    }
     const type =
         printer.printer_type ||
         (config.printing_mode === "local_agent" ? "local_agent" : "hw_proxy_any_printer");
@@ -64,7 +68,7 @@ function createPrintingSuitePrinter(store, printer) {
         return new LocalAgentPrinter({
             ...printer,
             baseUrl: getLocalAgentBaseUrl(config),
-            printerName: getPrinterName(store, printer),
+            printerName,
         });
     }
     if (type === "hw_proxy_any_printer") {
@@ -72,7 +76,7 @@ function createPrintingSuitePrinter(store, printer) {
         return new HwProxyPrinter({
             ...printer,
             hwProxyBaseUrl: baseUrl,
-            printerName: getPrinterName(store, printer),
+            printerName,
         });
     }
     return null;
