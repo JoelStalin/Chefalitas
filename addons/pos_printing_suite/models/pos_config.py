@@ -157,6 +157,16 @@ class PosConfig(models.Model):
             if not rec.agent_token:
                 rec.agent_token = rec._generate_agent_token()
 
+    def _apply_printer_ids_to_vals(self, vals):
+        if vals.get("local_printer_cashier_id"):
+            printer = self.env["pos.printing.agent.printer"].browse(vals["local_printer_cashier_id"])
+            if printer.exists():
+                vals["local_printer_cashier_name"] = printer.name
+        if vals.get("local_printer_kitchen_id"):
+            printer = self.env["pos.printing.agent.printer"].browse(vals["local_printer_kitchen_id"])
+            if printer.exists():
+                vals["local_printer_kitchen_name"] = printer.name
+
     def action_regenerate_agent_token(self):
         self._ensure_admin()
         for rec in self:
@@ -243,6 +253,8 @@ class PosConfig(models.Model):
             "  exit 1",
             "}",
             "sc.exe create PosPrintingSuiteAgent binPath= `\"$exe`\" start= auto | Out-Null",
+            "sc.exe failure PosPrintingSuiteAgent reset= 0 actions= restart/5000 | Out-Null",
+            "sc.exe failureflag PosPrintingSuiteAgent 1 | Out-Null",
             "sc.exe start PosPrintingSuiteAgent | Out-Null",
             "Write-Host 'Agent installed and started.'",
         ]
@@ -399,6 +411,7 @@ class PosConfig(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            self._apply_printer_ids_to_vals(vals)
             if "any_printer_port" in vals:
                 vals["any_printer_port"] = self._normalize_port_value(
                     vals.get("any_printer_port"), _("HW Proxy Port")
@@ -416,6 +429,7 @@ class PosConfig(models.Model):
         return records
 
     def write(self, vals):
+        self._apply_printer_ids_to_vals(vals)
         if "any_printer_port" in vals:
             vals["any_printer_port"] = self._normalize_port_value(
                 vals.get("any_printer_port"), _("HW Proxy Port")

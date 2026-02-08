@@ -7,6 +7,10 @@
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
                 <group string="POS Printing Suite">
+                    <div class="alert alert-info" role="alert"
+                         invisible="printing_mode != 'local_agent' or agent_status == 'online'">
+                        The Windows Agent is not connected. Install and start the agent to fetch available printers.
+                    </div>
                     <field name="printing_mode"/>
                     <field name="local_printer_cashier_id" domain="[('pos_config_id', '=', id)]"
                            placeholder="Select from agent printers"
