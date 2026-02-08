@@ -1,18 +1,55 @@
 /** @odoo-module **/
 
 import { patch } from "@web/core/utils/patch";
+import { _t } from "@web/core/l10n/translation";
 import { LocalAgentPrinter } from "../app/printers/local_agent_printer";
 import { HwProxyPrinter } from "../app/printers/hw_proxy_printer";
+
+if (odoo.debug) {
+    console.debug("[pos_printing_suite] self_order_service_patch loaded");
+}
 
 const DEFAULT_LOCAL_AGENT_HOST = "127.0.0.1";
 const DEFAULT_LOCAL_AGENT_PORT = 9060;
 const DEFAULT_HW_PROXY_HOST = "127.0.0.1";
 const DEFAULT_HW_PROXY_PORT = 8069;
 
+function sanitizePort(raw) {
+    if (raw === null || raw === undefined || raw === "") {
+        return null;
+    }
+    const cleaned = String(raw).replace(/,/g, "").trim();
+    if (!cleaned) return null;
+    const port = Number.parseInt(cleaned, 10);
+    if (Number.isNaN(port) || port < 1 || port > 65535) {
+        return null;
+    }
+    return port;
+}
+
+function sanitizeHost(raw) {
+    const host = (raw || "").trim();
+    if (!host || /[\s,]/.test(host)) {
+        return null;
+    }
+    return host;
+}
+
+function notifyInvalidConfig(env, message) {
+    console.error("[pos_printing_suite] Invalid configuration:", message);
+    const notification = env?.services?.notification;
+    if (notification?.add) {
+        notification.add(message, { type: "danger" });
+    }
+}
+
 function buildBaseUrl(host, port, fallbackHost, fallbackPort) {
-    const rawHost = (host || "").trim() || fallbackHost;
-    const safePort = port || fallbackPort;
-    let url = rawHost.startsWith("http") ? rawHost : `http://${rawHost}`;
+    const safeHost = sanitizeHost(host) || sanitizeHost(fallbackHost);
+    const safePort = sanitizePort(port) ?? sanitizePort(fallbackPort);
+    if (!safeHost || !safePort) {
+        return null;
+    }
+    let url = safeHost.startsWith("http") ? safeHost : `http://${safeHost}`;
     const hasPort = /:\d{2,5}(\/|$)/.test(url);
     if (!hasPort && safePort) {
         url = url.replace(/\/?$/, `:${safePort}`);
@@ -70,14 +107,23 @@ function createSelfOrderPrinter(env, config) {
     }
     const type = config.printing_mode === "local_agent" ? "local_agent" : "hw_proxy_any_printer";
     if (type === "local_agent") {
+        const baseUrl = getLocalAgentBaseUrl(config);
+        if (!baseUrl) {
+            notifyInvalidConfig(env, _t("Local Agent host/port is invalid."));
+            return null;
+        }
         return new LocalAgentPrinter({
-            baseUrl: getLocalAgentBaseUrl(config),
+            baseUrl,
             printerName,
             role: "kitchen",
             env,
         });
     }
     const baseUrl = getHwProxyBaseUrl(config);
+    if (!baseUrl) {
+        notifyInvalidConfig(env, _t("HW Proxy host/port is invalid."));
+        return null;
+    }
     return new HwProxyPrinter({
         hwProxyBaseUrl: baseUrl,
         printerName,

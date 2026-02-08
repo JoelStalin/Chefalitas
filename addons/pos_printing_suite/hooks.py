@@ -27,3 +27,9 @@ def post_init_hook(env_or_cr, registry=None):
             except Exception:
                 # Ignore failures to avoid blocking module install/upgrade.
                 pass
+
+    try:
+        env["pos.config"]._normalize_existing_hw_proxy_ports()
+    except Exception:
+        # Avoid blocking install if normalization fails.
+        pass

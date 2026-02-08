@@ -1,23 +1,69 @@
 /** @odoo-module **/
 
 import { patch } from "@web/core/utils/patch";
+import { _t } from "@web/core/l10n/translation";
 import { PosStore } from "@point_of_sale/app/store/pos_store";
 import { HardwareProxy } from "@point_of_sale/app/hardware_proxy/hardware_proxy_service";
 import { LocalAgentPrinter } from "../app/printers/local_agent_printer";
 import { HwProxyPrinter } from "../app/printers/hw_proxy_printer";
+
+if (odoo.debug) {
+    console.debug("[pos_printing_suite] pos_store_patch loaded");
+}
 
 const DEFAULT_LOCAL_AGENT_HOST = "127.0.0.1";
 const DEFAULT_LOCAL_AGENT_PORT = 9060;
 const DEFAULT_HW_PROXY_HOST = "127.0.0.1";
 const DEFAULT_HW_PROXY_PORT = 8069;
 
-function buildBaseUrl(host, port, fallbackHost, fallbackPort) {
-    const rawHost = (host || "").trim() || fallbackHost;
-    const safePort = port || fallbackPort;
-    let url = rawHost.startsWith("http") ? rawHost : `http://${rawHost}`;
+function sanitizePort(raw) {
+    if (raw === null || raw === undefined || raw === "") {
+        return null;
+    }
+    const cleaned = String(raw).replace(/,/g, "").trim();
+    if (!cleaned) {
+        return null;
+    }
+    const port = Number.parseInt(cleaned, 10);
+    if (Number.isNaN(port) || port < 1 || port > 65535) {
+        return null;
+    }
+    return port;
+}
+
+function sanitizeHost(raw) {
+    const host = (raw || "").trim();
+    if (!host || /[\s,]/.test(host)) {
+        return null;
+    }
+    return host;
+}
+
+function notifyInvalidConfig(store, message) {
+    console.error("[pos_printing_suite] Invalid configuration:", message);
+    if (store?.notification?.add) {
+        store.notification.add(message, { type: "danger" });
+    }
+}
+
+function buildBaseUrl(host, port, fallbackHost, fallbackPort, store, label) {
+    const safeHost = sanitizeHost(host) || sanitizeHost(fallbackHost);
+    const safePort = sanitizePort(port) ?? sanitizePort(fallbackPort);
+    if (!safeHost) {
+        notifyInvalidConfig(store, _t("%s host is invalid.", label));
+        return null;
+    }
+    if (!safePort) {
+        notifyInvalidConfig(store, _t("%s port is invalid.", label));
+        return null;
+    }
+    let url = safeHost.startsWith("http") ? safeHost : `http://${safeHost}`;
     const hasPort = /:\d{2,5}(\/|$)/.test(url);
     if (!hasPort && safePort) {
         url = url.replace(/\/?$/, `:${safePort}`);
+    }
+    if (odoo.debug) {
+        console.debug(`[pos_printing_suite] ${label} URL:`, url);
     }
     return url;
 }
@@ -35,21 +81,25 @@ function getPrinterName(store, printer) {
     return config?.local_printer_cashier_name || printer.local_printer_name || printer.name || fallback;
 }
 
-function getLocalAgentBaseUrl(config) {
+function getLocalAgentBaseUrl(store, config) {
     return buildBaseUrl(
         config?.local_agent_host,
         config?.local_agent_port,
         DEFAULT_LOCAL_AGENT_HOST,
-        DEFAULT_LOCAL_AGENT_PORT
+        DEFAULT_LOCAL_AGENT_PORT,
+        store,
+        _t("Local Agent")
     );
 }
 
-function getHwProxyBaseUrl(config) {
+function getHwProxyBaseUrl(store, config) {
     return buildBaseUrl(
         config?.any_printer_ip || config?.proxy_ip,
         config?.any_printer_port,
         DEFAULT_HW_PROXY_HOST,
-        DEFAULT_HW_PROXY_PORT
+        DEFAULT_HW_PROXY_PORT,
+        store,
+        _t("HW Proxy")
     );
 }
 
@@ -63,14 +113,18 @@ function createPrintingSuitePrinter(store, printer) {
         printer.printer_type ||
         (config.printing_mode === "local_agent" ? "local_agent" : "hw_proxy_any_printer");
     if (type === "local_agent") {
+        const baseUrl = getLocalAgentBaseUrl(store, config);
+        if (!baseUrl) {
+            return null;
+        }
         return new LocalAgentPrinter({
             ...printer,
-            baseUrl: getLocalAgentBaseUrl(config),
+            baseUrl,
             printerName,
         });
     }
     if (type === "hw_proxy_any_printer") {
-        const baseUrl = getHwProxyBaseUrl(config);
+        const baseUrl = getHwProxyBaseUrl(store, config);
         if (!baseUrl) {
             return null;
         }

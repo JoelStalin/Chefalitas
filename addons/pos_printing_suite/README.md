@@ -37,3 +37,25 @@ Configuration lives **only in `pos.config`**.
 
 - The addon converts the POS receipt to an **image** before sending it to the agent/proxy.
 - If no printer name is configured, the addon does **not** override standard Odoo printing.
+
+## Windows Agent (MVP)
+
+This module can generate a **ZIP installer** (placeholder) for a Windows agent.
+
+**Flow**
+1. Open POS Config and go to the **Windows Agent** section.
+2. Click **Crear instalable del agente** to generate a ZIP.
+3. Click **Descargar e instalar agente** to open instructions and download.
+4. Extract the ZIP on the Windows POS machine.
+5. Run `install.ps1` as Administrator.
+
+**Important**
+- The generated `agent.exe` is a **placeholder**. Replace it with a real service binary.
+- Recommended build options:
+  - **Python + PyInstaller** (simple)
+  - **.NET Worker Service** (robust)
+
+The agent should:
+- read `config.json` (server URL + token),
+- send periodic pings to `/pos_printing_suite/agent/ping`,
+- optionally expose a local endpoint for printing.

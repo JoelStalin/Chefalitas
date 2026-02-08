@@ -7,6 +7,14 @@ import { ensureImagePayload } from "./image_utils";
 
 const DEFAULT_TIMEOUT_MS = 5000;
 
+function summarizePayload(action, receipt, printerName) {
+    return {
+        action,
+        printer_name: printerName || undefined,
+        receipt_size: receipt ? String(receipt).length : 0,
+    };
+}
+
 async function rpcWithTimeout(url, params, timeoutMs) {
     const request = rpc(url, params);
     let timer;
@@ -49,6 +57,11 @@ export class HwProxyPrinter extends BasePrinter {
             throw new Error(_t("HW Proxy: no base URL configured."));
         }
         const url = `${this.hwProxyBaseUrl.replace(/\/$/, "")}/hw_proxy/default_printer_action`;
+        const summary = summarizePayload("print_receipt", receipt, this.printerName);
+        if (odoo.debug) {
+            console.debug("[pos_printing_suite] HW proxy URL:", url);
+            console.debug("[pos_printing_suite] HW proxy payload summary:", summary);
+        }
         try {
             const payload = await ensureImagePayload(this.env, receipt);
             if (!payload) {
@@ -66,6 +79,17 @@ export class HwProxyPrinter extends BasePrinter {
                 this.timeoutMs
             );
         } catch (err) {
+            console.error("[pos_printing_suite] HW proxy request failed", {
+                url,
+                payload_summary: summary,
+                error_message: err?.message,
+                error_stack: err?.stack,
+                error_name: err?.name,
+                error_code: err?.code,
+                error_subtype: err?.subType,
+                error_data: err?.data,
+                response_body: err?.data?.message || err?.data?.debug,
+            });
             if (err?.message === "timeout") {
                 throw new Error(_t("HW Proxy print timed out."));
             }
@@ -78,6 +102,13 @@ export class HwProxyPrinter extends BasePrinter {
             return false;
         }
         const url = `${this.hwProxyBaseUrl.replace(/\/$/, "")}/hw_proxy/default_printer_action`;
+        if (odoo.debug) {
+            console.debug("[pos_printing_suite] HW proxy URL:", url);
+            console.debug("[pos_printing_suite] HW proxy payload summary:", {
+                action: "cashbox",
+                printer_name: this.printerName || undefined,
+            });
+        }
         return rpcWithTimeout(
             url,
             { data: { action: "cashbox", printer_name: this.printerName || undefined } },

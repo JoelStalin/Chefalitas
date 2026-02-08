@@ -21,6 +21,7 @@
         "security/ir.model.access.csv",
         "security/security.xml",
         "views/pos_config_views.xml",
+        "views/agent_install_wizard_views.xml",
     ],
     "installable": True,
     "application": False,
