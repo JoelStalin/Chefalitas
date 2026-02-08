@@ -121,6 +121,7 @@ function createPrintingSuitePrinter(store, printer) {
             ...printer,
             baseUrl,
             printerName,
+            token: config?.agent_token_pos || "",
         });
     }
     if (type === "hw_proxy_any_printer") {

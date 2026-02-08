@@ -60,6 +60,10 @@ class PosConfig(models.Model):
         copy=False,
         groups="base.group_system",
     )
+    agent_token_pos = fields.Char(
+        compute="_compute_agent_token_pos",
+        help="Agent token exposed to POS only for authorized users.",
+    )
     agent_last_seen = fields.Datetime(string="Agent Last Seen", readonly=True)
     agent_version = fields.Char(string="Agent Version", readonly=True)
     agent_status = fields.Selection(
@@ -89,6 +93,15 @@ class PosConfig(models.Model):
     def _compute_printing_suite_allowed(self):
         for rec in self:
             rec.printing_suite_allowed = rec._is_printing_suite_allowed()
+
+    @api.depends("agent_token", "printing_mode")
+    @api.depends_context("uid")
+    def _compute_agent_token_pos(self):
+        for rec in self:
+            if rec.printing_mode == "local_agent" and rec._is_printing_suite_allowed():
+                rec.agent_token_pos = rec.agent_token
+            else:
+                rec.agent_token_pos = False
 
     def _is_printing_suite_allowed(self):
         self.ensure_one()
@@ -421,6 +434,7 @@ class PosConfig(models.Model):
             "local_agent_port",
             "local_printer_cashier_name",
             "local_printer_kitchen_name",
+            "agent_token_pos",
             "any_printer_ip",
             "any_printer_port",
         ])
@@ -439,6 +453,7 @@ class PosConfig(models.Model):
             "local_agent_port",
             "local_printer_cashier_name",
             "local_printer_kitchen_name",
+            "agent_token_pos",
             "any_printer_ip",
             "any_printer_port",
         ]

@@ -117,6 +117,7 @@ function createSelfOrderPrinter(env, config) {
             printerName,
             role: "kitchen",
             env,
+            token: config?.agent_token_pos || "",
         });
     }
     const baseUrl = getHwProxyBaseUrl(config);
