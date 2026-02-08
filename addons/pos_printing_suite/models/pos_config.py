@@ -148,7 +148,7 @@ class PosConfig(models.Model):
         base_url = self.env["ir.config_parameter"].sudo().get_param("web.base.url")
         for rec in self:
             if not base_url:
-                rec.agent_download_url = False
+                rec.agent_download_url = f"/pos_printing_suite/agent/download?config_id={rec.id}"
             else:
                 rec.agent_download_url = (
                     f"{base_url}/pos_printing_suite/agent/download?config_id={rec.id}"
