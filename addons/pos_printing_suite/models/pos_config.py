@@ -264,6 +264,7 @@ class PosConfig(models.Model):
             "token": self.agent_token,
             "pos_config_id": self.id,
         }
+        loopback_policy = self._build_loopback_policy_script()
         installer_lines = [
             "$ErrorActionPreference = 'Stop'",
             "$baseDir = Join-Path $env:ProgramData 'PosPrintingSuite\\Agent'",
@@ -299,7 +300,8 @@ class PosConfig(models.Model):
             "Windows Agent (bundle)\n"
             "1) Run install.ps1 as Administrator.\n"
             "2) The service will start automatically.\n"
-            "3) If no compiled agent is present, build it using the scripts in installer/.\n"
+            "3) If your POS runs on HTTPS, run enable_loopback_policy.ps1 as Administrator.\n"
+            "4) If no compiled agent is present, build it using the scripts in installer/.\n"
         )
 
         buffer = io.BytesIO()
@@ -307,6 +309,7 @@ class PosConfig(models.Model):
             zipf.writestr("config.json", json.dumps(config, indent=2))
             zipf.writestr("install.ps1", installer_ps1)
             zipf.writestr("uninstall.ps1", uninstall_ps1)
+            zipf.writestr("enable_loopback_policy.ps1", loopback_policy)
             zipf.writestr("README.txt", readme_txt)
             self._zip_directory(zipf, agent_root, base_path="")
             compiled = self._find_compiled_agent(dist_root, agent_root)
@@ -319,6 +322,32 @@ class PosConfig(models.Model):
             if compiled and dist_root and os.path.isdir(dist_root):
                 self._zip_directory(zipf, dist_root, base_path="dist")
         return buffer.getvalue()
+
+    def _build_loopback_policy_script(self, base_url=None):
+        base_url = base_url or self.env["ir.config_parameter"].sudo().get_param("web.base.url") or ""
+        base_url = base_url.rstrip("/")
+        urls = set()
+        if base_url:
+            urls.add(base_url)
+        if base_url.startswith("http://"):
+            urls.add("https://" + base_url[len("http://"):])
+        elif base_url.startswith("https://"):
+            urls.add("http://" + base_url[len("https://"):])
+        if not urls:
+            urls = {"http://localhost", "https://localhost"}
+        url_list = ", ".join([f"'{u}'" for u in sorted(urls)])
+        return (
+            "$ErrorActionPreference = 'Stop'\n"
+            "$chromePath = 'HKLM:\\\\SOFTWARE\\\\Policies\\\\Google\\\\Chrome'\n"
+            "New-Item -Path $chromePath -Force | Out-Null\n"
+            "New-ItemProperty -Path $chromePath -Name InsecurePrivateNetworkRequestsAllowed -PropertyType DWord -Value 1 -Force | Out-Null\n"
+            f"New-ItemProperty -Path $chromePath -Name InsecurePrivateNetworkRequestsAllowedForUrls -PropertyType MultiString -Value @({url_list}) -Force | Out-Null\n"
+            "$edgePath = 'HKLM:\\\\SOFTWARE\\\\Policies\\\\Microsoft\\\\Edge'\n"
+            "New-Item -Path $edgePath -Force | Out-Null\n"
+            "New-ItemProperty -Path $edgePath -Name InsecurePrivateNetworkRequestsAllowed -PropertyType DWord -Value 1 -Force | Out-Null\n"
+            f"New-ItemProperty -Path $edgePath -Name InsecurePrivateNetworkRequestsAllowedForUrls -PropertyType MultiString -Value @({url_list}) -Force | Out-Null\n"
+            "Write-Host 'Loopback policy applied. Restart Chrome/Edge.'\n"
+        )
 
     def _run_agent_build(self, build_cmd, agent_root):
         installer_dir = os.path.join(agent_root, "installer")

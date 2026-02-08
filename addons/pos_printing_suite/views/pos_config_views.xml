@@ -41,7 +41,6 @@
                     <field name="agent_last_seen" readonly="1"/>
                     <field name="agent_version" readonly="1"/>
                     <field name="agent_download_url" readonly="1"/>
-                    <field name="agent_policy_download_url" readonly="1"/>
                     <field name="agent_token" password="True" readonly="1"/>
                     <field name="agent_printer_ids" readonly="1">
                         <list>
@@ -51,10 +50,6 @@
                     </field>
                     <button name="action_regenerate_agent_token" type="object"
                             string="Regenerate Token" class="btn-secondary"/>
-                    <button name="action_download_agent_policy" type="object"
-                            string="Download Loopback Policy" class="btn-secondary"/>
-                    <button name="action_build_agent_installer" type="object"
-                            string="Crear instalable del agente" class="btn-primary"/>
                     <button name="action_open_agent_install_wizard" type="object"
                             string="Descargar e instalar agente" class="btn-secondary"/>
                 </group>

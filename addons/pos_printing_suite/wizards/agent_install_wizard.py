@@ -8,7 +8,6 @@ class PosPrintingSuiteAgentInstallWizard(models.TransientModel):
 
     pos_config_id = fields.Many2one("pos.config", required=True)
     download_url = fields.Char(compute="_compute_download_url")
-    policy_download_url = fields.Char(compute="_compute_policy_download_url")
     instructions = fields.Html(compute="_compute_instructions", sanitize=False)
 
     @api.depends("pos_config_id")
@@ -22,18 +21,7 @@ class PosPrintingSuiteAgentInstallWizard(models.TransientModel):
                     f"{base_url}/pos_printing_suite/agent/download?config_id={rec.pos_config_id.id}"
                 )
 
-    @api.depends("pos_config_id")
-    def _compute_policy_download_url(self):
-        base_url = self.env["ir.config_parameter"].sudo().get_param("web.base.url")
-        for rec in self:
-            if not base_url or not rec.pos_config_id:
-                rec.policy_download_url = False
-            else:
-                rec.policy_download_url = (
-                    f"{base_url}/pos_printing_suite/agent/policy.ps1?config_id={rec.pos_config_id.id}"
-                )
-
-    @api.depends("download_url", "policy_download_url")
+    @api.depends("download_url")
     def _compute_instructions(self):
         for rec in self:
             if not rec.download_url:
@@ -45,23 +33,10 @@ class PosPrintingSuiteAgentInstallWizard(models.TransientModel):
                   <li>Download the installer ZIP.</li>
                   <li>Extract it on the Windows POS machine.</li>
                   <li>Right-click <code>install.ps1</code> and run as Administrator.</li>
+                  <li>If your POS runs on HTTPS, run <code>enable_loopback_policy.ps1</code> as Administrator.</li>
                   <li>The service will start automatically and report status back to Odoo.</li>
                 </ol>
-                <p>
-                  <a class="btn btn-primary" href="%s">Download Installer</a>
-                </p>
-                <hr/>
-                <p><strong>Chrome/Edge Loopback Policy (required for https POS)</strong></p>
-                <ol>
-                  <li>Download the loopback policy script.</li>
-                  <li>Run it as Administrator to allow https POS to access <code>http://127.0.0.1</code>.</li>
-                  <li>Restart Chrome/Edge.</li>
-                </ol>
-                <p>
-                  <a class="btn btn-secondary" href="%s">Download Loopback Policy Script</a>
-                </p>
                 """
-                % (rec.download_url, rec.policy_download_url or "#")
             )
 
     def action_download(self):

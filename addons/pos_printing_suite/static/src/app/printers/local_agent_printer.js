@@ -28,15 +28,8 @@ function isLoopbackBlocked(err, baseUrl) {
 }
 
 function buildLoopbackHelpMessage(env) {
-    const url = env?.pos?.config?.agent_policy_download_url;
-    if (url) {
-        return _t(
-            "Chrome/Edge blocked access to the local agent. Ask an admin to download and run the loopback policy: %s",
-            url
-        );
-    }
     return _t(
-        "Chrome/Edge blocked access to the local agent. Ask an admin to enable the loopback policy for this POS domain."
+        "Chrome/Edge blocked access to the local agent. Ask an admin to download the Windows Agent installer and run enable_loopback_policy.ps1 as Administrator."
     );
 }
 
