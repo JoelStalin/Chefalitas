@@ -1,0 +1,60 @@
+<odoo>
+    <record id="view_rest_recipe_tree" model="ir.ui.view">
+        <field name="name">rest.recipe.tree</field>
+        <field name="model">rest.recipe</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name" />
+                <field name="product_id" />
+                <field name="expected_portions" />
+                <field name="theoretical_total_cost" />
+                <field name="theoretical_cost_per_portion" />
+                <field name="suggested_sale_price" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_rest_recipe_form" model="ir.ui.view">
+        <field name="name">rest.recipe.form</field>
+        <field name="model">rest.recipe</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name" />
+                        <field name="product_id" />
+                        <field name="expected_portions" />
+                        <field name="standard_portion_weight_g" />
+                        <field name="expected_total_weight_g" readonly="1" />
+                    </group>
+                    <group>
+                        <field name="target_margin_pct" />
+                        <field name="theoretical_total_cost" readonly="1" />
+                        <field name="theoretical_cost_per_portion" readonly="1" />
+                        <field name="suggested_sale_price" readonly="1" />
+                    </group>
+                    <notebook>
+                        <page string="Ingredients">
+                            <field name="line_ids">
+                                <tree editable="bottom">
+                                    <field name="ingredient_id" />
+                                    <field name="uom_id" />
+                                    <field name="qty_g" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Notes">
+                            <field name="notes_kitchen" />
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_rest_recipe" model="ir.actions.act_window">
+        <field name="name">Recipes</field>
+        <field name="res_model">rest.recipe</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>
