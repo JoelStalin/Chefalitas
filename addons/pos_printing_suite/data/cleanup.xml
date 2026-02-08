@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <!-- Remove legacy Printing Devices UI records if they exist -->
-    <delete id="menu_pos_print_device"/>
-    <delete id="action_pos_print_device"/>
-    <delete id="view_pos_print_device_tree"/>
-    <delete id="view_pos_print_device_form"/>
-    <delete id="view_pos_printer_form_printing_suite"/>
+    <data>
+        <!-- Remove legacy Printing Devices UI records if they exist -->
+        <delete id="menu_pos_print_device"/>
+        <delete id="action_pos_print_device"/>
+        <delete id="view_pos_print_device_tree"/>
+        <delete id="view_pos_print_device_form"/>
+        <delete id="view_pos_printer_form_printing_suite"/>
+    </data>
 </odoo>
