@@ -7,6 +7,7 @@ const DEFAULT_RENDER_OPTIONS = {
     backgroundColor: "#ffffff",
     pixelRatio: 1,
     skipFonts: true,
+    fontEmbedCSS: "",
     cacheBust: true,
 };
 

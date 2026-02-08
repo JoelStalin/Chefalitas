@@ -49,7 +49,18 @@ export class HwProxyPrinter extends BasePrinter {
     }
 
     async printReceipt(receipt) {
-        return this.sendPrintingJob(receipt);
+        try {
+            const result = await this.sendPrintingJob(receipt);
+            return { successful: true, result };
+        } catch (err) {
+            return {
+                successful: false,
+                message: {
+                    title: _t("Printing failed"),
+                    body: err?.message || _t("HW Proxy print failed."),
+                },
+            };
+        }
     }
 
     async sendPrintingJob(receipt) {

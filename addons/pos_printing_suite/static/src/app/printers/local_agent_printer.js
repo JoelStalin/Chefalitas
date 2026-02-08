@@ -17,7 +17,18 @@ export class LocalAgentPrinter extends BasePrinter {
     }
 
     async printReceipt(receipt) {
-        return this.sendPrintingJob(receipt);
+        try {
+            const result = await this.sendPrintingJob(receipt);
+            return { successful: true, result };
+        } catch (err) {
+            return {
+                successful: false,
+                message: {
+                    title: _t("Printing failed"),
+                    body: err?.message || _t("Local Agent print failed."),
+                },
+            };
+        }
     }
 
     async sendPrintingJob(receipt) {
