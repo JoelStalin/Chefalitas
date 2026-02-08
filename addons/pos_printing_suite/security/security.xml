@@ -4,10 +4,4 @@
         <field name="name">POS Printing Suite: Printing</field>
         <field name="category_id" ref="base.module_category_point_of_sale"/>
     </record>
-    <record id="pos_print_device_company_rule" model="ir.rule">
-        <field name="name">POS Print Device: multi-company</field>
-        <field name="model_id" ref="pos_printing_suite.model_pos_print_device"/>
-        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
-        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
-    </record>
 </odoo>
