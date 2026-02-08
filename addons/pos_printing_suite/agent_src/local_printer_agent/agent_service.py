@@ -187,11 +187,15 @@ def _send_ping(config):
     if not server_url or not token:
         return
     payload = {
-        "token": token,
-        "version": VERSION,
-        "status": "online",
-        "pos_config_id": config.get("pos_config_id"),
-        "printers": list_printers(),
+        "jsonrpc": "2.0",
+        "method": "call",
+        "params": {
+            "token": token,
+            "version": VERSION,
+            "status": "online",
+            "pos_config_id": config.get("pos_config_id"),
+            "printers": list_printers(),
+        },
     }
     url = f"{server_url}/pos_printing_suite/agent/ping"
     data = json.dumps(payload).encode("utf-8")
