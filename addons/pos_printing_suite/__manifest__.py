@@ -6,7 +6,7 @@
     "category": "Sales/Point of Sale",
     "summary": "Unified POS printing: Local Agent (Windows), HW Proxy, Self-Order",
     "author": "GetUpSoft",
-    "depends": ["point_of_sale"],
+    "depends": ["point_of_sale", 'pos_self_order'],
     "post_init_hook": "post_init_hook",
     "assets": {
         "point_of_sale._assets_pos": [

@@ -2,12 +2,18 @@
 import base64
 import io
 import json
+import logging
+import os
 import re
 import secrets
+import subprocess
 import zipfile
 
 from odoo import api, fields, models, _
+from odoo.modules.module import get_module_resource
 from odoo.exceptions import AccessError, ValidationError, UserError
+
+_logger = logging.getLogger(__name__)
 
 
 class PosConfig(models.Model):
@@ -178,6 +184,16 @@ class PosConfig(models.Model):
 
     def _build_agent_zip_payload(self):
         self.ensure_one()
+        module_root = get_module_resource("pos_printing_suite")
+        agent_root = get_module_resource("pos_printing_suite", "agent_src", "local_printer_agent")
+        dist_root = get_module_resource("pos_printing_suite", "agent_src", "dist")
+        if not agent_root:
+            raise UserError(_("Agent source folder not found."))
+
+        build_cmd = os.environ.get("POS_PRINTING_SUITE_AGENT_BUILD_CMD")
+        if build_cmd:
+            self._run_agent_build(build_cmd, agent_root)
+
         config = {
             "server_url": self.env["ir.config_parameter"].sudo().get_param("web.base.url"),
             "token": self.agent_token,
@@ -189,6 +205,14 @@ class PosConfig(models.Model):
             "New-Item -ItemType Directory -Force -Path $baseDir | Out-Null",
             "Copy-Item -Path (Join-Path $PSScriptRoot '*') -Destination $baseDir -Recurse -Force",
             "$exe = Join-Path $baseDir 'agent.exe'",
+            "$onedirExe = Join-Path $baseDir 'dist\\LocalPrinterAgent\\LocalPrinterAgent.exe'",
+            "$singleExe = Join-Path $baseDir 'LocalPrinterAgent.exe'",
+            "if (Test-Path $onedirExe) { $exe = $onedirExe }",
+            "elseif (Test-Path $singleExe) { $exe = $singleExe }",
+            "elseif (-not (Test-Path $exe)) {",
+            "  Write-Host 'No compiled agent executable found. Build the agent first.'",
+            "  exit 1",
+            "}",
             "sc.exe create PosPrintingSuiteAgent binPath= `\"$exe`\" start= auto | Out-Null",
             "sc.exe start PosPrintingSuiteAgent | Out-Null",
             "Write-Host 'Agent installed and started.'",
@@ -205,14 +229,10 @@ class PosConfig(models.Model):
         ]
         uninstall_ps1 = "\n".join(uninstall_lines) + "\n"
         readme_txt = (
-            "Windows Agent (placeholder)\n"
+            "Windows Agent (bundle)\n"
             "1) Run install.ps1 as Administrator.\n"
             "2) The service will start automatically.\n"
-            "3) Replace agent.exe with a real build (PyInstaller/.NET) later.\n"
-        )
-        agent_placeholder = (
-            "PLACEHOLDER EXECUTABLE\n"
-            "Build a real Windows service binary and replace this file.\n"
+            "3) If no compiled agent is present, build it using the scripts in installer/.\n"
         )
 
         buffer = io.BytesIO()
@@ -221,8 +241,60 @@ class PosConfig(models.Model):
             zipf.writestr("install.ps1", installer_ps1)
             zipf.writestr("uninstall.ps1", uninstall_ps1)
             zipf.writestr("README.txt", readme_txt)
-            zipf.writestr("agent.exe", agent_placeholder)
+            self._zip_directory(zipf, agent_root, base_path="")
+            compiled = self._find_compiled_agent(dist_root, agent_root)
+            if not compiled:
+                _logger.warning(
+                    "No compiled agent binary found. "
+                    "Set POS_PRINTING_SUITE_AGENT_BUILD_CMD or place the compiled "
+                    "binary under agent_src/dist/LocalPrinterAgent/LocalPrinterAgent.exe."
+                )
+            if compiled and dist_root and os.path.isdir(dist_root):
+                self._zip_directory(zipf, dist_root, base_path="dist")
         return buffer.getvalue()
+
+    def _run_agent_build(self, build_cmd, agent_root):
+        installer_dir = os.path.join(agent_root, "installer")
+        if not os.path.isdir(installer_dir):
+            raise UserError(_("Agent installer folder not found: %s") % installer_dir)
+        _logger.info("Running agent build command: %s", build_cmd)
+        try:
+            subprocess.run(
+                build_cmd,
+                shell=True,
+                cwd=installer_dir,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        except subprocess.CalledProcessError as exc:
+            _logger.error("Agent build failed: %s", exc.stderr)
+            raise UserError(_("Agent build failed:\n%s") % (exc.stderr or exc.stdout or str(exc)))
+
+    def _zip_directory(self, zipf, root_dir, base_path=""):
+        for root, dirs, files in os.walk(root_dir):
+            dirs[:] = [d for d in dirs if d != "__pycache__"]
+            for filename in files:
+                if filename.endswith(".pyc"):
+                    continue
+                abs_path = os.path.join(root, filename)
+                rel_path = os.path.relpath(abs_path, root_dir)
+                arc_path = os.path.join(base_path, rel_path) if base_path else rel_path
+                zipf.write(abs_path, arc_path)
+
+    def _find_compiled_agent(self, dist_root, agent_root):
+        candidates = []
+        if dist_root:
+            candidates.extend([
+                os.path.join(dist_root, "LocalPrinterAgent", "LocalPrinterAgent.exe"),
+                os.path.join(dist_root, "LocalPrinterAgent.exe"),
+            ])
+        if agent_root:
+            candidates.append(os.path.join(agent_root, "agent.exe"))
+        for path in candidates:
+            if path and os.path.isfile(path):
+                return path
+        return None
 
     def _notify(self, message, notif_type="info"):
         return {
