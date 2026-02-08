@@ -31,7 +31,13 @@ export class HwProxyPrinter extends BasePrinter {
             if (!payload) {
                 throw new Error(_t("HW Proxy: empty receipt payload."));
             }
-            return await rpc(url, { action: "print_receipt", receipt: payload });
+            return await rpc(url, {
+                data: {
+                    action: "print_receipt",
+                    printer_name: this.printerName || undefined,
+                    receipt: payload,
+                },
+            });
         } catch (e) {
             throw new Error(_t("HW Proxy print failed."));
         }
@@ -42,6 +48,6 @@ export class HwProxyPrinter extends BasePrinter {
             return false;
         }
         const url = `${this.hwProxyBaseUrl.replace(/\/$/, "")}/hw_proxy/default_printer_action`;
-        return rpc(url, { action: "cashbox" });
+        return rpc(url, { data: { action: "cashbox", printer_name: this.printerName || undefined } });
     }
 }
