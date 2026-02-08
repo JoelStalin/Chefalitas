@@ -68,7 +68,7 @@ class PosPrintingSuiteAgentController(http.Controller):
             urls.add("https://" + base_url[len("http://"):])
         elif base_url.startswith("https://"):
             urls.add("http://" + base_url[len("https://"):])
-        url_list = ", ".join([f\"'{u}'\" for u in sorted(urls)])
+        url_list = ", ".join([f"'{u}'" for u in sorted(urls)])
         script = (
             "$ErrorActionPreference = 'Stop'\n"
             "$chromePath = 'HKLM:\\\\SOFTWARE\\\\Policies\\\\Google\\\\Chrome'\n"
