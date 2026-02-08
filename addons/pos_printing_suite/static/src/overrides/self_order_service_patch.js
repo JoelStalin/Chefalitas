@@ -41,6 +41,9 @@ function getHwProxyBaseUrl(config) {
 function isSuiteAllowed(config) {
     if (!config) return false;
     if (config.printing_mode === "odoo_default") return false;
+    if (Object.prototype.hasOwnProperty.call(config, "other_devices") && !config.other_devices) {
+        return false;
+    }
     // If the field exists and is explicitly false, block.
     if (Object.prototype.hasOwnProperty.call(config, "printing_suite_allowed")) {
         return !!config.printing_suite_allowed;
@@ -49,7 +52,12 @@ function isSuiteAllowed(config) {
 }
 
 function getKitchenPrinterName(config) {
-    return config?.local_printer_kitchen_name || config?.local_printer_cashier_name || "";
+    return (
+        config?.local_printer_kitchen_name ||
+        config?.local_printer_cashier_name ||
+        config?.name ||
+        ""
+    );
 }
 
 function createSelfOrderPrinter(env, config) {

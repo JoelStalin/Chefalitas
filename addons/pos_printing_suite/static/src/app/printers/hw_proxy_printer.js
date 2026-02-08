@@ -13,7 +13,10 @@ export class HwProxyPrinter extends BasePrinter {
     setup(params) {
         super.setup(...arguments);
         this.hwProxyBaseUrl = params.hwProxyBaseUrl || "";
-        this.printerName = params.printerName || "";
+        if (!this.hwProxyBaseUrl && params.ip) {
+            this.hwProxyBaseUrl = params.ip.startsWith("http") ? params.ip : `http://${params.ip}`;
+        }
+        this.printerName = params.printerName || params.printer || "";
     }
 
     async printReceipt(receipt) {

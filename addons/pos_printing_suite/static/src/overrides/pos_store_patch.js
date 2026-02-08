@@ -28,10 +28,11 @@ function getPosConfig(store) {
 
 function getPrinterName(store, printer) {
     const config = getPosConfig(store);
+    const fallback = config?.name || printer?.name || "";
     if (printer?.role === "kitchen") {
-        return config?.local_printer_kitchen_name || printer.local_printer_name || printer.name || "";
+        return config?.local_printer_kitchen_name || printer.local_printer_name || printer.name || fallback;
     }
-    return config?.local_printer_cashier_name || printer.local_printer_name || printer.name || "";
+    return config?.local_printer_cashier_name || printer.local_printer_name || printer.name || fallback;
 }
 
 function getLocalAgentBaseUrl(config) {
@@ -58,9 +59,6 @@ function createPrintingSuitePrinter(store, printer) {
         return null;
     }
     const printerName = getPrinterName(store, printer);
-    if (!printerName) {
-        return null;
-    }
     const type =
         printer.printer_type ||
         (config.printing_mode === "local_agent" ? "local_agent" : "hw_proxy_any_printer");
@@ -73,6 +71,9 @@ function createPrintingSuitePrinter(store, printer) {
     }
     if (type === "hw_proxy_any_printer") {
         const baseUrl = getHwProxyBaseUrl(config);
+        if (!baseUrl) {
+            return null;
+        }
         return new HwProxyPrinter({
             ...printer,
             hwProxyBaseUrl: baseUrl,

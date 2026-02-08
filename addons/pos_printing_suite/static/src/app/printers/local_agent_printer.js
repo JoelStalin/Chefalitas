@@ -11,7 +11,7 @@ export class LocalAgentPrinter extends BasePrinter {
         super.setup(...arguments);
         this.baseUrl = params.baseUrl || LOCAL_AGENT_BASE_URL;
         this.token = params.token || "";
-        this.printerName = params.printerName || "";
+        this.printerName = params.printerName || params.printer || "";
     }
 
     async printReceipt(receipt) {
