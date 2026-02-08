@@ -16,6 +16,11 @@ export class HwProxyPrinter extends BasePrinter {
         this.printerName = params.printerName || "";
     }
 
+    async printReceipt(receipt) {
+        const payload = await ensureImagePayload(this.env, receipt);
+        return this.sendPrintingJob(payload);
+    }
+
     async sendPrintingJob(receiptB64) {
         if (!this.hwProxyBaseUrl) {
             throw new Error(_t("HW Proxy: no base URL configured."));

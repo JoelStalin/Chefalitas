@@ -14,6 +14,11 @@ export class LocalAgentPrinter extends BasePrinter {
         this.printerName = params.printerName || "";
     }
 
+    async printReceipt(receipt) {
+        const payload = await ensureImagePayload(this.env, receipt);
+        return this.sendPrintingJob(payload);
+    }
+
     async sendPrintingJob(receiptB64) {
         const payload = await ensureImagePayload(this.env, receiptB64);
         if (!payload) {

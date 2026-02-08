@@ -36,20 +36,36 @@ function getRenderService(env) {
 
 async function renderElementToImage(env, element) {
     const service = getRenderService(env);
+    const options = { skipFonts: true, cacheBust: true };
     if (service) {
         if (typeof service.renderToImage === "function") {
-            return await service.renderToImage(element);
+            try {
+                return await service.renderToImage(element, options);
+            } catch (e) {
+                // fallback below
+            }
         }
         if (typeof service.toImage === "function") {
-            return await service.toImage(element);
+            try {
+                return await service.toImage(element, options);
+            } catch (e) {
+                // fallback below
+            }
         }
         if (typeof service.toCanvas === "function") {
-            const canvas = await service.toCanvas(element);
-            return canvas?.toDataURL ? canvas.toDataURL("image/png") : null;
+            try {
+                const canvas = await service.toCanvas(element, options);
+                return canvas?.toDataURL ? canvas.toDataURL("image/png") : null;
+            } catch (e) {
+                // fallback below
+            }
         }
     }
+    if (globalThis?.htmlToImage?.toPng) {
+        return await globalThis.htmlToImage.toPng(element, options);
+    }
     if (globalThis?.html2canvas) {
-        const canvas = await globalThis.html2canvas(element);
+        const canvas = await globalThis.html2canvas(element, { useCORS: true, logging: false });
         return canvas?.toDataURL ? canvas.toDataURL("image/png") : null;
     }
     throw new Error(_t("No image renderer available. Update Odoo POS or enable the render service."));
