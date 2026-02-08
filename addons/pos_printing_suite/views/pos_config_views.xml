@@ -28,7 +28,7 @@
                            invisible="printing_mode != 'hw_proxy'"/>
                 </group>
                 <group string="Windows Agent" groups="base.group_system">
-                    <div class="alert alert-warning"
+                    <div class="alert alert-warning" role="alert"
                          invisible="agent_status == 'online'">
                         The Windows Agent is not connected. Install and start the agent on the POS PC.
                     </div>
