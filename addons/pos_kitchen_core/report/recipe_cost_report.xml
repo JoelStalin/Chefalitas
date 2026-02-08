@@ -1,0 +1,37 @@
+<odoo>
+    <report
+        id="report_recipe_cost"
+        model="rest.recipe"
+        string="Recipe Cost Sheet"
+        report_type="qweb-pdf"
+        name="pos_kitchen_core.recipe_cost_report"
+        file="pos_kitchen_core.recipe_cost_report"
+    />
+
+    <template id="recipe_cost_report">
+        <t t-call="web.external_layout">
+            <div class="page">
+                <h2 t-esc="doc.name" />
+                <p><strong>Product:</strong> <t t-esc="doc.product_id.display_name" /></p>
+                <p><strong>Expected portions:</strong> <t t-esc="doc.expected_portions" /></p>
+                <p><strong>Theoretical total cost:</strong> <t t-esc="doc.theoretical_total_cost" /></p>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Ingredient</th>
+                            <th>Qty (g)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="doc.line_ids" t-as="line">
+                            <tr>
+                                <td><t t-esc="line.ingredient_id.display_name" /></td>
+                                <td><t t-esc="line.qty_g" /></td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </div>
+        </t>
+    </template>
+</odoo>

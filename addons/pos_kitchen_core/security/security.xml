@@ -1,0 +1,19 @@
+<odoo>
+    <record id="group_prep_chef" model="res.groups">
+        <field name="name">Prep Chef</field>
+        <field name="category_id" ref="base.module_category_hidden"/>
+    </record>
+    <record id="group_prep_supervisor" model="res.groups">
+        <field name="name">Prep Supervisor</field>
+        <field name="category_id" ref="base.module_category_hidden"/>
+    </record>
+    <record id="group_prep_finance" model="res.groups">
+        <field name="name">Prep Finance</field>
+        <field name="category_id" ref="base.module_category_hidden"/>
+    </record>
+    <record id="group_prep_admin" model="res.groups">
+        <field name="name">Prep Admin</field>
+        <field name="category_id" ref="base.module_category_hidden"/>
+        <field name="implied_ids" eval="[(4, ref('group_prep_supervisor')),(4, ref('group_prep_finance'))]"/>
+    </record>
+</odoo>
