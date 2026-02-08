@@ -19,6 +19,10 @@ if sys.platform == "win32":
     except Exception:
         Image = None
         ImageWin = None
+    try:
+        import fitz  # PyMuPDF
+    except Exception:
+        fitz = None
 else:
     win32print = None
     win32api = None
@@ -26,6 +30,7 @@ else:
     win32con = None
     Image = None
     ImageWin = None
+    fitz = None
 
 
 def list_printers():
@@ -73,10 +78,23 @@ def print_raw(printer_name, data_b64):
 
 
 def print_pdf(printer_name, data_b64):
-    """Print PDF from base64 data by saving to temp file and using default PDF handler."""
+    """Print PDF from base64 data. Prefer PyMuPDF->GDI when available."""
     if not win32api:
         raise RuntimeError("Windows only")
     raw = base64.b64decode(data_b64)
+    if raw and fitz and Image and ImageWin and win32print:
+        gdi_error = None
+        try:
+            doc = fitz.open(stream=raw, filetype="pdf")
+            for page in doc:
+                pix = page.get_pixmap(dpi=200)
+                mode = "RGBA" if pix.alpha else "RGB"
+                img = Image.frombytes(mode, [pix.width, pix.height], pix.samples)
+                _print_pil_image_gdi(printer_name, img)
+            return
+        except Exception as e:
+            gdi_error = e
+        # fall through to ShellExecute
     fd, path = tempfile.mkstemp(suffix=".pdf")
     try:
         os.write(fd, raw)
@@ -96,13 +114,15 @@ def print_pdf(printer_name, data_b64):
             os.unlink(path)
         except Exception:
             pass
-        raise RuntimeError(f"Print PDF failed: {e}") from e
+        detail = f"Print PDF failed: {e}"
+        if 'gdi_error' in locals() and gdi_error:
+            detail += f". GDI/PyMuPDF error: {gdi_error}"
+        raise RuntimeError(detail) from e
 
 
-def _print_image_gdi(printer_name, raw):
+def _print_pil_image_gdi(printer_name, img):
     if not (win32print and win32ui and win32con and Image and ImageWin):
         raise RuntimeError("Image printing requires Pillow and pywin32.")
-    img = Image.open(io.BytesIO(raw))
     if img.mode == "RGBA":
         bg = Image.new("RGB", img.size, (255, 255, 255))
         bg.paste(img, mask=img.split()[3])
@@ -128,6 +148,13 @@ def _print_image_gdi(printer_name, raw):
             hdc.DeleteDC()
         except Exception:
             pass
+
+
+def _print_image_gdi(printer_name, raw):
+    if not (win32print and win32ui and win32con and Image and ImageWin):
+        raise RuntimeError("Image printing requires Pillow and pywin32.")
+    img = Image.open(io.BytesIO(raw))
+    _print_pil_image_gdi(printer_name, img)
 
 
 def print_image(printer_name, data_b64, width_mm=80):

@@ -5,7 +5,7 @@ $ErrorActionPreference = "Stop"
 $agentDir = $PSScriptRoot
 if ($agentDir -match "installer$") { $agentDir = Split-Path $agentDir -Parent }
 Set-Location $agentDir
-& python -m pip install pyinstaller pywin32 pillow --quiet
+& python -m pip install pyinstaller pywin32 pillow pymupdf --quiet
 New-Item -ItemType Directory -Force -Path build, dist | Out-Null
 & python -m PyInstaller --clean --noconfirm (Join-Path $agentDir "installer\pyinstaller.spec")
 Write-Host "Built. Output in dist\LocalPrinterAgent\"

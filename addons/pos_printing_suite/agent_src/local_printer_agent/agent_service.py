@@ -49,11 +49,18 @@ class Handler(BaseHTTPRequestHandler):
             logger.info("%s - %s", self.address_string(), format % args)
 
     def _send_json(self, status, body):
-        self.send_response(status)
-        self._set_cors_headers()
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.end_headers()
-        self.wfile.write(json.dumps(body).encode("utf-8"))
+        try:
+            self.send_response(status)
+            self._set_cors_headers()
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(json.dumps(body).encode("utf-8"))
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            if logger:
+                logger.warning("Client disconnected before response was sent.")
+        except Exception as exc:
+            if logger:
+                logger.exception("Failed to send response: %s", exc)
 
     def _set_cors_headers(self):
         # Allow browser POS to call local agent with Authorization header.
