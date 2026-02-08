@@ -15,8 +15,6 @@
                            invisible="printing_mode == 'odoo_default'"/>
                     <field name="local_printer_kitchen_name" placeholder="e.g. Kitchen Receipt"
                            invisible="printing_mode == 'odoo_default'"/>
-                    <field name="receipt_image" widget="image"
-                           invisible="printing_mode == 'odoo_default'"/>
                 </group>
             </xpath>
         </field>

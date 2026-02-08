@@ -29,10 +29,6 @@ class PosConfig(models.Model):
         help="Only used when printing_mode is HW Proxy.",
         default="127.0.0.1:8069",
     )
-    receipt_image = fields.Image(
-        string="Receipt Image",
-        help="Optional image printed on receipts (embedded as data URI).",
-    )
     local_agent_token = fields.Char(
         compute="_compute_local_agent_token",
         help="Token for Local Agent; only set when device is active (for POS UI).",
@@ -83,7 +79,6 @@ class PosConfig(models.Model):
             "local_printer_print_as_image",
             "local_printer_image_width",
             "any_printer_ip",
-            "receipt_image",
         ])
         return params
 
@@ -103,7 +98,6 @@ class PosConfig(models.Model):
             "local_printer_print_as_image",
             "local_printer_image_width",
             "any_printer_ip",
-            "receipt_image",
         ]
         for f in extras:
             if f not in fields:

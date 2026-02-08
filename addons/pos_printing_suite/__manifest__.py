@@ -11,7 +11,6 @@
     "assets": {
         "point_of_sale._assets_pos": [
             "pos_printing_suite/static/src/**/*.js",
-            "pos_printing_suite/static/src/**/*.xml",
         ],
     },
     "data": [

@@ -19,12 +19,6 @@ function normalizeUrl(raw, defaultPort = "8069") {
     return url;
 }
 
-function getReceiptImageData(config) {
-    const img = config?.receipt_image;
-    if (!img) return null;
-    return img.startsWith("data:image") ? img : `data:image/png;base64,${img}`;
-}
-
 function getPrinterName(store, printer) {
     const config = store.pos?.config;
     if (printer?.role === "kitchen") {
@@ -130,26 +124,6 @@ patch(PosStore.prototype, {
             return super._createPrinter(...arguments);
         }
         return null;
-    },
-    getReceiptHeaderData(order) {
-        const data = super.getReceiptHeaderData(...arguments);
-        if (this.config?.printing_suite_allowed) {
-            const receiptImage = getReceiptImageData(this.config);
-            if (receiptImage) {
-                data.receipt_image = receiptImage;
-            }
-        }
-        return data;
-    },
-    getPrintingChanges(order, diningModeUpdate) {
-        const changes = super.getPrintingChanges(...arguments);
-        if (this.config?.printing_suite_allowed) {
-            const receiptImage = getReceiptImageData(this.config);
-            if (receiptImage) {
-                changes.receipt_image = receiptImage;
-            }
-        }
-        return changes;
     },
 });
 
