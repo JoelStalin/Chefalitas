@@ -60,16 +60,25 @@ class PosPrintingSuiteAgentController(http.Controller):
         if not config:
             return request.not_found()
         base_url = request.env["ir.config_parameter"].sudo().get_param("web.base.url") or ""
+        if not base_url:
+            base_url = request.httprequest.host_url.rstrip("/")
+        base_url = base_url.rstrip("/")
+        urls = {base_url} if base_url else set()
+        if base_url.startswith("http://"):
+            urls.add("https://" + base_url[len("http://"):])
+        elif base_url.startswith("https://"):
+            urls.add("http://" + base_url[len("https://"):])
+        url_list = ", ".join([f\"'{u}'\" for u in sorted(urls)])
         script = (
             "$ErrorActionPreference = 'Stop'\n"
             "$chromePath = 'HKLM:\\\\SOFTWARE\\\\Policies\\\\Google\\\\Chrome'\n"
             "New-Item -Path $chromePath -Force | Out-Null\n"
             "New-ItemProperty -Path $chromePath -Name InsecurePrivateNetworkRequestsAllowed -PropertyType DWord -Value 1 -Force | Out-Null\n"
-            f"New-ItemProperty -Path $chromePath -Name InsecurePrivateNetworkRequestsAllowedForUrls -PropertyType MultiString -Value @('{base_url}') -Force | Out-Null\n"
+            f"New-ItemProperty -Path $chromePath -Name InsecurePrivateNetworkRequestsAllowedForUrls -PropertyType MultiString -Value @({url_list}) -Force | Out-Null\n"
             "$edgePath = 'HKLM:\\\\SOFTWARE\\\\Policies\\\\Microsoft\\\\Edge'\n"
             "New-Item -Path $edgePath -Force | Out-Null\n"
             "New-ItemProperty -Path $edgePath -Name InsecurePrivateNetworkRequestsAllowed -PropertyType DWord -Value 1 -Force | Out-Null\n"
-            f"New-ItemProperty -Path $edgePath -Name InsecurePrivateNetworkRequestsAllowedForUrls -PropertyType MultiString -Value @('{base_url}') -Force | Out-Null\n"
+            f"New-ItemProperty -Path $edgePath -Name InsecurePrivateNetworkRequestsAllowedForUrls -PropertyType MultiString -Value @({url_list}) -Force | Out-Null\n"
             "Write-Host 'Loopback policy applied. Restart Chrome/Edge.'\n"
         )
         headers = [
