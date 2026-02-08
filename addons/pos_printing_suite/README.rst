@@ -37,7 +37,7 @@ Local Agent (Windows)
   - ``GET /printers``
   - ``POST /print`` (body: ``type`` raw|pdf|image, ``printer``, ``data`` base64)
 
-- **Config**: ``ProgramData\PosPrintingSuite\LocalPrinterAgent\config.json``
+- **Config**: ``ProgramData\PosPrintingSuite\Agent\config.json``
 
   - ``host``, ``port``, ``log_dir``
   - ``token`` is **optional**; if set in the agent config, requests must include

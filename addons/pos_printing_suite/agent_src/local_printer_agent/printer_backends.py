@@ -4,6 +4,7 @@ Windows printing backends: RAW (ESC/POS), PDF, image.
 Uses win32print when on Windows; no GUI (no Tkinter).
 """
 import base64
+import io
 import os
 import sys
 import tempfile
@@ -11,9 +12,20 @@ import tempfile
 if sys.platform == "win32":
     import win32print
     import win32api
+    import win32ui
+    import win32con
+    try:
+        from PIL import Image, ImageWin
+    except Exception:
+        Image = None
+        ImageWin = None
 else:
     win32print = None
     win32api = None
+    win32ui = None
+    win32con = None
+    Image = None
+    ImageWin = None
 
 
 def list_printers():
@@ -87,12 +99,51 @@ def print_pdf(printer_name, data_b64):
         raise RuntimeError(f"Print PDF failed: {e}") from e
 
 
+def _print_image_gdi(printer_name, raw):
+    if not (win32print and win32ui and win32con and Image and ImageWin):
+        raise RuntimeError("Image printing requires Pillow and pywin32.")
+    img = Image.open(io.BytesIO(raw))
+    if img.mode == "RGBA":
+        bg = Image.new("RGB", img.size, (255, 255, 255))
+        bg.paste(img, mask=img.split()[3])
+        img = bg
+    elif img.mode != "RGB":
+        img = img.convert("RGB")
+    hdc = win32ui.CreateDC()
+    try:
+        hdc.CreatePrinterDC(printer_name)
+        printable_width = hdc.GetDeviceCaps(win32con.HORZRES)
+        printable_height = hdc.GetDeviceCaps(win32con.VERTRES)
+        scale = min(printable_width / img.width, printable_height / img.height)
+        target_w = max(1, int(img.width * scale))
+        target_h = max(1, int(img.height * scale))
+        hdc.StartDoc("POS Image")
+        hdc.StartPage()
+        dib = ImageWin.Dib(img)
+        dib.draw(hdc.GetHandleOutput(), (0, 0, target_w, target_h))
+        hdc.EndPage()
+        hdc.EndDoc()
+    finally:
+        try:
+            hdc.DeleteDC()
+        except Exception:
+            pass
+
+
 def print_image(printer_name, data_b64, width_mm=80):
-    """Print image (e.g. PNG/JPEG) from base64. Uses GDI print if available."""
+    """Print image (e.g. PNG/JPEG) from base64. Uses GDI print when possible."""
     if not win32print:
         raise RuntimeError("Windows only")
     raw = base64.b64decode(data_b64)
-    # For image, we could use PIL to render and then GDI; for simplicity we write raw to temp and try ShellExecute print.
+    if not raw:
+        return
+    gdi_error = None
+    try:
+        _print_image_gdi(printer_name, raw)
+        return
+    except Exception as e:
+        gdi_error = e
+    # Fallback: write to temp and try ShellExecute print (may require GUI handler).
     ext = ".png"
     if raw[:3] == b"\xff\xd8\xff":
         ext = ".jpg"
@@ -115,4 +166,4 @@ def print_image(printer_name, data_b64, width_mm=80):
             os.unlink(path)
         except Exception:
             pass
-        raise RuntimeError(f"Print image failed: {e}") from e
+        raise RuntimeError(f"Print image failed: {e}. GDI error: {gdi_error}") from e

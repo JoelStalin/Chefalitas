@@ -5,8 +5,8 @@ $ErrorActionPreference = "Stop"
 $agentDir = $PSScriptRoot
 if ($agentDir -match "installer$") { $agentDir = Split-Path $agentDir -Parent }
 Set-Location $agentDir
-& python -m pip install pyinstaller pywin32 --quiet
+& python -m pip install pyinstaller pywin32 pillow --quiet
 New-Item -ItemType Directory -Force -Path build, dist | Out-Null
 & python -m PyInstaller --clean --noconfirm (Join-Path $agentDir "installer\pyinstaller.spec")
 Write-Host "Built. Output in dist\LocalPrinterAgent\"
-Write-Host "Create config with token in ProgramData\PosPrintingSuite\LocalPrinterAgent\config.json: `"token`": `"$Token`""
+Write-Host "Create config with token in ProgramData\PosPrintingSuite\Agent\config.json: `"token`": `"$Token`""

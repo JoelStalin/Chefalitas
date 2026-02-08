@@ -13,7 +13,7 @@ DEFAULT_PORT = 9060
 
 if sys.platform == "win32":
     _program_data = os.environ.get("PROGRAMDATA", "C:\\ProgramData")
-    DEFAULT_CONFIG_DIR = os.path.join(_program_data, "PosPrintingSuite", "LocalPrinterAgent")
+    DEFAULT_CONFIG_DIR = os.path.join(_program_data, "PosPrintingSuite", "Agent")
     DEFAULT_LOG_DIR = os.path.join(DEFAULT_CONFIG_DIR, "logs")
 else:
     DEFAULT_CONFIG_DIR = os.path.expanduser("~/.local/share/pos_printing_suite_agent")

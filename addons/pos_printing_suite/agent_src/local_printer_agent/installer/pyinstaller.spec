@@ -6,15 +6,33 @@ import os
 try:
     specdir = os.path.dirname(os.path.abspath(SPECPATH))
 except NameError:
-    specdir = os.path.dirname(os.path.abspath(os.path.join(os.getcwd(), "installer")))
+    specdir = os.path.abspath(os.path.join(os.getcwd(), "installer"))
 agent_dir = os.path.normpath(os.path.join(specdir, ".."))
+if not os.path.isfile(os.path.join(agent_dir, "run_agent.py")):
+    if os.path.isfile(os.path.join(specdir, "run_agent.py")):
+        agent_dir = specdir
+    else:
+        cwd = os.getcwd()
+        if os.path.isfile(os.path.join(cwd, "run_agent.py")):
+            agent_dir = cwd
 
 a = Analysis(
     [os.path.join(agent_dir, 'run_agent.py')],
     pathex=[agent_dir],
     binaries=[],
     datas=[],
-    hiddenimports=['win32timezone', 'win32print', 'win32api', 'win32serviceutil', 'win32service', 'win32event', 'servicemanager'],
+    hiddenimports=[
+        'win32timezone',
+        'win32print',
+        'win32api',
+        'win32serviceutil',
+        'win32service',
+        'win32event',
+        'servicemanager',
+        'PIL',
+        'PIL.Image',
+        'PIL.ImageWin',
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
