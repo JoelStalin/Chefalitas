@@ -5,9 +5,9 @@ import { LocalAgentPrinter } from "../app/printers/local_agent_printer";
 import { HwProxyPrinter } from "../app/printers/hw_proxy_printer";
 
 const DEFAULT_LOCAL_AGENT_HOST = "127.0.0.1";
-const DEFAULT_LOCAL_AGENT_PORT = 8060;
+const DEFAULT_LOCAL_AGENT_PORT = 9060;
 const DEFAULT_HW_PROXY_HOST = "127.0.0.1";
-const DEFAULT_HW_PROXY_PORT = 9060;
+const DEFAULT_HW_PROXY_PORT = 8069;
 
 function buildBaseUrl(host, port, fallbackHost, fallbackPort) {
     const rawHost = (host || "").trim() || fallbackHost;

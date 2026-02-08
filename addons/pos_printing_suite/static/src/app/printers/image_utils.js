@@ -1,6 +1,14 @@
 /** @odoo-module **/
 
 import { _t } from "@web/core/l10n/translation";
+import { toCanvas } from "@point_of_sale/app/utils/html-to-image";
+
+const DEFAULT_RENDER_OPTIONS = {
+    backgroundColor: "#ffffff",
+    pixelRatio: 1,
+    skipFonts: true,
+    cacheBust: true,
+};
 
 function stripDataUrl(data) {
     if (typeof data !== "string") {
@@ -20,99 +28,52 @@ function looksLikeBase64Image(data) {
 
 function looksLikeHtml(data) {
     if (typeof data !== "string") return false;
-    return /<\s*(html|body|div|span|table|section|p|br|img|svg|style|head|meta|title)\b/i.test(data);
-}
-
-function getRenderService(env) {
-    const services = env?.services || {};
-    return (
-        services.renderService ||
-        services.renderer ||
-        services.rendering ||
-        services.pos_renderer ||
-        services.render
+    return /<\s*(html|body|div|span|table|section|p|br|img|svg|style|head|meta|title)\b/i.test(
+        data
     );
 }
 
-function isOdooFontUrl(url) {
-    return /fonts\.odoocdn\.com\/fonts\/noto\/.+\.(woff2?|ttf)$/i.test(url || "");
-}
-
-async function withFontFetchPatched(fn) {
-    const originalFetch = globalThis.fetch;
-    if (typeof originalFetch !== "function") {
-        return await fn();
-    }
-    globalThis.fetch = (input, init) => {
-        const url = typeof input === "string" ? input : input?.url;
-        if (url && isOdooFontUrl(url)) {
-            const headers = new Headers({ "Content-Type": "font/woff2" });
-            return Promise.resolve(new Response(new ArrayBuffer(0), { status: 200, headers }));
-        }
-        return originalFetch(input, init);
-    };
-    try {
-        return await fn();
-    } finally {
-        globalThis.fetch = originalFetch;
+function ensurePrintClass(node) {
+    if (node?.classList && !node.classList.contains("pos-receipt-print")) {
+        node.classList.add("pos-receipt-print");
     }
 }
 
-async function renderElementToImage(env, element) {
-    return await withFontFetchPatched(async () => {
-        const service = getRenderService(env);
-        const options = { skipFonts: true, cacheBust: true };
-        if (service) {
-            if (typeof service.renderToImage === "function") {
-                try {
-                    return await service.renderToImage(element, options);
-                } catch (e) {
-                    // fallback below
-                }
-            }
-            if (typeof service.toImage === "function") {
-                try {
-                    return await service.toImage(element, options);
-                } catch (e) {
-                    // fallback below
-                }
-            }
-            if (typeof service.toCanvas === "function") {
-                try {
-                    const canvas = await service.toCanvas(element, options);
-                    return canvas?.toDataURL ? canvas.toDataURL("image/png") : null;
-                } catch (e) {
-                    // fallback below
-                }
-            }
-        }
-        if (globalThis?.htmlToImage?.toPng) {
-            return await globalThis.htmlToImage.toPng(element, options);
-        }
-        if (globalThis?.html2canvas) {
-            const canvas = await globalThis.html2canvas(element, { useCORS: true, logging: false });
-            return canvas?.toDataURL ? canvas.toDataURL("image/png") : null;
-        }
-        throw new Error(_t("No image renderer available. Update Odoo POS or enable the render service."));
-    });
-}
-
-async function htmlToImage(env, html) {
+function mountForRender(node) {
     const container = document.createElement("div");
-    container.innerHTML = html;
     container.style.position = "fixed";
     container.style.left = "-10000px";
     container.style.top = "0";
     container.style.background = "white";
+    container.style.pointerEvents = "none";
+    const clone = node.cloneNode(true);
+    ensurePrintClass(clone);
+    container.appendChild(clone);
     document.body.appendChild(container);
+    return {
+        node: clone,
+        cleanup: () => container.remove(),
+    };
+}
+
+async function renderElementToImage(element) {
+    const { node, cleanup } = mountForRender(element);
     try {
-        return await renderElementToImage(env, container);
+        const canvas = await toCanvas(node, DEFAULT_RENDER_OPTIONS);
+        return canvas?.toDataURL ? canvas.toDataURL("image/png") : null;
     } finally {
-        container.remove();
+        cleanup();
     }
 }
 
-export async function ensureImagePayload(env, receipt) {
+async function htmlToImage(html) {
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = html;
+    ensurePrintClass(wrapper);
+    return await renderElementToImage(wrapper);
+}
+
+export async function ensureImagePayload(_env, receipt) {
     if (!receipt) return receipt;
     if (typeof receipt === "string") {
         const trimmed = receipt.trim();
@@ -121,12 +82,11 @@ export async function ensureImagePayload(env, receipt) {
             return stripDataUrl(trimmed);
         }
         if (looksLikeHtml(trimmed)) {
-            const img = await htmlToImage(env, trimmed);
+            const img = await htmlToImage(trimmed);
             return stripDataUrl(img);
         }
-        // Best-effort: attempt to render unknown string as HTML
         try {
-            const img = await htmlToImage(env, trimmed);
+            const img = await htmlToImage(trimmed);
             return stripDataUrl(img);
         } catch (e) {
             throw new Error(_t("Unable to convert receipt to image."));
@@ -140,14 +100,14 @@ export async function ensureImagePayload(env, receipt) {
               ? receipt.el
               : null;
     if (element) {
-        const img = await renderElementToImage(env, element);
+        const img = await renderElementToImage(element);
         return stripDataUrl(img);
     }
     if (typeof receipt?.image === "string") {
         return stripDataUrl(receipt.image);
     }
     if (receipt?.outerHTML) {
-        const img = await htmlToImage(env, receipt.outerHTML);
+        const img = await htmlToImage(receipt.outerHTML);
         return stripDataUrl(img);
     }
     return receipt;

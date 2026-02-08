@@ -14,7 +14,7 @@ Configuration lives **only in `pos.config`**.
 
 ## Installation
 
-1. Install the addon (depends on `point_of_sale` and `mail`).
+1. Install the addon (depends on `point_of_sale`).
 2. In each POS configuration, set:
    - **Printing mode**: Local Agent or HW Proxy
    - **Printer (Cashier)** and **Printer (Kitchen)**

@@ -5,6 +5,7 @@ import { _t } from "@web/core/l10n/translation";
 import { ensureImagePayload } from "./image_utils";
 
 const LOCAL_AGENT_BASE_URL = "http://127.0.0.1:9060";
+const DEFAULT_TIMEOUT_MS = 5000;
 
 export class LocalAgentPrinter extends BasePrinter {
     setup(params) {
@@ -12,15 +13,15 @@ export class LocalAgentPrinter extends BasePrinter {
         this.baseUrl = params.baseUrl || LOCAL_AGENT_BASE_URL;
         this.token = params.token || "";
         this.printerName = params.printerName || params.printer || "";
+        this.timeoutMs = params.timeoutMs || DEFAULT_TIMEOUT_MS;
     }
 
     async printReceipt(receipt) {
-        const payload = await ensureImagePayload(this.env, receipt);
-        return this.sendPrintingJob(payload);
+        return this.sendPrintingJob(receipt);
     }
 
-    async sendPrintingJob(receiptB64) {
-        const payload = await ensureImagePayload(this.env, receiptB64);
+    async sendPrintingJob(receipt) {
+        const payload = await ensureImagePayload(this.env, receipt);
         if (!payload) {
             throw new Error(_t("Local Agent: empty receipt payload."));
         }
@@ -28,15 +29,28 @@ export class LocalAgentPrinter extends BasePrinter {
         if (this.token) {
             headers["Authorization"] = `Bearer ${this.token}`;
         }
-        const res = await fetch(`${this.baseUrl}/print`, {
-            method: "POST",
-            headers,
-            body: JSON.stringify({
-                type: "image",
-                printer: this.printerName,
-                data: payload,
-            }),
-        });
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+        let res;
+        try {
+            res = await fetch(`${this.baseUrl}/print`, {
+                method: "POST",
+                headers,
+                signal: controller.signal,
+                body: JSON.stringify({
+                    type: "image",
+                    printer: this.printerName,
+                    data: payload,
+                }),
+            });
+        } catch (err) {
+            if (err?.name === "AbortError") {
+                throw new Error(_t("Local Agent print timed out."));
+            }
+            throw new Error(_t("Local Agent connection failed."));
+        } finally {
+            clearTimeout(timer);
+        }
         if (!res.ok) {
             const text = await res.text();
             throw new Error(_t("Local Agent print failed: %s", text || res.status));

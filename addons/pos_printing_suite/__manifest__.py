@@ -12,6 +12,10 @@
         "point_of_sale._assets_pos": [
             "pos_printing_suite/static/src/**/*.js",
         ],
+        "pos_self_order.assets": [
+            "pos_printing_suite/static/src/app/printers/*.js",
+            "pos_printing_suite/static/src/overrides/self_order_service_patch.js",
+        ],
     },
     "data": [
         "security/ir.model.access.csv",
