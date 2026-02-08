@@ -183,24 +183,27 @@ class PosConfig(models.Model):
             "token": self.agent_token,
             "pos_config_id": self.id,
         }
-        installer_ps1 = (
-            r"$ErrorActionPreference = 'Stop'" + "\n"
-            r"$baseDir = Join-Path $env:ProgramData 'PosPrintingSuite\Agent'" + "\n"
-            r"New-Item -ItemType Directory -Force -Path $baseDir | Out-Null" + "\n"
-            r"Copy-Item -Path (Join-Path $PSScriptRoot '*') -Destination $baseDir -Recurse -Force" + "\n"
-            r"$exe = Join-Path $baseDir 'agent.exe'" + "\n"
-            r"sc.exe create PosPrintingSuiteAgent binPath= `"$exe`" start= auto | Out-Null" + "\n"
-            r"sc.exe start PosPrintingSuiteAgent | Out-Null" + "\n"
-            r"Write-Host 'Agent installed and started.'" + "\n"
-        )
-        uninstall_ps1 = (
-            r"$ErrorActionPreference = 'SilentlyContinue'" + "\n"
-            r"sc.exe stop PosPrintingSuiteAgent | Out-Null" + "\n"
-            r"sc.exe delete PosPrintingSuiteAgent | Out-Null" + "\n"
-            r"$baseDir = Join-Path $env:ProgramData 'PosPrintingSuite\Agent'" + "\n"
-            r"Remove-Item -Recurse -Force $baseDir" + "\n"
-            r"Write-Host 'Agent uninstalled.'" + "\n"
-        )
+        installer_lines = [
+            "$ErrorActionPreference = 'Stop'",
+            "$baseDir = Join-Path $env:ProgramData 'PosPrintingSuite\\Agent'",
+            "New-Item -ItemType Directory -Force -Path $baseDir | Out-Null",
+            "Copy-Item -Path (Join-Path $PSScriptRoot '*') -Destination $baseDir -Recurse -Force",
+            "$exe = Join-Path $baseDir 'agent.exe'",
+            "sc.exe create PosPrintingSuiteAgent binPath= `\"$exe`\" start= auto | Out-Null",
+            "sc.exe start PosPrintingSuiteAgent | Out-Null",
+            "Write-Host 'Agent installed and started.'",
+        ]
+        installer_ps1 = "\n".join(installer_lines) + "\n"
+
+        uninstall_lines = [
+            "$ErrorActionPreference = 'SilentlyContinue'",
+            "sc.exe stop PosPrintingSuiteAgent | Out-Null",
+            "sc.exe delete PosPrintingSuiteAgent | Out-Null",
+            "$baseDir = Join-Path $env:ProgramData 'PosPrintingSuite\\Agent'",
+            "Remove-Item -Recurse -Force $baseDir",
+            "Write-Host 'Agent uninstalled.'",
+        ]
+        uninstall_ps1 = "\n".join(uninstall_lines) + "\n"
         readme_txt = (
             "Windows Agent (placeholder)\n"
             "1) Run install.ps1 as Administrator.\n"
