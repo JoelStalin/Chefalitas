@@ -83,48 +83,61 @@ function createPrintingSuitePrinter(store, printer) {
     return null;
 }
 
+function setupPrintingSuitePrinters(store) {
+    if (store._printingSuiteInitialized) {
+        return;
+    }
+    const config = getPosConfig(store);
+    if (!config?.printing_suite_allowed) {
+        return;
+    }
+    const printerType =
+        config.printing_mode === "local_agent" ? "local_agent" : "hw_proxy_any_printer";
+
+    // Receipt (cashier) printer
+    const receiptPrinter = createPrintingSuitePrinter(store, {
+        printer_type: printerType,
+        role: "cashier",
+    });
+    if (receiptPrinter) {
+        if (store.hardwareProxy) {
+            store.hardwareProxy.printer = receiptPrinter;
+        }
+        if (store.printer?.setPrinter) {
+            store.printer.setPrinter(receiptPrinter);
+        }
+    }
+
+    // Kitchen printer (single)
+    if (config.local_printer_kitchen_name) {
+        const kitchenPrinter = createPrintingSuitePrinter(store, {
+            printer_type: printerType,
+            role: "kitchen",
+        });
+        if (kitchenPrinter) {
+            const allCategoryIds = store.models["pos.category"]
+                .getAll()
+                .map((c) => c.id);
+            kitchenPrinter.config = { product_categories_ids: allCategoryIds };
+            store.unwatched.printers = [kitchenPrinter];
+            store.printers_category_ids_set = new Set(allCategoryIds);
+            store.config.iface_printers = true;
+        }
+    }
+
+    store._printingSuiteInitialized = true;
+}
+
 // Hook into printer creation if the store has a method that builds printer instances.
 // Otherwise we rely on printer service or model extensions.
 patch(PosStore.prototype, {
+    async afterProcessServerData() {
+        await super.afterProcessServerData(...arguments);
+        setupPrintingSuitePrinters(this);
+    },
     async initServerData() {
         await super.initServerData(...arguments);
-        const config = this.config;
-        if (!config?.printing_suite_allowed) {
-            return;
-        }
-        const printerType =
-            config.printing_mode === "local_agent" ? "local_agent" : "hw_proxy_any_printer";
-
-        // Receipt (cashier) printer
-        const receiptPrinter = createPrintingSuitePrinter(this, {
-            printer_type: printerType,
-            role: "cashier",
-        });
-        if (receiptPrinter) {
-            if (this.hardwareProxy) {
-                this.hardwareProxy.printer = receiptPrinter;
-            }
-            if (this.printer?.setPrinter) {
-                this.printer.setPrinter(receiptPrinter);
-            }
-        }
-
-        // Kitchen printer (single)
-        if (config.local_printer_kitchen_name) {
-            const kitchenPrinter = createPrintingSuitePrinter(this, {
-                printer_type: printerType,
-                role: "kitchen",
-            });
-            if (kitchenPrinter) {
-                const allCategoryIds = this.models["pos.category"]
-                    .getAll()
-                    .map((c) => c.id);
-                kitchenPrinter.config = { product_categories_ids: allCategoryIds };
-                this.unwatched.printers = [kitchenPrinter];
-                this.printers_category_ids_set = new Set(allCategoryIds);
-                this.config.iface_printers = true;
-            }
-        }
+        setupPrintingSuitePrinters(this);
     },
     create_printer(printer) {
         const created = createPrintingSuitePrinter(this, printer);
