@@ -57,7 +57,10 @@ def print_pdf(printer_name, data_b64):
         os.write(fd, raw)
         os.close(fd)
         fd = None
-        win32api.ShellExecute(0, "print", path, None, ".", 0)
+        if printer_name:
+            win32api.ShellExecute(0, "printto", path, f'"{printer_name}"', ".", 0)
+        else:
+            win32api.ShellExecute(0, "print", path, None, ".", 0)
     except Exception as e:
         if fd is not None:
             try:
@@ -85,7 +88,10 @@ def print_image(printer_name, data_b64, width_mm=80):
         os.write(fd, raw)
         os.close(fd)
         fd = None
-        win32api.ShellExecute(0, "print", path, None, ".", 0)
+        if printer_name:
+            win32api.ShellExecute(0, "printto", path, f'"{printer_name}"', ".", 0)
+        else:
+            win32api.ShellExecute(0, "print", path, None, ".", 0)
     except Exception as e:
         if fd is not None:
             try:

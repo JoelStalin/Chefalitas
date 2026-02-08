@@ -8,8 +8,6 @@
             <xpath expr="//group" position="inside">
                 <group string="Printing Suite">
                     <field name="printer_type"/>
-                    <field name="local_printer_name" help="Windows printer name used by Local Agent mode."/>
-                    <field name="hw_proxy_ip" help="Only for HW Proxy mode (legacy)."/>
                 </group>
             </xpath>
         </field>

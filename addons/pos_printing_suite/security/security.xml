@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
+    <record id="group_pos_printing_suite_printing" model="res.groups">
+        <field name="name">POS Printing Suite: Printing</field>
+        <field name="category_id" ref="base.module_category_point_of_sale"/>
+    </record>
     <record id="pos_print_device_company_rule" model="ir.rule">
         <field name="name">POS Print Device: multi-company</field>
         <field name="model_id" ref="pos_printing_suite.model_pos_print_device"/>

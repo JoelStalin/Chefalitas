@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, models, _
-from odoo.exceptions import ValidationError
+from odoo import api, fields, models
 
 
 class PosPrinter(models.Model):
@@ -30,11 +29,3 @@ class PosPrinter(models.Model):
     )
     hw_proxy_ip = fields.Char(string="HW Proxy IP (legacy)")
     local_printer_name = fields.Char(string="Windows Printer Name")
-
-    @api.constrains("printer_type", "hw_proxy_ip")
-    def _check_hw_proxy_ip(self):
-        for p in self:
-            if p.printer_type == "hw_proxy_any_printer" and not (p.hw_proxy_ip or "").strip():
-                raise ValidationError(
-                    _("HW Proxy IP is required for HW Proxy printers.")
-                )

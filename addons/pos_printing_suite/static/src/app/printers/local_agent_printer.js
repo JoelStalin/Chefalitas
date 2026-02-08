@@ -24,7 +24,7 @@ export class LocalAgentPrinter extends BasePrinter {
                 "Authorization": `Bearer ${this.token}`,
             },
             body: JSON.stringify({
-                type: "raw",
+                type: "image",
                 printer: this.printerName,
                 data: receiptB64,
             }),
@@ -34,5 +34,10 @@ export class LocalAgentPrinter extends BasePrinter {
             throw new Error(_t("Local Agent print failed: %s", text || res.status));
         }
         return await res.json();
+    }
+
+    openCashbox() {
+        // Local Agent doesn't implement cashbox control; return false to avoid crash.
+        return false;
     }
 }

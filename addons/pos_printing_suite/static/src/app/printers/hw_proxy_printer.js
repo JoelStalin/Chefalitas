@@ -2,6 +2,7 @@
 
 import { BasePrinter } from "@point_of_sale/app/printer/base_printer";
 import { _t } from "@web/core/l10n/translation";
+import { rpc } from "@web/core/network/rpc";
 
 /**
  * HW Proxy / Any Printer: uses RPC or HTTP to a proxy (e.g. /hw_proxy/default_printer_action).
@@ -19,15 +20,18 @@ export class HwProxyPrinter extends BasePrinter {
             throw new Error(_t("HW Proxy: no base URL configured."));
         }
         const url = `${this.hwProxyBaseUrl.replace(/\/$/, "")}/hw_proxy/default_printer_action`;
-        const res = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ data: receiptB64, printer: this.printerName }),
-        });
-        if (!res.ok) {
-            const text = await res.text();
-            throw new Error(_t("HW Proxy print failed: %s", text || res.status));
+        try {
+            return await rpc(url, { action: "print_receipt", receipt: receiptB64 });
+        } catch (e) {
+            throw new Error(_t("HW Proxy print failed."));
         }
-        return await res.json().catch(() => ({}));
+    }
+
+    openCashbox() {
+        if (!this.hwProxyBaseUrl) {
+            return false;
+        }
+        const url = `${this.hwProxyBaseUrl.replace(/\/$/, "")}/hw_proxy/default_printer_action`;
+        return rpc(url, { action: "cashbox" });
     }
 }
