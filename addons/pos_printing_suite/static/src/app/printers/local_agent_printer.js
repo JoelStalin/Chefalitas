@@ -7,6 +7,55 @@ import { ensureImagePayload } from "./image_utils";
 const LOCAL_AGENT_BASE_URL = "http://127.0.0.1:9060";
 const DEFAULT_TIMEOUT_MS = 5000;
 
+function stripDataUrl(data) {
+    if (typeof data !== "string") {
+        return data;
+    }
+    const match = data.match(/^data:([a-zA-Z0-9.+-]+\/[a-zA-Z0-9.+-]+);base64,(.*)$/);
+    return match ? match[2] : data;
+}
+
+function looksLikeBase64Pdf(data) {
+    if (typeof data !== "string") return false;
+    const trimmed = data.trim();
+    if (!trimmed) return false;
+    if (trimmed.startsWith("data:application/pdf;base64,")) return true;
+    return trimmed.startsWith("JVBERi0");
+}
+
+async function toBase64FromBlob(blob) {
+    const buffer = await blob.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    let binary = "";
+    for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+}
+
+async function normalizePayload(env, receipt) {
+    if (!receipt) {
+        throw new Error(_t("Local Agent: empty receipt payload."));
+    }
+    if (typeof receipt === "string") {
+        if (looksLikeBase64Pdf(receipt)) {
+            return { type: "pdf", data: stripDataUrl(receipt) };
+        }
+    }
+    if (receipt?.type === "application/pdf" && typeof receipt.arrayBuffer === "function") {
+        const b64 = await toBase64FromBlob(receipt);
+        return { type: "pdf", data: b64 };
+    }
+    if (receipt?.pdf && looksLikeBase64Pdf(receipt.pdf)) {
+        return { type: "pdf", data: stripDataUrl(receipt.pdf) };
+    }
+    const imagePayload = await ensureImagePayload(env, receipt);
+    if (!imagePayload) {
+        throw new Error(_t("Local Agent: empty receipt payload."));
+    }
+    return { type: "image", data: stripDataUrl(imagePayload) };
+}
+
 export class LocalAgentPrinter extends BasePrinter {
     setup(params) {
         super.setup(...arguments);
@@ -32,9 +81,12 @@ export class LocalAgentPrinter extends BasePrinter {
     }
 
     async sendPrintingJob(receipt) {
-        const payload = await ensureImagePayload(this.env, receipt);
-        if (!payload) {
-            throw new Error(_t("Local Agent: empty receipt payload."));
+        const payload = await normalizePayload(this.env, receipt);
+        if (odoo.debug) {
+            console.debug("[pos_printing_suite] Local Agent payload:", {
+                type: payload.type,
+                size: payload.data ? String(payload.data).length : 0,
+            });
         }
         const headers = { "Content-Type": "application/json" };
         if (this.token) {
@@ -49,9 +101,9 @@ export class LocalAgentPrinter extends BasePrinter {
                 headers,
                 signal: controller.signal,
                 body: JSON.stringify({
-                    type: "image",
+                    type: payload.type,
                     printer: this.printerName,
-                    data: payload,
+                    data: payload.data,
                 }),
             });
         } catch (err) {

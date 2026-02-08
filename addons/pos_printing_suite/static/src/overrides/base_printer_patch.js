@@ -35,10 +35,21 @@ async function safeHtmlToCanvas(receipt) {
     if (clone.classList) {
         clone.classList.add("pos-receipt-print");
     }
-    const height = Math.ceil(clone.clientHeight || element.clientHeight || 0);
-    const width = Math.ceil(clone.clientWidth || element.clientWidth || 0);
     container.appendChild(clone);
     try {
+        const width = Math.ceil(
+            clone.scrollWidth || clone.clientWidth || element.scrollWidth || element.clientWidth || 0
+        );
+        const height = Math.ceil(
+            clone.scrollHeight || clone.clientHeight || element.scrollHeight || element.clientHeight || 0
+        );
+        if (width) {
+            clone.style.width = `${width}px`;
+        }
+        if (height) {
+            clone.style.height = `${height}px`;
+        }
+        await new Promise((resolve) => requestAnimationFrame(resolve));
         return await toCanvas(clone, {
             ...RENDER_OPTIONS,
             height: height || undefined,

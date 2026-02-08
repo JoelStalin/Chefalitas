@@ -33,6 +33,14 @@ async function rpcWithTimeout(url, params, timeoutMs) {
     }
 }
 
+function looksLikeBase64Pdf(data) {
+    if (typeof data !== "string") return false;
+    const trimmed = data.trim();
+    if (!trimmed) return false;
+    if (trimmed.startsWith("data:application/pdf;base64,")) return true;
+    return trimmed.startsWith("JVBERi0");
+}
+
 /**
  * HW Proxy / Any Printer: uses RPC or HTTP to a proxy (e.g. /hw_proxy/default_printer_action).
  * Compatible with existing "any printer" approach.
@@ -66,6 +74,11 @@ export class HwProxyPrinter extends BasePrinter {
     async sendPrintingJob(receipt) {
         if (!this.hwProxyBaseUrl) {
             throw new Error(_t("HW Proxy: no base URL configured."));
+        }
+        if (looksLikeBase64Pdf(receipt) || receipt?.type === "application/pdf") {
+            throw new Error(
+                _t("HW Proxy does not support PDF receipts. Use Local Agent for invoices.")
+            );
         }
         const url = `${this.hwProxyBaseUrl.replace(/\/$/, "")}/hw_proxy/default_printer_action`;
         const summary = summarizePayload("print_receipt", receipt, this.printerName);
