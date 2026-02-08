@@ -94,6 +94,8 @@ class PosConfig(models.Model):
         self.ensure_one()
         if self.printing_mode not in ("local_agent", "hw_proxy"):
             return False
+        if self.env.user.has_group("base.group_system"):
+            return True
         group = self.env.ref("pos_printing_suite.group_pos_printing_suite_printing", raise_if_not_found=False)
         if not group:
             return False
