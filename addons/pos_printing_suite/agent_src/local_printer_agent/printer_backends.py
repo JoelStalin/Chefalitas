@@ -19,10 +19,7 @@ if sys.platform == "win32":
     except Exception:
         Image = None
         ImageWin = None
-    try:
-        import fitz  # PyMuPDF
-    except Exception:
-        fitz = None
+    fitz = None
 else:
     win32print = None
     win32api = None
@@ -82,10 +79,17 @@ def print_pdf(printer_name, data_b64):
     if not win32api:
         raise RuntimeError("Windows only")
     raw = base64.b64decode(data_b64)
-    if raw and fitz and Image and ImageWin and win32print:
+    fitz_mod = fitz
+    if fitz_mod is None:
+        try:
+            import importlib
+            fitz_mod = importlib.import_module("fitz")
+        except Exception:
+            fitz_mod = None
+    if raw and fitz_mod and Image and ImageWin and win32print:
         gdi_error = None
         try:
-            doc = fitz.open(stream=raw, filetype="pdf")
+            doc = fitz_mod.open(stream=raw, filetype="pdf")
             for page in doc:
                 pix = page.get_pixmap(dpi=200)
                 mode = "RGBA" if pix.alpha else "RGB"

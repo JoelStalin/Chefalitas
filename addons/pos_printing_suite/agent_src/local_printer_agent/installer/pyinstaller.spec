@@ -32,7 +32,6 @@ a = Analysis(
         'PIL',
         'PIL.Image',
         'PIL.ImageWin',
-        'fitz',
     ],
     hookspath=[],
     hooksconfig={},

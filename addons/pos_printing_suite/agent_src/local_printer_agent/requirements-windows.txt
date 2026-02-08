@@ -6,4 +6,3 @@
 pyinstaller>=6.0.0
 pywin32>=306
 pillow>=10.0.0
-pymupdf>=1.24.0
