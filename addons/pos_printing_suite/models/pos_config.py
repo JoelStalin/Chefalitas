@@ -87,6 +87,11 @@ class PosConfig(models.Model):
         string="Agent Download URL",
         groups="base.group_system",
     )
+    agent_policy_download_url = fields.Char(
+        compute="_compute_agent_policy_download_url",
+        string="Loopback Policy Download URL",
+        groups="base.group_system",
+    )
     agent_printer_ids = fields.One2many(
         "pos.printing.agent.printer",
         "pos_config_id",
@@ -149,6 +154,16 @@ class PosConfig(models.Model):
                     f"{base_url}/pos_printing_suite/agent/download?config_id={rec.id}"
                 )
 
+    def _compute_agent_policy_download_url(self):
+        base_url = self.env["ir.config_parameter"].sudo().get_param("web.base.url")
+        for rec in self:
+            if not base_url:
+                rec.agent_policy_download_url = False
+            else:
+                rec.agent_policy_download_url = (
+                    f"{base_url}/pos_printing_suite/agent/policy.ps1?config_id={rec.id}"
+                )
+
     def _generate_agent_token(self):
         return secrets.token_urlsafe(32)
 
@@ -203,6 +218,17 @@ class PosConfig(models.Model):
             "view_mode": "form",
             "target": "new",
             "context": {"default_pos_config_id": self.id},
+        }
+
+    def action_download_agent_policy(self):
+        self._ensure_admin()
+        self.ensure_one()
+        if not self.agent_policy_download_url:
+            raise UserError(_("Policy download URL is not available."))
+        return {
+            "type": "ir.actions.act_url",
+            "url": self.agent_policy_download_url,
+            "target": "self",
         }
 
     def _build_agent_installer(self):
@@ -473,6 +499,7 @@ class PosConfig(models.Model):
             "local_printer_cashier_name",
             "local_printer_kitchen_name",
             "agent_token_pos",
+            "agent_policy_download_url",
             "any_printer_ip",
             "any_printer_port",
         ])
@@ -492,6 +519,7 @@ class PosConfig(models.Model):
             "local_printer_cashier_name",
             "local_printer_kitchen_name",
             "agent_token_pos",
+            "agent_policy_download_url",
             "any_printer_ip",
             "any_printer_port",
         ]

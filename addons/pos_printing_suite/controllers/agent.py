@@ -51,6 +51,33 @@ class PosPrintingSuiteAgentController(http.Controller):
         ]
         return request.make_response(data, headers)
 
+    @http.route("/pos_printing_suite/agent/policy.ps1", type="http", auth="user")
+    def download_loopback_policy(self, config_id=None, **kwargs):
+        self._ensure_admin()
+        if not config_id:
+            return request.not_found()
+        config = request.env["pos.config"].browse(int(config_id)).exists()
+        if not config:
+            return request.not_found()
+        base_url = request.env["ir.config_parameter"].sudo().get_param("web.base.url") or ""
+        script = (
+            "$ErrorActionPreference = 'Stop'\n"
+            "$chromePath = 'HKLM:\\\\SOFTWARE\\\\Policies\\\\Google\\\\Chrome'\n"
+            "New-Item -Path $chromePath -Force | Out-Null\n"
+            "New-ItemProperty -Path $chromePath -Name InsecurePrivateNetworkRequestsAllowed -PropertyType DWord -Value 1 -Force | Out-Null\n"
+            f"New-ItemProperty -Path $chromePath -Name InsecurePrivateNetworkRequestsAllowedForUrls -PropertyType MultiString -Value @('{base_url}') -Force | Out-Null\n"
+            "$edgePath = 'HKLM:\\\\SOFTWARE\\\\Policies\\\\Microsoft\\\\Edge'\n"
+            "New-Item -Path $edgePath -Force | Out-Null\n"
+            "New-ItemProperty -Path $edgePath -Name InsecurePrivateNetworkRequestsAllowed -PropertyType DWord -Value 1 -Force | Out-Null\n"
+            f"New-ItemProperty -Path $edgePath -Name InsecurePrivateNetworkRequestsAllowedForUrls -PropertyType MultiString -Value @('{base_url}') -Force | Out-Null\n"
+            "Write-Host 'Loopback policy applied. Restart Chrome/Edge.'\n"
+        )
+        headers = [
+            ("Content-Type", "application/octet-stream"),
+            ("Content-Disposition", 'attachment; filename="enable_loopback_policy.ps1"'),
+        ]
+        return request.make_response(script, headers)
+
     @http.route("/pos_printing_suite/agent/ping", type="json", auth="public", csrf=False)
     def agent_ping(self, token=None, version=None, status=None, pos_config_id=None, printers=None, **kwargs):
         token = token or self._get_agent_token()

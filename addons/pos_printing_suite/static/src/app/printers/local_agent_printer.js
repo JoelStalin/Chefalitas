@@ -6,6 +6,7 @@ import { ensureImagePayload } from "./image_utils";
 
 const LOCAL_AGENT_BASE_URL = "http://127.0.0.1:9060";
 const DEFAULT_TIMEOUT_MS = 5000;
+const LOOPBACK_REGEX = /(127\.0\.0\.1|localhost|::1)/i;
 
 function stripDataUrl(data) {
     if (typeof data !== "string") {
@@ -13,6 +14,30 @@ function stripDataUrl(data) {
     }
     const match = data.match(/^data:([a-zA-Z0-9.+-]+\/[a-zA-Z0-9.+-]+);base64,(.*)$/);
     return match ? match[2] : data;
+}
+
+function isLoopbackBlocked(err, baseUrl) {
+    if (!baseUrl || !LOOPBACK_REGEX.test(baseUrl)) {
+        return false;
+    }
+    if (!window.isSecureContext) {
+        return false;
+    }
+    const message = (err?.message || "").toLowerCase();
+    return message.includes("failed to fetch") || message.includes("networkerror");
+}
+
+function buildLoopbackHelpMessage(env) {
+    const url = env?.pos?.config?.agent_policy_download_url;
+    if (url) {
+        return _t(
+            "Chrome/Edge blocked access to the local agent. Ask an admin to download and run the loopback policy: %s",
+            url
+        );
+    }
+    return _t(
+        "Chrome/Edge blocked access to the local agent. Ask an admin to enable the loopback policy for this POS domain."
+    );
 }
 
 function looksLikeBase64Pdf(data) {
@@ -109,6 +134,15 @@ export class LocalAgentPrinter extends BasePrinter {
         } catch (err) {
             if (err?.name === "AbortError") {
                 throw new Error(_t("Local Agent print timed out."));
+            }
+            if (isLoopbackBlocked(err, this.baseUrl)) {
+                const help = buildLoopbackHelpMessage(this.env);
+                console.error("[pos_printing_suite] Loopback blocked:", {
+                    baseUrl: this.baseUrl,
+                    secureContext: window.isSecureContext,
+                    error: err?.message,
+                });
+                throw new Error(help);
             }
             throw new Error(_t("Local Agent connection failed."));
         } finally {
