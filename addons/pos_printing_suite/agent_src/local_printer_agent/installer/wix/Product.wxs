@@ -10,7 +10,7 @@
     <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
     <MediaTemplate />
 
-    <StandardDirectory Id="ProgramDataFolder">
+    <StandardDirectory Id="CommonAppDataFolder">
       <Directory Id="INSTALLDIR" Name="PosPrintingSuite">
         <Directory Id="AGENTDIR" Name="Agent" />
       </Directory>
@@ -48,7 +48,7 @@
                   Impersonate="no" />
 
     <InstallExecuteSequence>
-      <Custom Action="RunInstallScript" After="InstallFiles">NOT Installed</Custom>
+      <Custom Action="RunInstallScript" After="InstallFiles" Condition="NOT Installed" />
     </InstallExecuteSequence>
 
     <Feature Id="Complete" Title="POS Printing Suite Agent" Level="1">
