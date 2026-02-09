@@ -58,6 +58,15 @@ If an **MSI** is present in `agent_src/dist/`, Odoo will serve the MSI instead.
 - Place the resulting `.msi` in `agent_src/dist/` (example: `PosPrintingSuiteAgent.msi`).
 - Odoo will automatically serve the MSI when available.
 
+**Recommended MSI build (WiX Toolset)**
+1. Download the installer ZIP from Odoo (contains `config.json`, `install.ps1`, tray assets).
+2. On a Windows build machine with WiX installed, run:
+   ```
+   installer/build_msi.ps1 -ZipPath <path_to_zip> -Version 1.0.0
+   ```
+3. Copy the generated MSI from `agent_src/dist/` to the server’s `agent_src/dist/`.
+4. Odoo will serve the MSI instead of ZIP automatically.
+
 **Important**
 - The generated `agent.exe` is a **placeholder**. Replace it with a real service binary.
 - Recommended build options:
