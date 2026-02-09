@@ -29,10 +29,10 @@ class PosPrintingSuiteAgentInstallWizard(models.TransientModel):
             rec.instructions = _(
                 """
                 <ol>
-                  <li>Download the installer ZIP.</li>
-                  <li>Extract it on the Windows POS machine.</li>
-                  <li>Right-click <code>install.ps1</code> and run as Administrator.</li>
-                  <li>If your POS runs on HTTPS, run <code>enable_loopback_policy.ps1</code> as Administrator.</li>
+                  <li>Download the installer (MSI or ZIP).</li>
+                  <li>If you downloaded an <strong>.msi</strong>, run it as Administrator and finish the wizard.</li>
+                  <li>If you downloaded a <strong>.zip</strong>, extract it and run <code>install.ps1</code> as Administrator.</li>
+                  <li>If your POS runs on HTTPS, run <code>enable_loopback_policy.ps1</code> as Administrator (included in ZIP).</li>
                   <li>The service will start automatically and report status back to Odoo.</li>
                 </ol>
                 """

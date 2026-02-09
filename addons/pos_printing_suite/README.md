@@ -41,13 +41,19 @@ Configuration lives **only in `pos.config`**.
 ## Windows Agent (MVP)
 
 This module can generate a **ZIP installer** (placeholder) for a Windows agent.
+If an **MSI** is present in `agent_src/dist/`, Odoo will serve the MSI instead.
 
 **Flow**
 1. Open POS Config and go to the **Windows Agent** section.
-2. Click **Crear instalable del agente** to generate a ZIP.
+2. Click **Crear instalable del agente** to generate an installer (MSI preferred, ZIP fallback).
 3. Click **Descargar e instalar agente** to open instructions and download.
-4. Extract the ZIP on the Windows POS machine.
-5. Run `install.ps1` as Administrator.
+4. If you downloaded an **MSI**, run it as Administrator.
+5. If you downloaded a **ZIP**, extract it and run `install.ps1` as Administrator.
+
+**MSI Build (optional)**
+- Build the MSI on a Windows build machine (e.g., WiX Toolset).
+- Place the resulting `.msi` in `agent_src/dist/` (example: `PosPrintingSuiteAgent.msi`).
+- Odoo will automatically serve the MSI when available.
 
 **Important**
 - The generated `agent.exe` is a **placeholder**. Replace it with a real service binary.

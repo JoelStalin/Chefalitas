@@ -223,22 +223,6 @@ class PosConfig(models.Model):
     def _build_agent_installer(self):
         self.ensure_one()
         self._ensure_agent_token()
-        artifact_name = f"windows_agent_v{self.AGENT_ARTIFACT_VERSION}.zip"
-        payload = self._build_agent_zip_payload()
-        attachment = self.env["ir.attachment"].create({
-            "name": artifact_name,
-            "type": "binary",
-            "datas": base64.b64encode(payload),
-            "res_model": "pos.config",
-            "res_id": self.id,
-            "mimetype": "application/zip",
-        })
-        self.agent_artifact_id = attachment
-        return attachment
-
-    def _build_agent_zip_payload(self):
-        self.ensure_one()
-        module_root = get_module_resource("pos_printing_suite")
         agent_root = get_module_resource("pos_printing_suite", "agent_src", "local_printer_agent")
         dist_root = get_module_resource("pos_printing_suite", "agent_src", "dist")
         if not agent_root:
@@ -247,6 +231,45 @@ class PosConfig(models.Model):
         build_cmd = os.environ.get("POS_PRINTING_SUITE_AGENT_BUILD_CMD")
         if build_cmd:
             self._run_agent_build(build_cmd, agent_root)
+
+        msi_path = self._find_compiled_msi(dist_root, agent_root)
+        if msi_path:
+            artifact_name = os.path.basename(msi_path)
+            with open(msi_path, "rb") as handle:
+                payload = handle.read()
+            mimetype = "application/x-msi"
+        else:
+            artifact_name = f"windows_agent_v{self.AGENT_ARTIFACT_VERSION}.zip"
+            payload = self._build_agent_zip_payload(
+                agent_root=agent_root,
+                dist_root=dist_root,
+                run_build=False,
+            )
+            mimetype = "application/zip"
+
+        attachment = self.env["ir.attachment"].create({
+            "name": artifact_name,
+            "type": "binary",
+            "datas": base64.b64encode(payload),
+            "res_model": "pos.config",
+            "res_id": self.id,
+            "mimetype": mimetype,
+        })
+        self.agent_artifact_id = attachment
+        return attachment
+
+    def _build_agent_zip_payload(self, agent_root=None, dist_root=None, run_build=True):
+        self.ensure_one()
+        module_root = get_module_resource("pos_printing_suite")
+        agent_root = agent_root or get_module_resource("pos_printing_suite", "agent_src", "local_printer_agent")
+        dist_root = dist_root or get_module_resource("pos_printing_suite", "agent_src", "dist")
+        if not agent_root:
+            raise UserError(_("Agent source folder not found."))
+
+        if run_build:
+            build_cmd = os.environ.get("POS_PRINTING_SUITE_AGENT_BUILD_CMD")
+            if build_cmd:
+                self._run_agent_build(build_cmd, agent_root)
 
         base_url = self._get_request_base_url() or self.env["ir.config_parameter"].sudo().get_param("web.base.url")
         config = {
@@ -422,6 +445,21 @@ class PosConfig(models.Model):
             ])
         if agent_root:
             candidates.append(os.path.join(agent_root, "agent.exe"))
+        for path in candidates:
+            if path and os.path.isfile(path):
+                return path
+        return None
+
+    def _find_compiled_msi(self, dist_root, agent_root):
+        candidates = []
+        if dist_root and os.path.isdir(dist_root):
+            for name in os.listdir(dist_root):
+                if name.lower().endswith(".msi"):
+                    candidates.append(os.path.join(dist_root, name))
+        if agent_root and os.path.isdir(agent_root):
+            for name in os.listdir(agent_root):
+                if name.lower().endswith(".msi"):
+                    candidates.append(os.path.join(agent_root, name))
         for path in candidates:
             if path and os.path.isfile(path):
                 return path
