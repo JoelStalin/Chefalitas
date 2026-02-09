@@ -1,58 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <Product
-    Id="*"
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package
     Name="POS Printing Suite Agent"
     Language="1033"
     Version="$(var.ProductVersion)"
     Manufacturer="Chefalitas"
     UpgradeCode="{B9E0E9E2-4A5A-4D8A-8DA6-5B1B5D6C9A01}">
-    <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" />
+    <SummaryInformation Description="POS Printing Suite Agent" />
     <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
     <MediaTemplate />
 
-    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />
-
-    <Directory Id="TARGETDIR" Name="SourceDir">
-      <Directory Id="ProgramDataFolder">
-        <Directory Id="INSTALLDIR" Name="PosPrintingSuite">
-          <Directory Id="AGENTDIR" Name="Agent" />
-        </Directory>
+    <StandardDirectory Id="ProgramDataFolder">
+      <Directory Id="INSTALLDIR" Name="PosPrintingSuite">
+        <Directory Id="AGENTDIR" Name="Agent" />
       </Directory>
-      <Directory Id="ProgramMenuFolder" />
-      <Directory Id="DesktopFolder" />
-      <Directory Id="StartupFolder" />
-    </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="DesktopFolder" />
+    <StandardDirectory Id="StartupFolder" />
 
-    <DirectoryRef Id="AGENTDIR">
-      <!-- Files are harvested into AgentFiles.wxs -->
-      <ComponentRef Id="AgentFilesComponentGroup" />
-    </DirectoryRef>
+    <Icon Id="AgentIcon" SourceFile="$(var.IconPath)" />
 
-    <Component Id="TrayShortcuts" Guid="{A2B0C6B7-1D2F-4F2E-9D46-3D7E8A0F9F11}">
-      <RegistryValue Root="HKLM" Key="Software\\Chefalitas\\PosPrintingSuite" Name="Installed" Type="integer" Value="1" KeyPath="yes"/>
+    <ComponentGroupRef Id="AgentFilesComponentGroup" />
+
+    <Component Id="TrayShortcuts" Guid="*">
+      <RegistryValue Root="HKLM" Key="Software\Chefalitas\PosPrintingSuite" Name="Installed" Type="integer" Value="1" KeyPath="yes" />
       <Shortcut Id="TrayDesktopShortcut"
                 Directory="DesktopFolder"
                 Name="POS Printing Suite Agent"
-                Target="[SystemFolder]WindowsPowerShell\\v1.0\\powershell.exe"
+                Target="[SystemFolder]WindowsPowerShell\v1.0\powershell.exe"
                 Arguments="-NoProfile -ExecutionPolicy Bypass -File &quot;[AGENTDIR]tray_agent.ps1&quot;"
-                WorkingDirectory="[AGENTDIR]"
+                WorkingDirectory="AGENTDIR"
                 Icon="AgentIcon" />
       <Shortcut Id="TrayStartupShortcut"
                 Directory="StartupFolder"
                 Name="POS Printing Suite Agent"
-                Target="[SystemFolder]WindowsPowerShell\\v1.0\\powershell.exe"
+                Target="[SystemFolder]WindowsPowerShell\v1.0\powershell.exe"
                 Arguments="-NoProfile -ExecutionPolicy Bypass -File &quot;[AGENTDIR]tray_agent.ps1&quot;"
-                WorkingDirectory="[AGENTDIR]"
+                WorkingDirectory="AGENTDIR"
                 Icon="AgentIcon" />
     </Component>
 
-    <Icon Id="AgentIcon" SourceFile="$(var.IconPath)" />
-
-    <!-- Run install.ps1 after install to register service -->
     <CustomAction Id="RunInstallScript"
                   Directory="AGENTDIR"
-                  ExeCommand="&quot;[SystemFolder]WindowsPowerShell\\v1.0\\powershell.exe&quot; -NoProfile -ExecutionPolicy Bypass -File &quot;[AGENTDIR]install.ps1&quot;"
+                  ExeCommand="&quot;[SystemFolder]WindowsPowerShell\v1.0\powershell.exe&quot; -NoProfile -ExecutionPolicy Bypass -File &quot;[AGENTDIR]install.ps1&quot;"
                   Execute="deferred"
                   Return="check"
                   Impersonate="no" />
@@ -63,7 +53,7 @@
 
     <Feature Id="Complete" Title="POS Printing Suite Agent" Level="1">
       <ComponentRef Id="TrayShortcuts" />
-      <ComponentRef Id="AgentFilesComponentGroup" />
+      <ComponentGroupRef Id="AgentFilesComponentGroup" />
     </Feature>
-  </Product>
+  </Package>
 </Wix>
