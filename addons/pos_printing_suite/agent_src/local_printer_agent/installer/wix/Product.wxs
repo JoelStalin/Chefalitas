@@ -40,17 +40,6 @@
                 Icon="AgentIcon" />
     </Component>
 
-    <CustomAction Id="RunInstallScript"
-                  Directory="AGENTDIR"
-                  ExeCommand="&quot;[SystemFolder]WindowsPowerShell\v1.0\powershell.exe&quot; -NoProfile -ExecutionPolicy Bypass -File &quot;[AGENTDIR]install.ps1&quot;"
-                  Execute="deferred"
-                  Return="check"
-                  Impersonate="no" />
-
-    <InstallExecuteSequence>
-      <Custom Action="RunInstallScript" After="InstallFiles" Condition="NOT Installed" />
-    </InstallExecuteSequence>
-
     <Feature Id="Complete" Title="POS Printing Suite Agent" Level="1">
       <ComponentRef Id="TrayShortcuts" />
       <ComponentGroupRef Id="AgentFilesComponentGroup" />

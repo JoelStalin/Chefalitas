@@ -37,6 +37,17 @@ if (-not (Test-Path $iconPath)) {
     $iconPath = Join-Path $PSScriptRoot "..\\assets\\agent.ico"
 }
 
+$serviceExeCandidates = @(
+    (Join-Path $temp "dist\\LocalPrinterAgent\\LocalPrinterAgent.exe"),
+    (Join-Path $temp "LocalPrinterAgent.exe"),
+    (Join-Path $temp "agent.exe")
+)
+$serviceExePath = $serviceExeCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $serviceExePath) {
+    Write-Host "ERROR: Service executable not found in the ZIP. Build the agent first."
+    exit 1
+}
+
 Write-Host "Generating AgentFiles.wxs..."
 $components = New-Object System.Collections.Generic.List[string]
 $compRefs = New-Object System.Collections.Generic.List[string]
@@ -45,7 +56,28 @@ Get-ChildItem -Path $temp -Recurse -File | ForEach-Object {
     $compId = "cmp$idx"
     $fileId = "fil$idx"
     $src = $_.FullName
-    $components.Add("      <Component Id=`"$compId`" Guid=`"*`">`n        <File Id=`"$fileId`" Source=`"$src`" KeyPath=`"yes`" />`n      </Component>")
+    if ($src -eq $serviceExePath) {
+        $components.Add(@"
+      <Component Id="$compId" Guid="*">
+        <File Id="$fileId" Source="$src" KeyPath="yes" />
+        <ServiceInstall Id="PosPrintingSuiteAgentSvc"
+                        Name="PosPrintingSuiteAgent"
+                        DisplayName="POS Printing Suite Agent"
+                        Description="POS Printing Suite Windows Agent"
+                        Start="auto"
+                        Type="ownProcess"
+                        ErrorControl="normal" />
+        <ServiceControl Id="PosPrintingSuiteAgentCtrl"
+                        Name="PosPrintingSuiteAgent"
+                        Start="install"
+                        Stop="both"
+                        Remove="uninstall"
+                        Wait="yes" />
+      </Component>
+"@)
+    } else {
+        $components.Add("      <Component Id=`"$compId`" Guid=`"*`">`n        <File Id=`"$fileId`" Source=`"$src`" KeyPath=`"yes`" />`n      </Component>")
+    }
     $compRefs.Add("      <ComponentRef Id=`"$compId`" />")
     $idx++
 }
