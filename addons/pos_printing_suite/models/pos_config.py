@@ -200,6 +200,8 @@ class PosConfig(models.Model):
     def action_open_agent_install_wizard(self):
         self._ensure_admin()
         self.ensure_one()
+        if not self.agent_artifact_id:
+            self._build_agent_installer()
         return {
             "type": "ir.actions.act_window",
             "name": _("Install Windows Agent"),
@@ -334,6 +336,21 @@ class PosConfig(models.Model):
             "  $startupShortcut.WorkingDirectory = $baseDir",
             "  if (Test-Path $iconPath) { $startupShortcut.IconLocation = $iconPath }",
             "  $startupShortcut.Save()",
+            "}",
+            "$configPath = Join-Path $baseDir 'config.json'",
+            "$serverUrl = ''",
+            "if (Test-Path $configPath) {",
+            "  try {",
+            "    $cfg = Get-Content $configPath -Raw | ConvertFrom-Json",
+            "    $serverUrl = $cfg.server_url",
+            "  } catch {}",
+            "}",
+            "$policyScript = Join-Path $baseDir 'enable_loopback_policy.ps1'",
+            "if ($serverUrl -like 'https://*' -and (Test-Path $policyScript)) {",
+            "  & $policyScript",
+            "}",
+            "if (Test-Path $trayScript) {",
+            "  Start-Process $trayCmd -ArgumentList $trayArgs",
             "}",
             "Write-Host 'Agent installed and started.'",
         ]
