@@ -12,6 +12,7 @@ import zipfile
 from odoo import api, fields, models, _
 from odoo.modules.module import get_module_resource
 from odoo.exceptions import AccessError, ValidationError, UserError
+from odoo.http import request
 
 _logger = logging.getLogger(__name__)
 
@@ -247,12 +248,13 @@ class PosConfig(models.Model):
         if build_cmd:
             self._run_agent_build(build_cmd, agent_root)
 
+        base_url = self._get_request_base_url() or self.env["ir.config_parameter"].sudo().get_param("web.base.url")
         config = {
-            "server_url": self.env["ir.config_parameter"].sudo().get_param("web.base.url"),
+            "server_url": base_url,
             "token": self.agent_token,
             "pos_config_id": self.id,
         }
-        loopback_policy = self._build_loopback_policy_script()
+        loopback_policy = self._build_loopback_policy_script(base_url=base_url)
         installer_lines = [
             "$ErrorActionPreference = 'Stop'",
             "$baseDir = Join-Path $env:ProgramData 'PosPrintingSuite\\Agent'",
@@ -336,6 +338,15 @@ class PosConfig(models.Model):
             f"New-ItemProperty -Path $edgePath -Name InsecurePrivateNetworkRequestsAllowedForUrls -PropertyType MultiString -Value @({url_list}) -Force | Out-Null\n"
             "Write-Host 'Loopback policy applied. Restart Chrome/Edge.'\n"
         )
+
+    def _get_request_base_url(self):
+        """Best-effort base URL from the current HTTP request (respects proxy headers)."""
+        try:
+            if request and getattr(request, "httprequest", None):
+                return request.httprequest.url_root.rstrip("/")
+        except Exception:
+            return None
+        return None
 
     def _run_agent_build(self, build_cmd, agent_root):
         installer_dir = os.path.join(agent_root, "installer")
