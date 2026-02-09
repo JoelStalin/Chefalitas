@@ -12,6 +12,7 @@ import sys
 import threading
 import time
 import urllib.request
+import urllib.error
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 from config_loader import load_config, VERSION, DEFAULT_HOST, DEFAULT_PORT
@@ -197,11 +198,23 @@ def _send_ping(config):
             "printers": list_printers(),
         },
     }
+    def _post(url):
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            resp.read()
+
     url = f"{server_url}/pos_printing_suite/agent/ping"
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=5) as resp:
-        resp.read()
+    try:
+        _post(url)
+        return
+    except urllib.error.HTTPError as err:
+        if err.code != 404:
+            raise
+    # Fallback for deployments where Odoo is mounted under /odoo
+    if not server_url.endswith("/odoo"):
+        fallback_url = f"{server_url}/odoo/pos_printing_suite/agent/ping"
+        _post(fallback_url)
 
 
 if __name__ == "__main__":
