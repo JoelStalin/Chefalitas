@@ -355,6 +355,10 @@ class PosConfig(models.Model):
                         proto = "https"
                 else:
                     proto = httpreq.scheme
+                if proto != "https":
+                    origin = httpreq.headers.get("Origin") or httpreq.headers.get("Referer")
+                    if origin and origin.startswith("https://"):
+                        proto = "https"
                 host = httpreq.headers.get("X-Forwarded-Host") or httpreq.host
                 if proto and host:
                     return f"{proto}://{host}"
