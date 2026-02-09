@@ -32,6 +32,9 @@ Configuration lives **only in `pos.config`**.
   - `host`, `port`, `log_dir`
   - `token` is **optional**; if set in the agent config, requests must include `Authorization: Bearer <token>`.
 - **Service**: run via `python win_service.py install` (pywin32) or NSSM.
+- **Tray icon**: the ZIP installer adds a tray app (`tray_agent.ps1`) and creates:
+  - Desktop shortcut: **POS Printing Suite Agent**
+  - Startup shortcut (auto-run on login)
 
 ## Notes
 
