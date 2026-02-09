@@ -145,24 +145,12 @@ class PosConfig(models.Model):
             rec.agent_status = "online" if delta.total_seconds() <= threshold_minutes * 60 else "offline"
 
     def _compute_agent_download_url(self):
-        base_url = self.env["ir.config_parameter"].sudo().get_param("web.base.url")
         for rec in self:
-            if not base_url:
-                rec.agent_download_url = f"/pos_printing_suite/agent/download?config_id={rec.id}"
-            else:
-                rec.agent_download_url = (
-                    f"{base_url}/pos_printing_suite/agent/download?config_id={rec.id}"
-                )
+            rec.agent_download_url = f"/pos_printing_suite/agent/download?config_id={rec.id}"
 
     def _compute_agent_policy_download_url(self):
-        base_url = self.env["ir.config_parameter"].sudo().get_param("web.base.url")
         for rec in self:
-            if not base_url:
-                rec.agent_policy_download_url = False
-            else:
-                rec.agent_policy_download_url = (
-                    f"{base_url}/pos_printing_suite/agent/policy.ps1?config_id={rec.id}"
-                )
+            rec.agent_policy_download_url = f"/pos_printing_suite/agent/policy.ps1?config_id={rec.id}"
 
     def _generate_agent_token(self):
         return secrets.token_urlsafe(32)

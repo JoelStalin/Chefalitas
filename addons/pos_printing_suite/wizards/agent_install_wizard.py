@@ -12,19 +12,13 @@ class PosPrintingSuiteAgentInstallWizard(models.TransientModel):
 
     @api.depends("pos_config_id")
     def _compute_download_url(self):
-        base_url = self.env["ir.config_parameter"].sudo().get_param("web.base.url")
         for rec in self:
             if not rec.pos_config_id:
                 rec.download_url = False
             else:
-                if not base_url:
-                    rec.download_url = (
-                        f"/pos_printing_suite/agent/download?config_id={rec.pos_config_id.id}"
-                    )
-                else:
-                    rec.download_url = (
-                        f"{base_url}/pos_printing_suite/agent/download?config_id={rec.pos_config_id.id}"
-                    )
+                rec.download_url = (
+                    f"/pos_printing_suite/agent/download?config_id={rec.pos_config_id.id}"
+                )
 
     @api.depends("download_url")
     def _compute_instructions(self):
