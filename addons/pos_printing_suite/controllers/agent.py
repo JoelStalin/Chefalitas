@@ -45,9 +45,11 @@ class PosPrintingSuiteAgentController(http.Controller):
             config._build_agent_installer()
         attachment = config.agent_artifact_id
         data = base64.b64decode(attachment.datas or b"")
+        mimetype = attachment.mimetype or "application/octet-stream"
         headers = [
-            ("Content-Type", "application/zip"),
+            ("Content-Type", mimetype),
             ("Content-Disposition", f'attachment; filename="{attachment.name}"'),
+            ("X-Content-Type-Options", "nosniff"),
         ]
         return request.make_response(data, headers)
 
