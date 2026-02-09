@@ -73,6 +73,8 @@ New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 $msiName = "PosPrintingSuiteAgent-$Version.msi"
 $msiPath = Join-Path $OutDir $msiName
 
+Get-ChildItem -Path $OutDir -Filter "cab*.cab" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+
 & wix build -d ProductVersion=$Version -d IconPath="$iconPath" -o $msiPath $productWxs $harvestWxs
 
 Write-Host "MSI created: $msiPath"
