@@ -343,7 +343,22 @@ class PosConfig(models.Model):
         """Best-effort base URL from the current HTTP request (respects proxy headers)."""
         try:
             if request and getattr(request, "httprequest", None):
-                return request.httprequest.url_root.rstrip("/")
+                httpreq = request.httprequest
+                proto = (
+                    httpreq.headers.get("X-Forwarded-Proto")
+                    or httpreq.headers.get("X-Forwarded-Protocol")
+                    or httpreq.headers.get("X-Forwarded-Ssl")
+                )
+                if proto:
+                    proto = proto.split(",")[0].strip()
+                    if proto.lower() in ("on", "true"):
+                        proto = "https"
+                else:
+                    proto = httpreq.scheme
+                host = httpreq.headers.get("X-Forwarded-Host") or httpreq.host
+                if proto and host:
+                    return f"{proto}://{host}"
+                return httpreq.url_root.rstrip("/")
         except Exception:
             return None
         return None
