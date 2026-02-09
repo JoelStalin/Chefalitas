@@ -124,15 +124,29 @@ def print_pdf(printer_name, data_b64):
         raise RuntimeError(detail) from e
 
 
+def _flatten_to_rgb(img):
+    """Ensure image is RGB with a white background for any transparency."""
+    if img.mode in ("RGBA", "LA"):
+        bg = Image.new("RGB", img.size, (255, 255, 255))
+        bg.paste(img, mask=img.split()[-1])
+        return bg
+    if img.mode == "P":
+        # Palette images can carry transparency; convert via RGBA to preserve alpha.
+        if "transparency" in img.info:
+            rgba = img.convert("RGBA")
+            bg = Image.new("RGB", rgba.size, (255, 255, 255))
+            bg.paste(rgba, mask=rgba.split()[-1])
+            return bg
+        return img.convert("RGB")
+    if img.mode != "RGB":
+        return img.convert("RGB")
+    return img
+
+
 def _print_pil_image_gdi(printer_name, img):
     if not (win32print and win32ui and win32con and Image and ImageWin):
         raise RuntimeError("Image printing requires Pillow and pywin32.")
-    if img.mode == "RGBA":
-        bg = Image.new("RGB", img.size, (255, 255, 255))
-        bg.paste(img, mask=img.split()[3])
-        img = bg
-    elif img.mode != "RGB":
-        img = img.convert("RGB")
+    img = _flatten_to_rgb(img)
     hdc = win32ui.CreateDC()
     try:
         hdc.CreatePrinterDC(printer_name)
