@@ -1,10 +1,10 @@
-$ErrorActionPreference = 'Stop'
-
 param(
     [string]$ZipPath,
     [string]$OutDir = "..\\dist",
     [string]$Version = "1.0.0"
 )
+
+$ErrorActionPreference = 'Stop'
 
 function Require-Tool($name) {
     $cmd = Get-Command $name -ErrorAction SilentlyContinue
