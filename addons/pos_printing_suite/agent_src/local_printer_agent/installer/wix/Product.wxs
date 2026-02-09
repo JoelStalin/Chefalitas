@@ -8,7 +8,7 @@
     UpgradeCode="{B9E0E9E2-4A5A-4D8A-8DA6-5B1B5D6C9A01}">
     <SummaryInformation Description="POS Printing Suite Agent" />
     <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
-    <MediaTemplate />
+    <MediaTemplate EmbedCab="yes" />
 
     <StandardDirectory Id="CommonAppDataFolder">
       <Directory Id="INSTALLDIR" Name="PosPrintingSuite">

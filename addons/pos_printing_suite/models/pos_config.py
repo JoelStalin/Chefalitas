@@ -504,10 +504,12 @@ class PosConfig(models.Model):
             for name in os.listdir(agent_root):
                 if name.lower().endswith(".msi"):
                     candidates.append(os.path.join(agent_root, name))
-        for path in candidates:
-            if path and os.path.isfile(path):
-                return path
-        return None
+        existing = [path for path in candidates if path and os.path.isfile(path)]
+        if not existing:
+            return None
+        # Prefer the newest MSI by modification time.
+        existing.sort(key=lambda p: os.path.getmtime(p), reverse=True)
+        return existing[0]
 
     def _notify(self, message, notif_type="info"):
         return {
