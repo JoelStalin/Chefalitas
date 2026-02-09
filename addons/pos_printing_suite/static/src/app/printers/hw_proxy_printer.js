@@ -48,6 +48,7 @@ function looksLikeBase64Pdf(data) {
 export class HwProxyPrinter extends BasePrinter {
     setup(params) {
         super.setup(...arguments);
+        this.isPrintingSuitePrinter = true;
         this.hwProxyBaseUrl = params.hwProxyBaseUrl || "";
         if (!this.hwProxyBaseUrl && params.ip) {
             this.hwProxyBaseUrl = params.ip.startsWith("http") ? params.ip : `http://${params.ip}`;

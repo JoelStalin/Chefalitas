@@ -77,6 +77,7 @@ async function normalizePayload(env, receipt) {
 export class LocalAgentPrinter extends BasePrinter {
     setup(params) {
         super.setup(...arguments);
+        this.isPrintingSuitePrinter = true;
         this.baseUrl = params.baseUrl || LOCAL_AGENT_BASE_URL;
         this.token = params.token || "";
         this.printerName = params.printerName || params.printer || "";

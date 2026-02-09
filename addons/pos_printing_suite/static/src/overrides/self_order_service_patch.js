@@ -68,7 +68,7 @@ function getLocalAgentBaseUrl(config) {
 
 function getHwProxyBaseUrl(config) {
     return buildBaseUrl(
-        config?.any_printer_ip || config?.proxy_ip,
+        config?.any_printer_ip,
         config?.any_printer_port,
         DEFAULT_HW_PROXY_HOST,
         DEFAULT_HW_PROXY_PORT

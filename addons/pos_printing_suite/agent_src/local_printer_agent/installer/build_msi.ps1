@@ -69,7 +69,6 @@ Get-ChildItem -Path $temp -Recurse -File | ForEach-Object {
                         ErrorControl="normal" />
         <ServiceControl Id="PosPrintingSuiteAgentCtrl"
                         Name="PosPrintingSuiteAgent"
-                        Start="install"
                         Stop="both"
                         Remove="uninstall"
                         Wait="yes" />
@@ -108,5 +107,8 @@ $msiPath = Join-Path $OutDir $msiName
 Get-ChildItem -Path $OutDir -Filter "cab*.cab" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
 
 & wix build -d ProductVersion=$Version -d IconPath="$iconPath" -o $msiPath $productWxs $harvestWxs
+if ($LASTEXITCODE -ne 0) {
+    throw "WiX build failed with exit code $LASTEXITCODE"
+}
 
 Write-Host "MSI created: $msiPath"

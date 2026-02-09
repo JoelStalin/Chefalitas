@@ -62,6 +62,9 @@ async function safeHtmlToCanvas(receipt) {
 
 patch(BasePrinter.prototype, {
     async printReceipt(receipt) {
+        if (!this.isPrintingSuitePrinter && typeof super.printReceipt === "function") {
+            return super.printReceipt(...arguments);
+        }
         if (receipt) {
             this.receiptQueue.push(receipt);
         }

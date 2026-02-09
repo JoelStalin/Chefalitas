@@ -187,8 +187,8 @@ class PosConfig(models.Model):
     def action_download_agent_installer(self):
         self._ensure_admin()
         self.ensure_one()
-        if not self.agent_artifact_id:
-            self._build_agent_installer()
+        # Always rebuild to avoid stale/cached installers.
+        self._build_agent_installer()
         if not self.agent_download_url:
             raise UserError(_("Download URL is not available."))
         return {
@@ -225,6 +225,9 @@ class PosConfig(models.Model):
     def _build_agent_installer(self):
         self.ensure_one()
         self._ensure_agent_token()
+        if self.agent_artifact_id:
+            self.agent_artifact_id.unlink()
+            self.agent_artifact_id = False
         agent_root = get_module_resource("pos_printing_suite", "agent_src", "local_printer_agent")
         dist_root = get_module_resource("pos_printing_suite", "agent_src", "dist")
         if not agent_root:
