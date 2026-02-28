@@ -9,12 +9,15 @@
     "depends": ["point_of_sale", 'pos_self_order'],
     "post_init_hook": "post_init_hook",
     "assets": {
+        # Legacy compatibility: /pos/web (older POS route) may rely on this bundle key.
+        "point_of_sale.assets": [
+            "pos_printing_suite/static/src/entrypoints/pos_printing_suite_pos_entry.js",
+        ],
         "point_of_sale._assets_pos": [
-            "pos_printing_suite/static/src/**/*.js",
+            "pos_printing_suite/static/src/entrypoints/pos_printing_suite_pos_entry.js",
         ],
         "pos_self_order.assets": [
-            "pos_printing_suite/static/src/app/printers/*.js",
-            "pos_printing_suite/static/src/overrides/self_order_service_patch.js",
+            "pos_printing_suite/static/src/entrypoints/pos_printing_suite_self_order_entry.js",
         ],
     },
     "data": [

@@ -34,28 +34,38 @@ If you use Odoo, it generates `windows_agent_v0.1.0.zip`.
 3) Build the MSI:
 ```powershell
 cd addons/pos_printing_suite/agent_src/local_printer_agent/installer
-.\build_msi.ps1 -ZipPath "C:\Path\windows_agent_v0.1.0.zip" -OutDir "..\dist" -Version "1.0.3"
+.\build_msi.ps1 -ZipPath "C:\Path\windows_agent_v0.1.0.zip" -OutDir "..\dist" -Version "1.0.5"
 ```
 MSI output:
-`addons/pos_printing_suite/agent_src/dist/PosPrintingSuiteAgent-1.0.3.msi`
+`addons/pos_printing_suite/agent_src/dist/PosPrintingSuiteAgent-1.0.5.msi`
 
 ## Install / Uninstall logs (MSI)
 
 Install:
 ```bat
-msiexec /i "C:\Path\PosPrintingSuiteAgent-1.0.3.msi" /L*V "%TEMP%\agent_install.log"
+msiexec /i "C:\Path\PosPrintingSuiteAgent-1.0.5.msi" /L*V "%TEMP%\agent_install.log"
 ```
 
 Uninstall:
 ```bat
-msiexec /x "C:\Path\PosPrintingSuiteAgent-1.0.3.msi" /L*V "%TEMP%\agent_uninstall.log"
+msiexec /x "C:\Path\PosPrintingSuiteAgent-1.0.5.msi" /L*V "%TEMP%\agent_uninstall.log"
 ```
 
 ## Troubleshooting
 
+### Local legacy receiver (debug/testing)
+If you need to test POS print payloads locally and save them as PDF files:
+
+```powershell
+cd addons/pos_printing_suite/agent_src/local_printer_agent/tools
+python legacy_pdf_receiver.py
+```
+
+By default it listens on `http://127.0.0.1:9060` and writes files to `tmp/print_jobs`.
+
 ### cab1.cab not found
 - Ensure the MSI is built with embedded CAB:
-  `MediaTemplate EmbedCab="yes"` in `Product.wxs`.
+  `MediaTemplate EmbedCab="yes"` and `Compressed="yes"` in `Product.wxs`.
 - Remove old `cab*.cab` files before building.
 
 ### "There is a problem with this Windows Installer package..."
