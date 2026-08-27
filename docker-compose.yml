@@ -1,102 +1,58 @@
-services:
-  odoo:
-    image: chefalitas-odoo:18.0
-    build:
-      context: .
-      dockerfile: odoo/Dockerfile
-      args:
-        ODOO_IMAGE: odoo:18.0
-    depends_on:
-      - db
-    env_file: .env
-    restart: always
-    ports:
-      - "8069:8069"
-    volumes:
-      - odoo-data:/var/lib/odoo
-      - ./addons:/mnt/extra-addons
-      - ./config/odoo.conf:/etc/odoo/odoo.conf
-      - ./logs:/var/log/odoo
-    networks:
-      - odoo-net
-    # >>> Más prioridad y más recursos <<<
-    cpu_shares: 2048      # prioridad alta de CPU frente a otros
-    cpus: "2.0"           # puede usar hasta 2 cores lógicos
-    mem_reservation: 2g   # el sistema intenta reservarle 2 GB
-    mem_limit: 3g         # no puede pasar de 3 GB
+version: "3.8"
 
+services:
   db:
-    image: postgres:15
-    env_file: .env
+    image: postgres:16-alpine
+    container_name: chefalitas-db-prod
     restart: always
-    ports:
-      - "5432:5432"
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoopassword_secure_chefalitas
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - ./postgres-config/pg_hba.conf:/etc/postgresql/pg_hba.conf
-      - ./postgres-config/postgresql.conf:/etc/postgresql/postgresql.conf
-    networks:
-      - odoo-net
-    # >>> Base de datos también prioritaria <<<
-    cpu_shares: 2048
-    cpus: "1.5"
-    mem_reservation: 2g
-    mem_limit: 3g
+      - ./db_data:/var/lib/postgresql/data/pgdata
+    command: >
+      postgres
+      -c shared_buffers=512MB
+      -c effective_cache_size=1536MB
+      -c work_mem=32MB
+      -c maintenance_work_mem=128MB
+      -c max_connections=150
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  odoo:
+    image: odoo:18.0
+    container_name: chefalitas-odoo-prod
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - HOST=db
+      - USER=odoo
+      - PASSWORD=odoopassword_secure_chefalitas
+    volumes:
+      - ./config:/etc/odoo
+      - ./addons:/mnt/extra-addons
+      - ./data:/var/lib/odoo
+    ports:
+      - "127.0.0.1:8069:8069"
+      - "127.0.0.1:8072:8072"
 
   nginx:
-    image: nginx:stable
+    image: nginx:alpine
+    container_name: chefalitas-nginx-prod
+    restart: always
     depends_on:
       - odoo
     ports:
-      - "80:80"
-      - "443:443"
+      - "8080:80"
     volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/html:/var/www/certbot
-      - ./nginx/ssl:/etc/letsencrypt
-    networks:
-      - odoo-net
-    # >>> Menos prioridad que odoo/db, pero sin ahogarlo <<<
-    cpu_shares: 512
-    cpus: "0.5"
-    mem_limit: 512m
-
-  certbot:
-    image: certbot/certbot
-    depends_on:
-      - nginx
-    volumes:
-      - ./nginx/ssl:/etc/letsencrypt
-      - ./nginx/html:/var/www/certbot
-    entrypoint: >
-      /bin/sh -c "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h; done"
-    networks:
-      - odoo-net
-    # >>> Muy bajo consumo, no hace falta mucho <<<
-    cpu_shares: 256
-    cpus: "0.25"
-    mem_limit: 256m
-
-  pgadmin:
-    image: dpage/pgadmin4
-    restart: always
-    ports:
-      - "5050:80"    
-    env_file: .env
-    volumes:
-      - pgadmin-data:/var/lib/pgadmin
-    networks:
-      - odoo-net
-    # >>> Menos importante que odoo/db y nginx <<<
-    cpu_shares: 128
-    cpus: "0.25"
-    mem_limit: 256m
-
-networks:
-  odoo-net:
-    driver: bridge
-
-volumes:
-  odoo-data:
-  postgres-data:
-  pgadmin-data:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
