@@ -12,12 +12,13 @@ compose() {
 echo ">> Construyendo imagen de Odoo (si aplica)..."
 compose build "$ODOO_SERVICE"
 
-echo ">> Levantando/actualizando solo el servicio de Odoo (sin tocar la DB)..."
-compose up -d --no-deps "$ODOO_SERVICE"
+echo ">> Levantando/actualizando servicios..."
+compose up -d
 
-echo ">> Dependencias: instaladas en build (skipping runtime pip install)."
+echo ">> Actualizando modulos ORCA y contabilidad/POS en base de datos..."
+compose exec -T "$ODOO_SERVICE" odoo -u orca_bridge,l10n_do_accounting,pos_system,pos_kitchen_core -d chefalitas --stop-after-init || true
 
-echo ">> Reiniciando solo Odoo para aplicar cambios..."
+echo ">> Reiniciando Odoo para cargar nuevas rutas..."
 compose restart "$ODOO_SERVICE"
 
 echo ">> Todo OK."
