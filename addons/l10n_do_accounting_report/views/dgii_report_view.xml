@@ -247,7 +247,7 @@
                 <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]" />
                 <filter string="Generated" name="generated" domain="[('state', '=', 'generated')]" />
                 <filter string="Sent" name="sent" domain="[('state', '=', 'sent')]" />
-                <group expand="0" string="Group By">
+                <group>
                     <filter string="Status" name="group_by_state" context="{'group_by': 'state'}" />
                 </group>
             </search>
@@ -414,7 +414,7 @@
                     domain="[('withholded_itbis', '!=', 0)]" />
                 <filter string="ISR Withholding" name="isr_withholding"
                     domain="[('income_withholding', '!=', 0)]" />
-                <group expand="0" string="Group By">
+                <group>
                     <filter string="Contact" name="group_by_invoice_partner_id"
                         context="{'group_by':'invoice_partner_id'}" />
                     <filter string="Identification Type" name="group_by_identification_type"
@@ -450,7 +450,7 @@
                     domain="[('third_withheld_itbis', '!=', 0)]" />
                 <filter string="ISR Withholding" name="isr_withholding"
                     domain="[('third_income_withholding', '!=', 0)]" />
-                <group expand="0" string="Group By">
+                <group>
                     <filter string="Contact" name="group_by_invoice_partner_id"
                         context="{'group_by':'invoice_partner_id'}" />
                     <filter string="Identification Type" name="group_by_identification_type"
@@ -469,7 +469,7 @@
             <search string="Search Cancel Line">
                 <field name="invoice_partner_id" />
                 <field name="fiscal_invoice_number" />
-                <group expand="0" string="Group By">
+                <group>
                     <filter string="Contact" name="group_by_invoice_partner_id"
                         context="{'group_by':'invoice_partner_id'}" />
                     <filter string="Annulment Type" name="group_by_anulation_type"

@@ -1,5 +1,7 @@
 """file: dgii_report.py ."""
 import base64
+
+from odoo.tools import BinaryBytes
 import calendar
 import tempfile
 from datetime import datetime as dt, date as ddate
@@ -95,14 +97,10 @@ class DgiiReport(models.Model):
     )
     previous_report_pending = fields.Boolean(compute="_compute_previous_report_pending")
 
-    _sql_constraints = [
-        (
-            "name_unique",
-            "UNIQUE(name, company_id)",
-            "You cannot have more than one report by period.",
-        )
-    ]
-
+    _name_unique = models.Constraint(
+        'UNIQUE(name, company_id)',
+        'You cannot have more than one report by period.',
+    )
     @api.model
     def _compute_606_fields(self):
         for rec in self:
@@ -489,6 +487,12 @@ class DgiiReport(models.Model):
             ]
         )
 
+    @staticmethod
+    def _dgii_txt_binary(data, filename):
+        """DGII TXT content with CRLF line endings, kept in memory (no file left in /tmp)."""
+        text = str(data).replace("\r\n", "\n").replace("\n", "\r\n")
+        return BinaryBytes(text.encode("utf-8"), filename)
+
     def _generate_606_txt(self, records, qty):
 
         company_vat = self.company_id.vat
@@ -497,17 +501,11 @@ class DgiiReport(models.Model):
         header = "606|{}|{}|{}".format(str(company_vat), period, qty) + "\n"
         data = header + records
 
-        file_path = "{}/DGII_606_{}_{}.txt".format(
-            tempfile.gettempdir(),
-            company_vat,
-            period,
-        )
-        with open(file_path, "w", encoding="utf-8", newline="\r\n") as txt_606:
-            txt_606.write(str(data))
+        filename = "DGII_606_{}_{}.txt".format(company_vat, period)
         self.write(
             {
-                "purchase_filename": file_path.replace("/tmp/", ""),
-                "purchase_binary": base64.b64encode(open(file_path, "rb").read()),
+                "purchase_filename": filename,
+                "purchase_binary": self._dgii_txt_binary(data, filename),
             }
         )
 
@@ -912,17 +910,11 @@ class DgiiReport(models.Model):
         header = "607|{}|{}|{}".format(str(company_vat).ljust(11), period, qty) + "\n"
         data = header + records
 
-        file_path = "{}/DGII_607_{}_{}.txt".format(
-            tempfile.gettempdir(),
-            company_vat,
-            period,
-        )
-        with open(file_path, "w", encoding="utf-8", newline="\r\n") as txt_607:
-            txt_607.write(str(data))
+        filename = "DGII_607_{}_{}.txt".format(company_vat, period)
         self.write(
             {
-                "sale_filename": file_path.replace("/tmp/", ""),
-                "sale_binary": base64.b64encode(open(file_path, "rb").read()),
+                "sale_filename": filename,
+                "sale_binary": self._dgii_txt_binary(data, filename),
             }
         )
 
@@ -1086,17 +1078,11 @@ class DgiiReport(models.Model):
         header = "608|{}|{}|{}".format(str(company_vat).ljust(11), period, qty) + "\n"
         data = header + records
 
-        file_path = "{}/DGII_608_{}_{}.txt".format(
-            tempfile.gettempdir(),
-            company_vat,
-            period,
-        )
-        with open(file_path, "w", encoding="utf-8", newline="\r\n") as txt_608:
-            txt_608.write(str(data))
+        filename = "DGII_608_{}_{}.txt".format(company_vat, period)
         self.write(
             {
-                "cancel_filename": file_path.replace("/tmp/", ""),
-                "cancel_binary": base64.b64encode(open(file_path, "rb").read()),
+                "cancel_filename": filename,
+                "cancel_binary": self._dgii_txt_binary(data, filename),
             }
         )
 
@@ -1179,17 +1165,11 @@ class DgiiReport(models.Model):
         header = "609|{}|{}|{}".format(str(company_vat).ljust(11), period, qty) + "\n"
         data = header + records
 
-        file_path = "{}/DGII_609_{}_{}.txt".format(
-            tempfile.gettempdir(),
-            company_vat,
-            period,
-        )
-        with open(file_path, "w", encoding="utf-8", newline="\r\n") as txt_609:
-            txt_609.write(str(data))
+        filename = "DGII_609_{}_{}.txt".format(company_vat, period)
         self.write(
             {
-                "exterior_filename": file_path.replace("/tmp/", ""),
-                "exterior_binary": base64.b64encode(open(file_path, "rb").read()),
+                "exterior_filename": filename,
+                "exterior_binary": self._dgii_txt_binary(data, filename),
             }
         )
 

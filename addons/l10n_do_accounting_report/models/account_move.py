@@ -11,15 +11,10 @@ class InvoiceServiceTypeDetail(models.Model):
     code = fields.Char(string="Code", required=True)
     parent_code = fields.Char(string="Parent Code")
 
-    _sql_constraints = [
-        (
-            "invoice_service_type_detail_code_unique",
-            "unique (code)",
-            "El código debe ser único.",  # SIN _(), texto plano (no traducible)
-        ),
-    ]
-
-
+    _invoice_service_type_detail_code_unique = models.Constraint(
+        'unique (code)',
+        'El código debe ser único.',
+    )
 class AccountMove(models.Model):
     """
     Extensión de facturas para reportes DGII (606 / 607 / 608 / 609).
@@ -233,13 +228,23 @@ class AccountMove(models.Model):
 
     @api.depends("line_ids.tax_line_id", "line_ids.balance")
     def _compute_invoiced_itbis(self):
+        # DGII "ITBIS facturado" is all the ITBIS on the document (deductible or not; the part
+        # taken to cost is reported separately). purchase_tax_type is only editable on purchase
+        # taxes, so sale taxes are recognised by their ITBIS tax group as well.
         for move in self:
             itbis_amount = 0.0
             for line in move.line_ids:
                 tax = line.tax_line_id
-                if tax and tax.purchase_tax_type == "itbis":
+                if tax and move._l10n_do_is_invoiced_itbis(tax):
                     itbis_amount += line.balance
             move.invoiced_itbis = itbis_amount
+
+    @staticmethod
+    def _l10n_do_is_invoiced_itbis(tax):
+        if tax.purchase_tax_type == "itbis":
+            return True
+        group = (tax.tax_group_id.name or "").upper()
+        return tax.amount > 0 and "ITBIS" in group and tax.purchase_tax_type in (False, "none")
 
     @api.depends(
         "move_type",

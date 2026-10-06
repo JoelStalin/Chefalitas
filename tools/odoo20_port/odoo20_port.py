@@ -97,16 +97,48 @@ def list_views(s):
     return s
 
 
+def search_groups(s):
+    """Search views: Odoo 20 group-by filters sit in a bare <group> (no expand/string)."""
+    return re.sub(r'<group\s+expand="[01]"(?:\s+string="[^"]*")?\s*>|<group\s+string="[^"]*"\s+expand="[01]"\s*>',
+                  "<group>", s)
+
+
 def xml(s, path):
     s = attrs(s, path)
     s = groups(s, path)
     s = list_views(s)
+    s = search_groups(s)
     s = s.replace('<field name="users" eval=', '<field name="user_ids" eval=')
     s = s.replace('<field name="groups_id" eval=', '<field name="group_ids" eval=')
     return s
 
 
+def sql_constraints(s, path):
+    """_sql_constraints = [(name, definition, message), ...] -> _name = models.Constraint(...).
+    Odoo 20 ignores _sql_constraints (only logs a warning), so constraints silently vanish."""
+    import ast
+
+    def repl(m):
+        indent, body = m.group(1), m.group(2)
+        try:
+            items = ast.literal_eval("[" + body + "]")
+        except Exception:
+            report.append(f"{os.path.relpath(path, addon)}: _sql_constraints not literal, port by hand")
+            return m.group(0)
+        if not all(isinstance(t, tuple) and len(t) == 3 and all(isinstance(x, str) for x in t) for t in items):
+            report.append(f"{os.path.relpath(path, addon)}: _sql_constraints with translated/odd messages, port by hand")
+            return m.group(0)
+        out = []
+        for name, definition, message in items:
+            attr = name if name.startswith("_") else "_" + name
+            out.append(f"{indent}{attr} = models.Constraint(\n{indent}    {definition!r},\n{indent}    {message!r},\n{indent})")
+        return "\n".join(out) + "\n"
+
+    return re.sub(r"^([ \t]+)_sql_constraints\s*=\s*\[(.*?)^\1\]\s*\n", repl, s, flags=re.S | re.M)
+
+
 def py(s, path):
+    s = sql_constraints(s, path)
     s = s.replace("self._context", "self.env.context")
     s = s.replace("from odoo.tests.common import Form", "from odoo.tests import Form")
     s = re.sub(r"\.groups_id\b", ".group_ids", s)

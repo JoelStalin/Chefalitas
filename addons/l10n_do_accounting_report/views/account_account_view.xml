@@ -5,7 +5,7 @@
         <field name="model">account.account</field>
         <field name="inherit_id" ref="account.view_account_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='group_id']" position="after">
+            <xpath expr="//field[@name='tag_ids']" position="after">
                 <field name="account_fiscal_type"/>
                 <field name="isr_retention_type" invisible="account_fiscal_type != 'ISR'"/>
             </xpath>
