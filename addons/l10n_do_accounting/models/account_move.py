@@ -358,28 +358,24 @@ class AccountMove(models.Model):
                 and invoice.l10n_latam_document_type_id.l10n_do_ncf_type.startswith("e-")
             )
 
-    @api.depends("company_id", "company_id.l10n_do_ecf_issuer", "is_ecf_invoice")
+    @api.depends("company_id", "company_id.l10n_do_ecf_issuer")
     def _compute_company_in_contingency(self):
-        for invoice in self.filtered(lambda inv: inv.state == "draft" and inv.country_code == "DO" and inv.is_ecf_invoice):
-            contingency = not invoice.company_id.l10n_do_ecf_issuer
-            invoice.l10n_do_company_in_contingency = contingency
-
-            if contingency and not invoice.l10n_latam_manual_document_number:
-                # Buscar tipo de documento de contingencia según el tipo original
-                contingency_type = invoice.env["l10n_latam.document.type"].search([
-                    ("code", "in", ["E44", "E45"]),  # E44 = consumo, E45 = crédito fiscal
-                    ("country_id.code", "=", "DO"),
-                ])
-                # Determinar si es crédito o consumo original
-                if invoice.l10n_latam_document_type_id.l10n_do_ncf_type in ("e-credit", "credit"):
-                    new_doc_type = contingency_type.filtered(lambda d: d.code == "E45")
-                else:
-                    new_doc_type = contingency_type.filtered(lambda d: d.code == "E44")
-
-                if new_doc_type:
-                    invoice.l10n_latam_document_type_id = new_doc_type.id
-                    invoice.l10n_latam_manual_document_number = True
-
+        """A company that already issued e-CF but is not an e-CF issuer right now is in
+        contingency: per DGII it falls back to series B NCF, to be replaced later by an e-CF
+        with modification code 4 ("Reemplazo NCF emitido en contingencia")."""
+        issued_ecf = {}
+        for invoice in self:
+            company = invoice.company_id
+            if invoice.country_code != "DO" or not company or company.l10n_do_ecf_issuer:
+                invoice.l10n_do_company_in_contingency = False
+                continue
+            if company.id not in issued_ecf:
+                issued_ecf[company.id] = bool(self.search_count([
+                    ("company_id", "=", company.id),
+                    ("is_ecf_invoice", "=", True),
+                    ("state", "=", "posted"),
+                ], limit=1))
+            invoice.l10n_do_company_in_contingency = issued_ecf[company.id]
 
     @api.depends("l10n_do_ecf_security_code", "l10n_do_ecf_sign_date", "invoice_date")
     def _compute_l10n_do_electronic_stamp(self):
