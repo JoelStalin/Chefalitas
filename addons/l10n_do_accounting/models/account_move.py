@@ -690,7 +690,8 @@ class AccountMove(models.Model):
 
     def _get_starting_sequence(self):
         """Define la secuencia inicial para facturas dominicanas."""
-        if self.country_code == "DO" and self.l10n_latam_use_documents:
+        if (self.country_code == "DO" and self.l10n_latam_use_documents
+                and self.env.context.get("is_l10n_do_seq")):
             doc_type = self.l10n_latam_document_type_id
             return f"{doc_type.doc_code_prefix}{'0'.zfill(8)}"
         return super()._get_starting_sequence()
@@ -741,7 +742,8 @@ class AccountMove(models.Model):
 
     def _get_last_sequence(self, relaxed=False, with_prefix=None):
         """Ajusta la obtención de la última secuencia para facturas dominicanas."""
-        if not (self.country_code == "DO" and self.l10n_latam_use_documents):
+        if not (self.country_code == "DO" and self.l10n_latam_use_documents
+                and self.env.context.get("is_l10n_do_seq")):
             return super()._get_last_sequence(relaxed=relaxed, with_prefix=with_prefix)
 
         self.ensure_one()
@@ -757,7 +759,8 @@ class AccountMove(models.Model):
         return result[0][0] if result else None
     def _get_sequence_format_param(self, previous):
         """Formatea la secuencia para facturas dominicanas, incluyendo claves de fecha para compatibilidad."""
-        if not (self.country_code == "DO" and self.l10n_latam_use_documents):
+        if not (self.country_code == "DO" and self.l10n_latam_use_documents
+                and self.env.context.get("is_l10n_do_seq")):
             return super()._get_sequence_format_param(previous)
 
         regex = self._l10n_do_sequence_fixed_regex
@@ -789,7 +792,8 @@ class AccountMove(models.Model):
     def _set_next_sequence(self):
         """Forza la generación del siguiente número de secuencia para facturas dominicanas."""
         self.ensure_one()
-        if not (self.country_code == "DO" and self.l10n_latam_use_documents):
+        if not (self.country_code == "DO" and self.l10n_latam_use_documents
+                and self.env.context.get("is_l10n_do_seq")):
             return super()._set_next_sequence()
 
         # Obtener la última secuencia

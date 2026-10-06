@@ -652,16 +652,13 @@ class AccountMoveTest(common.L10nDOTestsCommon):
             }
         )
         sale_invoice_1_id._post()
-        self.assertEqual(
-            sale_invoice_1_id.name, "INV/%s/0001" % fields.Date.today().year
-        )
+        # DGII: our sales document is identified by its NCF, so the invoice name is the NCF.
+        self.assertEqual(sale_invoice_1_id.name, "B0100000001")
         self.assertEqual(sale_invoice_1_id.l10n_do_fiscal_number, "B0100000001")
 
         sale_invoice_2_id = self._create_l10n_do_invoice()
         sale_invoice_2_id._post()
-        self.assertEqual(
-            sale_invoice_2_id.name, "INV/%s/0002" % fields.Date.today().year
-        )
+        self.assertEqual(sale_invoice_2_id.name, "B0100000002")
         self.assertEqual(sale_invoice_2_id.l10n_do_fiscal_number, "B0100000002")
 
         purchase_invoice_1_id = self._create_l10n_do_invoice(
@@ -699,13 +696,14 @@ class AccountMoveTest(common.L10nDOTestsCommon):
                 "document_number": "B0100000001",
             }
         )
-        self.assertEqual(invoice_1.name, "INV/%s/0001" % invoice_1.date.year)
+        # DGII: our sales document is identified by its NCF, so the invoice name is the NCF.
+        self.assertEqual(invoice_1.name, "B0100000001")
         invoice_1._post()
         self.assertEqual(invoice_1.l10n_do_fiscal_number, "B0100000001")
 
         invoice_2 = self._create_l10n_do_invoice()
         invoice_2._post()
-        self.assertEqual(invoice_2.name, "INV/%s/0002" % invoice_2.date.year)
+        self.assertEqual(invoice_2.name, "B0100000002")
         self.assertEqual(invoice_2.l10n_do_fiscal_number, "B0100000002")
 
         # Unit test to verify if the invoice number or document number is repeated
@@ -715,7 +713,7 @@ class AccountMoveTest(common.L10nDOTestsCommon):
             }
         )
         invoice_3._post()
-        self.assertEqual(invoice_3.name, "INV/%s/0001" % invoice_3.date.year)
+        self.assertEqual(invoice_3.name, invoice_3.l10n_do_fiscal_number)
         self.assertNotEqual(invoice_3.l10n_do_fiscal_number, "B0100000001")
         self.assertEqual(invoice_3.l10n_do_fiscal_number, "B0100000003")
 
