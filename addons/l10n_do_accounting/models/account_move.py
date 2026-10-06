@@ -523,11 +523,9 @@ class AccountMove(models.Model):
         ncf_types = self.journal_id._get_journal_ncf_types(
             counterpart_partner=self.partner_id.commercial_partner_id, invoice=self
         )
-        domain += [
-            "|",
-            ("l10n_do_ncf_type", "=", False),
-            ("l10n_do_ncf_type", "in", ncf_types),
-        ]
+        # Only this module's NCF types: Odoo 20's l10n_do ships its own e-CF types
+        # (l10n_do.ecf_31..34) without l10n_do_ncf_type, which would duplicate E31-E34.
+        domain += [("l10n_do_ncf_type", "in", ncf_types)]
         codes = self.journal_id._get_journal_codes()
         if codes:
             domain.append(("code", "in", codes))
