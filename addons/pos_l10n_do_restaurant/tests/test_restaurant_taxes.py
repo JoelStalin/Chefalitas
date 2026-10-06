@@ -8,6 +8,12 @@ class TestDoRestaurantTaxes(AccountTestInvoicingCommon):
     """Dine-in: ITBIS 18% + 10% legal tip on the consumption subtotal; takeout/delivery: ITBIS only."""
 
     @classmethod
+    def setup_independent_company(cls, **kwargs):
+        # with l10n_do_accounting installed the DO chart needs a company RNC
+        kwargs.setdefault("vat", "131793916")
+        return super().setup_independent_company(**kwargs)
+
+    @classmethod
     @AccountTestInvoicingCommon.setup_country("do")
     def setUpClass(cls):
         super().setUpClass()

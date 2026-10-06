@@ -141,6 +141,19 @@ class L10nDOTestsCommon(AccountTestInvoicingCommon):
                 invoice_form.currency_id = data.get("currency")
             if data.get("expense_type"):
                 invoice_form.l10n_do_expense_type = data.get("expense_type")
+            # With l10n_do_accounting_report installed, purchases from abroad require the
+            # 609 service type (and its detail) on the form.
+            if "service_type" in self.env["account.move"]._fields:
+                try:
+                    exterior = invoice_form.is_exterior
+                except Exception:
+                    exterior = False
+                if exterior:
+                    invoice_form.service_type = data.get("service_type", "02")
+                    detail = self.env["invoice.service.type.detail"].search(
+                        [("parent_code", "=", invoice_form.service_type)], limit=1)
+                    if detail:
+                        invoice_form.service_type_detail = detail
             for line in data.get("lines", [{}]):
                 with invoice_form.invoice_line_ids.new() as invoice_line_form:
                     invoice_line_form.product_id = line.get(
