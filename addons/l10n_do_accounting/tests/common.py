@@ -143,7 +143,7 @@ class L10nDOTestsCommon(AccountTestInvoicingCommon):
                 invoice_form.l10n_do_expense_type = data.get("expense_type")
             # With l10n_do_accounting_report installed, purchases from abroad require the
             # 609 service type (and its detail) on the form.
-            if "service_type" in self.env["account.move"]._fields:
+            if "service_type" in self.env["account.move"]._fields and "in_" in invoice_type:
                 try:
                     exterior = invoice_form.is_exterior
                 except Exception:
