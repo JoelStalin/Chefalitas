@@ -72,6 +72,19 @@ class AccountMove(models.Model):
         string="Tipo de Gasto",
     )
 
+    # Odoo 20 l10n_do: DGII 606 purchase type ('1'..'11') == this module's expense type ('01'..'11')
+    l10n_do_purchase_type = fields.Selection(
+        compute="_compute_l10n_do_purchase_type", store=True, readonly=False, precompute=True,
+    )
+
+    @api.depends("l10n_do_expense_type")
+    def _compute_l10n_do_purchase_type(self):
+        for move in self:
+            if move.l10n_do_expense_type:
+                move.l10n_do_purchase_type = str(int(move.l10n_do_expense_type))
+            elif not move.l10n_do_purchase_type:
+                move.l10n_do_purchase_type = "9"  # l10n_do default
+
     l10n_do_income_type = fields.Selection(
         selection=_get_l10n_do_income_type,
         string="Tipo de Ingreso",
