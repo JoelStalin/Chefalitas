@@ -15,5 +15,128 @@
         <template id="pos_order_receipt_footer" inherit_id="point_of_sale.pos_order_receipt_footer">
             <xpath expr="//div[strong[text()='Odoo']]" position="replace"/>
         </template>
+
+        <!-- Invoiced orders (NCF / e-CF) print the DGII layout instead of the ticket -->
+        <template id="pos_order_receipt" inherit_id="point_of_sale.pos_order_receipt">
+            <xpath expr="//html[@id='pos-receipt']/div" position="attributes">
+                <attribute name="t-if">not order.get('l10n_do_receipt')</attribute>
+            </xpath>
+            <xpath expr="//html[@id='pos-receipt']/div" position="after">
+                <t t-if="order.get('l10n_do_receipt')" t-call="pos_system.l10n_do_ecf_receipt"/>
+            </xpath>
+        </template>
+
+        <template id="l10n_do_ecf_receipt">
+            <t t-set="r" t-value="order['l10n_do_receipt']"/>
+            <style>
+                #pos-receipt .do-r { padding: 0 4px; font-size: 18px; line-height: 1.35; font-family: "DejaVu Sans Mono", Consolas, "Courier New", monospace !important; }
+                #pos-receipt .do-r table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+                #pos-receipt .do-r td { padding: 1px 0; vertical-align: top; }
+                #pos-receipt .do-c { text-align: center; }
+                #pos-receipt .do-n { text-align: right; white-space: nowrap; }
+                #pos-receipt .do-b { font-weight: bold; }
+                #pos-receipt .do-big { font-size: 21px; }
+                #pos-receipt .do-eq { border-top: 3px double #000; margin: 6px 0; }
+                #pos-receipt .do-hr { border-top: 1px dashed #000; margin: 6px 0; }
+                #pos-receipt .do-lbl { width: 58%; }
+                #pos-receipt .do-info .do-lbl { width: 40%; }
+                #pos-receipt .do-wrap { white-space: normal; }
+                #pos-receipt .do-items th { font-weight: bold; padding-bottom: 2px; }
+                #pos-receipt .do-items .q { width: 12%; text-align: left; }
+                #pos-receipt .do-items .d { width: 42%; text-align: left; word-wrap: break-word; padding-right: 4px; }
+                #pos-receipt .do-items .i { width: 20%; }
+                #pos-receipt .do-items .t { width: 26%; }
+            </style>
+            <div class="do-r" name="l10n_do_ecf_receipt">
+                <div class="do-eq"/>
+                <div class="do-c">
+                    <div t-if="image.get('logo')" class="mb-2"><img t-att-src="image['logo']" class="w-50"/></div>
+                    <div class="do-b do-big" t-out="r['company']['name']"/>
+                    <div t-if="config.get('receipt_header')" style="white-space:pre-line" t-out="config['receipt_header']"/>
+                    <div>RNC: <t t-out="r['company']['vat']"/></div>
+                    <div t-if="r['company']['address']" t-out="r['company']['address']"/>
+                    <div t-if="r['company']['phone']">Tel: <t t-out="r['company']['phone']"/></div>
+                </div>
+                <div class="do-eq"/>
+
+                <div class="do-b" name="l10n_do_document_type">
+                    <t t-out="r['document_type']"/><t t-if="r['is_ecf']"> (e-CF)</t>
+                </div>
+                <table class="do-info">
+                    <tr>
+                        <td class="do-lbl"><t t-if="r['is_ecf']">e-NCF:</t><t t-else="">NCF:</t></td>
+                        <td class="do-n do-b l10n-do-ncf" t-out="r['ncf']"/>
+                    </tr>
+                    <tr><td class="do-lbl">FECHA EMISION:</td><td class="do-n" t-out="r['date']"/></tr>
+                    <tr t-if="r.get('due_date')"><td class="do-lbl">VALIDO HASTA:</td><td class="do-n" t-out="r['due_date']"/></tr>
+                    <tr><td class="do-lbl">CAJA:</td><td class="do-n do-wrap" t-out="r['register']"/></tr>
+                    <tr><td class="do-lbl">ORDEN:</td><td class="do-n" t-out="r['order_ref']"/></tr>
+                    <tr t-if="preset"><td class="do-lbl">SERVICIO:</td><td class="do-n" t-out="preset.get('name')"/></tr>
+                    <tr t-if="r.get('table')"><td class="do-lbl">MESA:</td><td class="do-n" t-out="r['table']"/></tr>
+                </table>
+                <div class="do-hr"/>
+
+                <table>
+                    <tr><td style="width:30%">CLIENTE:</td><td class="do-b do-n do-wrap" t-out="r['customer']"/></tr>
+                    <tr><td style="width:30%">RNC/CED:</td><td class="do-n" t-out="r['customer_vat']"/></tr>
+                </table>
+                <div class="do-hr"/>
+
+                <table class="do-items">
+                    <thead>
+                        <tr><th class="q">CANT</th><th class="d">DESCRIPCION</th><th class="i do-n">ITBIS</th><th class="t do-n">TOTAL</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="4"><div class="do-hr" style="margin:2px 0"/></td></tr>
+                        <tr t-foreach="r['lines']" t-as="l" class="lines">
+                            <td class="q do-n" style="text-align:left" t-out="l['qty']"/>
+                            <td class="d" t-out="l['name']"/>
+                            <td class="i do-n" t-out="l['itbis']"/>
+                            <td class="t do-n" t-out="l['total']"/>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="do-hr"/>
+
+                <table name="l10n_do_totals">
+                    <tr><td class="do-lbl">SUBTOTAL GRAVADO:</td><td class="do-n">RD$ <t t-out="r['gravado']"/></td></tr>
+                    <tr t-if="r['exento']"><td class="do-lbl">SUBTOTAL EXENTO:</td><td class="do-n">RD$ <t t-out="r['exento']"/></td></tr>
+                    <tr><td class="do-lbl">TOTAL ITBIS (<t t-out="r['itbis_rate']"/>):</td><td class="do-n">RD$ <t t-out="r['itbis']"/></td></tr>
+                    <tr t-if="r['tip']"><td class="do-lbl">PROPINA LEGAL (<t t-out="r['tip_rate']"/>):</td><td class="do-n">RD$ <t t-out="r['tip']"/></td></tr>
+                </table>
+                <div class="do-hr"/>
+                <table>
+                    <tr class="do-b do-big"><td class="do-lbl">TOTAL A PAGAR:</td><td class="do-n total-amount">RD$ <t t-out="r['total']"/></td></tr>
+                </table>
+                <div class="mt-1">FORMA DE PAGO:</div>
+                <table>
+                    <tr t-foreach="r['payments']" t-as="p" class="payment-line">
+                        <td class="do-lbl" style="padding-left:16px" t-out="p['name']"/>
+                        <td class="do-n">RD$ <t t-out="p['amount']"/></td>
+                    </tr>
+                    <tr t-if="r['change']"><td class="do-lbl" style="padding-left:16px">Cambio:</td><td class="do-n">RD$ <t t-out="r['change']"/></td></tr>
+                </table>
+
+                <t t-if="r['is_ecf']">
+                    <div class="do-eq"/>
+                    <div class="do-b">INFORMACION DE SEGURIDAD FISCAL:</div>
+                    <table>
+                        <tr><td class="do-lbl">Cod. Seguridad:</td><td class="do-n do-b" t-out="r['security_code'] or 'Pendiente'"/></tr>
+                        <tr><td class="do-lbl">Fecha Firma:</td><td class="do-n" t-out="r['sign_date'] or 'Pendiente'"/></tr>
+                    </table>
+                    <div t-if="image.get('l10n_do_qr')" class="do-c mt-2" name="l10n_do_qr">
+                        <img t-att-src="image['l10n_do_qr']" style="width:200px"/>
+                        <div>Escanee para validar en DGII</div>
+                    </div>
+                </t>
+                <div class="do-eq"/>
+                <div class="do-c">
+                    <div t-if="r['is_ecf']" class="do-b">Representacion Impresa de e-CF</div>
+                    <div>Conserve este comprobante</div>
+                    <div t-if="config.get('receipt_footer')" class="mt-1" style="white-space:pre-line" t-out="config['receipt_footer']"/>
+                </div>
+                <div class="do-eq"/>
+            </div>
+        </template>
     </data>
 </odoo>
