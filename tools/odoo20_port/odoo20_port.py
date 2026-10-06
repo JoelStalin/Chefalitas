@@ -103,11 +103,20 @@ def search_groups(s):
                   "<group>", s)
 
 
+def report_actions(s, path):
+    """ir.actions.report lost report_file in Odoo 20; the <report> shortcut tag is gone too."""
+    s = re.sub(r'\n?[ \t]*<field name="report_file"[^>]*(?:/>|>[^<]*</field>)', "", s)
+    if re.search(r"<report\s", s):
+        report.append(f"{os.path.relpath(path, addon)}: <report> shortcut -> <record model=\"ir.actions.report\">")
+    return s
+
+
 def xml(s, path):
     s = attrs(s, path)
     s = groups(s, path)
     s = list_views(s)
     s = search_groups(s)
+    s = report_actions(s, path)
     s = s.replace('<field name="users" eval=', '<field name="user_ids" eval=')
     s = s.replace('<field name="groups_id" eval=', '<field name="group_ids" eval=')
     return s
