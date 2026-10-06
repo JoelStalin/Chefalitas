@@ -1,7 +1,7 @@
-import base64
 import logging
 
 from odoo import _, fields, models
+from odoo.tools import BinaryBytes
 from odoo.exceptions import UserError
 
 from .easycount_client import EasyCountError
@@ -71,7 +71,9 @@ class AccountMove(models.Model):
             "l10n_do_ecf_sign_date": fields.Datetime.now(),
         }
         if result.get("xml"):
-            vals["l10n_do_ecf_edi_file"] = base64.b64encode(result["xml"].encode())
+            vals["l10n_do_ecf_edi_file"] = BinaryBytes(
+                result["xml"].encode(), f"{self.l10n_do_fiscal_number}.xml"
+            )
             vals["l10n_do_ecf_edi_file_name"] = f"{self.l10n_do_fiscal_number}.xml"
         self.write(vals)
 

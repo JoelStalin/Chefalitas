@@ -3,7 +3,9 @@ import re
 from werkzeug import urls
 
 from odoo import models, fields, api, _
-from odoo.osv import expression
+from odoo.fields import Domain
+from odoo.models import Query
+from odoo.tools import SQL, file_path
 from odoo.exceptions import ValidationError, UserError, AccessError
 from odoo.tools.sql import column_exists, create_column, drop_index, index_exists
 from lxml import etree
@@ -72,7 +74,7 @@ class AccountMove(models.Model):
         selection=_get_l10n_do_income_type,
         string="Tipo de Ingreso",
         copy=False,
-        default=lambda self: self._context.get("l10n_do_income_type", "01"),
+        default=lambda self: self.env.context.get("l10n_do_income_type", "01"),
     )
 
     l10n_do_cancellation_type = fields.Selection(
@@ -181,11 +183,10 @@ class AccountMove(models.Model):
                      .mapped('balance')
             ))
     
-    _sql_constraints = [
-        ("unique_l10n_do_fiscal_number_sales",
-         "unique (company_id, partner_id, l10n_do_fiscal_number)",
-         "Another document with the same fiscal number already exists."),
-    ]
+    _unique_l10n_do_fiscal_number_sales = models.Constraint(
+        "unique (company_id, partner_id, l10n_do_fiscal_number)",
+        "Another document with the same fiscal number already exists.",
+    )
 
     
     def _compute_tax_totals(self):
@@ -238,15 +239,12 @@ class AccountMove(models.Model):
         return super()._auto_init()
 
 
-    @api.model
-    def _name_search(self, name, domain=None, operator='ilike', limit=None, order=None):
-        if name:
-            domain = expression.AND([[
-                "|",
-                ("name", operator, name),
-                ("l10n_do_fiscal_number", operator, name),
-            ], domain])
-        return super()._name_search(name, domain, operator, limit, order)
+    def _search_display_name(self, operator, value):
+        # Also match the fiscal number (NCF / e-NCF) when searching invoices by name.
+        domain = super()._search_display_name(operator, value)
+        if value and operator not in Domain.NEGATIVE_OPERATORS:
+            domain = Domain.OR([domain, Domain("l10n_do_fiscal_number", operator, value)])
+        return domain
 
     def _l10n_do_is_new_expiration_date(self):
         self.ensure_one()
@@ -384,24 +382,25 @@ class AccountMove(models.Model):
             prefix = invoice.l10n_latam_document_type_id.doc_code_prefix
             is_rfc = prefix == "E32" and invoice.amount_total_signed < 250000
             base_url = f"https://{'fc' if is_rfc else 'ecf'}.dgii.gov.do/{env_type}/ConsultaTimbre{'FC' if is_rfc else ''}?"
-            query = {
-                "RncEmisor": invoice.company_id.vat or "",
-                "ENCF": invoice.l10n_do_fiscal_number or "",
-            }
-            if not is_rfc:
-                if prefix[1:] not in ("43", "47"):
-                    query["RncComprador"] = invoice.commercial_partner_id.vat or ""
-                query["FechaEmision"] = (invoice.invoice_date or fields.Date.today()).strftime("%d-%m-%Y")
-                query["FechaFirma"] = invoice.l10n_do_ecf_sign_date.strftime("%d-%m-%Y %H:%M:%S")
             total_field = "l10n_do_invoice_total"
             if invoice.currency_id != invoice.company_id.currency_id:
                 total_field += "_currency"
             total = invoice._get_l10n_do_amounts().get(total_field, 0)
-            query["MontoTotal"] = ("%f" % total).rstrip("0").rstrip(".")
             security_code = "".join(
                 f"%{c.encode('utf-8').hex()}".upper() if c in " !#$&'()*+,/:;=?@[]\"-.<>\\^_`" else c
                 for c in invoice.l10n_do_ecf_security_code or ""
             )
+            # DGII timbre order: RncEmisor, RncComprador, ENCF, FechaEmision, MontoTotal,
+            # FechaFirma, CodigoSeguridad (RFCE: RncEmisor, ENCF, MontoTotal, CodigoSeguridad).
+            query = {"RncEmisor": invoice.company_id.vat or ""}
+            if not is_rfc and prefix[1:] not in ("43", "47"):
+                query["RncComprador"] = invoice.commercial_partner_id.vat or ""
+            query["ENCF"] = invoice.l10n_do_fiscal_number or ""
+            if not is_rfc:
+                query["FechaEmision"] = (invoice.invoice_date or fields.Date.today()).strftime("%d-%m-%Y")
+            query["MontoTotal"] = ("%f" % total).rstrip("0").rstrip(".")
+            if not is_rfc:
+                query["FechaFirma"] = invoice.l10n_do_ecf_sign_date.strftime("%d-%m-%Y %H:%M:%S")
             query["CodigoSeguridad"] = security_code
             qr_string = base_url + "&".join(f"{k}={v}" for k, v in query.items())
             invoice.l10n_do_electronic_stamp = urls.url_quote_plus(qr_string, safe="%")
@@ -671,7 +670,7 @@ class AccountMove(models.Model):
 
     def _l10n_do_get_formatted_sequence(self):
         self.ensure_one()
-        if not self._context.get("is_l10n_do_seq", False):
+        if not self.env.context.get("is_l10n_do_seq", False):
             year = self.date.year
             base = f"{self.journal_id.code}/{year}/0000"
             if self.journal_id.refund_sequence and self.move_type in ("out_refund", "in_refund"):
@@ -700,35 +699,22 @@ class AccountMove(models.Model):
         return super()._get_name_invoice_report()
     
     def _get_last_sequence_domain(self, relaxed=False):
-        where_string, param = super(AccountMove, self)._get_last_sequence_domain(
-            relaxed
+        # Odoo 20 returns an SQL condition (no WHERE keyword). l10n_latam_invoice_document
+        # already disables the anti-regex for documents, so only the NCF numbering
+        # (is_l10n_do_seq) needs its own condition: NCF sequences are per document type
+        # and company, never per journal or date range.
+        if not self.env.context.get("is_l10n_do_seq", False):
+            return super()._get_last_sequence_domain(relaxed)
+        self.ensure_one()
+        condition = SQL(
+            "name != '/' AND l10n_latam_document_type_id = %s AND company_id = %s"
+            " AND l10n_do_sequence_prefix != '' AND l10n_do_sequence_prefix IS NOT NULL",
+            self.l10n_latam_document_type_id.id or 0,
+            self.company_id.id or 0,
         )
-
-        if self.l10n_latam_use_documents and self.country_code == "DO":
-            where_string = where_string.replace(
-                "AND sequence_prefix !~ %(anti_regex)s ", ""
-            )
-        if self._context.get("is_l10n_do_seq", False):
-            where_string = where_string.replace("journal_id = %(journal_id)s AND", "")
-            where_string += (
-                " AND l10n_latam_document_type_id = %(l10n_latam_document_type_id)s AND"
-                " company_id = %(company_id)s AND l10n_do_sequence_prefix != ''"
-                " AND l10n_do_sequence_prefix IS NOT NULL"
-            )
-            if (
-                not self.l10n_latam_manual_document_number
-                and self.move_type != "in_refund"
-            ):
-                where_string += " AND move_type = %(move_type)s"
-                param["move_type"] = self.move_type
-            else:
-                where_string += " AND l10n_latam_manual_document_number = 'f'"
-
-            param["company_id"] = self.company_id.id or False
-            param["l10n_latam_document_type_id"] = (
-                self.l10n_latam_document_type_id.id or 0
-            )
-        return where_string, param
+        if not self.l10n_latam_manual_document_number and self.move_type != "in_refund":
+            return SQL("%s AND move_type = %s", condition, self.move_type)
+        return SQL("%s AND l10n_latam_manual_document_number = FALSE", condition)
 
     # @api.constrains('invoice_line_ids')
     # def _check_tax_lines(self):
@@ -751,21 +737,16 @@ class AccountMove(models.Model):
             return super()._get_last_sequence(relaxed=relaxed, with_prefix=with_prefix)
 
         self.ensure_one()
-        where, params = self._get_last_sequence_domain(relaxed)
+        query = Query(self)
+        if condition := self._get_last_sequence_domain(relaxed):
+            query.add_where(condition)
         if self.id or self._origin.id:
-            where += " AND id != %(id)s "
-            params["id"] = self.id or self._origin.id
-
-        query = f"""
-            SELECT {self._l10n_do_sequence_field}
-            FROM {self._table}
-            {where}
-            ORDER BY l10n_do_sequence_number DESC
-            LIMIT 1
-        """
+            query.add_where(SQL("id != %s", self.id or self._origin.id))
+        query.order = SQL("%s DESC", query.table.l10n_do_sequence_number)
+        query.limit = 1
         self.flush_model([self._l10n_do_sequence_field, "l10n_do_sequence_number", "l10n_do_sequence_prefix"])
-        self.env.cr.execute(query, params)
-        return (self.env.cr.fetchone() or [None])[0]
+        result = self.env.execute_query(query.select(query.table[self._l10n_do_sequence_field]))
+        return result[0][0] if result else None
     def _get_sequence_format_param(self, previous):
         """Formatea la secuencia para facturas dominicanas, incluyendo claves de fecha para compatibilidad."""
         if not (self.country_code == "DO" and self.l10n_latam_use_documents):
@@ -852,10 +833,10 @@ class AccountMove(models.Model):
             self.l10n_latam_use_documents
             and self.company_id.country_id.code == "DO"
             and self.posted_before
-            and not self._context.get("is_l10n_do_seq", False)
+            and not self.env.context.get("is_l10n_do_seq", False)
         ):
             return "year"
-        elif self._context.get("is_l10n_do_seq", False):
+        elif self.env.context.get("is_l10n_do_seq", False):
             return "never"
         return super()._deduce_sequence_number_reset(name)
     @api.constrains("l10n_latam_document_type_id", "partner_id")
@@ -877,12 +858,12 @@ class AccountMove(models.Model):
         if not self.l10n_do_ecf_edi_file:
             return
 
-        xsd_path = get_module_resource('l10n_do_accounting', 'static', 'xsd', 'ECFv1_3.xsd')
+        xsd_path = file_path('l10n_do_accounting/static/xsd/ECFv1_3.xsd')
         with open(xsd_path, 'rb') as f:
             schema_doc = etree.XML(f.read())
             schema = etree.XMLSchema(schema_doc)
 
-        xml_data = base64.b64decode(self.l10n_do_ecf_edi_file)
+        xml_data = self.l10n_do_ecf_edi_file.content
         doc = etree.XML(xml_data)
         try:
             schema.assertValid(doc)

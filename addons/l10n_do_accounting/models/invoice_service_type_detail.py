@@ -44,23 +44,10 @@ class InvoiceServiceTypeDetail(models.Model):
     # -------------------------------------------------------------------------
     # Odoo creará automáticamente los índices y constraints en PostgreSQL
     # a partir de esta lista.
-    _sql_constraints = [
-        # Unicidad del código a nivel SQL
-        (
-            "invoice_service_type_detail_code_unique",
-            "UNIQUE(code)",
-            # ¡OJO! Aquí NO se usa _() ni _lt()
-            "Code must be unique",
-        ),
-
-        # (Opcional) Validar longitud exacta 2 en SQL
-        # Si no quieres esta restricción, borra esta línea.
-        (
-            "invoice_service_type_detail_code_length_check",
-            "CHECK (char_length(code) = 2)",
-            "Code must be exactly 2 characters",
-        ),
-    ]
+    _code_unique = models.Constraint("UNIQUE(code)", "Code must be unique")
+    _code_length_check = models.Constraint(
+        "CHECK (char_length(code) = 2)", "Code must be exactly 2 characters"
+    )
 
     # -------------------------------------------------------------------------
     # CONSTRAINTS PYTHON (opcionales, para mensajes más amigables)

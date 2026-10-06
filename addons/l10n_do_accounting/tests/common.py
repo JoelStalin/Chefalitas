@@ -1,4 +1,4 @@
-from odoo.tests.common import Form
+from odoo.tests import Form
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
 
 
@@ -16,6 +16,12 @@ class L10nDOTestsCommon(AccountTestInvoicingCommon):
         super().setUpClass()
 
         cls.do_company = cls.company_data["company"]
+        cls.env.user.group_ids |= (
+            cls.env.ref("l10n_do_accounting.group_l10n_do_fiscal_credit_note")
+            | cls.env.ref("l10n_do_accounting.group_l10n_do_fiscal_invoice_cancel")
+            | cls.env.ref("l10n_do_accounting.group_l10n_do_edit_fiscal_partner")
+            | cls.env.ref("l10n_do_accounting.group_l10n_do_debit_note")
+        )
         cls.do_company.write({
             "name": "INDEXA SRL",
             "vat": "131793916",

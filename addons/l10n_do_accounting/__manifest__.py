@@ -10,14 +10,14 @@
     "category": "Localization",
     "license": "LGPL-3",
     "website": "https://getupsoft.com",
-    "version": "18.0.1.0.0",
+    "version": "20.0.1.0.0",
     "countries": ["do"],
     "depends": [
         "l10n_latam_invoice_document",
         "l10n_do",
     ],
     "data": [
-        "security/ir.model.access.csv",
+        "security/ir.access.csv",
         "security/res_groups.xml",
         "data/l10n_latam.document.type.csv",
         "wizard/account_move_reversal_views.xml",

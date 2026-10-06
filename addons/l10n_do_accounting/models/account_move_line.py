@@ -3,7 +3,6 @@ import re
 from werkzeug import urls
 
 from odoo import models, fields, api, _
-from odoo.osv import expression
 from odoo.exceptions import ValidationError, UserError, AccessError
 from odoo.tools.sql import column_exists, create_column, drop_index, index_exists
 from lxml import etree
