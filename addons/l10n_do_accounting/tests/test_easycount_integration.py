@@ -1,6 +1,7 @@
 from itertools import count
 from unittest.mock import patch
 
+from odoo import fields
 from odoo.exceptions import UserError
 from odoo.tests import tagged
 
@@ -125,3 +126,65 @@ class EasyCountIntegrationTest(common.L10nDOTestsCommon):
         invoice.action_post()
         self.assertEqual(self.fake.issued, [])
         self.assertFalse(invoice.l10n_do_easycount_track_id)
+
+
+    # ------------------------------------------------------------------ buyer-issued e-CF (vendor bills)
+
+    def _bill(self, doc_key, partner, price=1000.0, taxes=None):
+        bill = self._create_l10n_do_invoice(
+            data={"partner": partner, "document_type": self.do_document_type[doc_key], "expense_type": "02",
+                  "invoice_date": fields.Date.today()},
+            invoice_type="in_invoice")
+        bill.invoice_line_ids.write({"price_unit": price, "tax_ids": [(6, 0, (taxes or self.env["account.tax"]).ids)]})
+        return bill
+
+    def test_07_e41_compra_informal_issued_by_chefalitas(self):
+        bill = self._bill("e-informal", self.consumo_partner)
+        bill.action_post()
+        self.assertEqual(bill.state, "posted")
+        self.assertEqual(bill.l10n_do_fiscal_number, "E410000000001")
+        self.assertEqual(bill.display_name, "E410000000001")
+        self.assertTrue(bill.name.startswith("BILL/"), "internal name stays the journal sequence")
+        self.assertEqual(bill.l10n_do_easycount_status, "Aceptado")
+        payload = self.fake.issued[0]
+        self.assertEqual((payload["eCfType"], payload["encf"], payload["buyerRnc"]), ("E41", "E410000000001", "22400559690"))
+
+    def test_08_e43_gasto_menor_has_no_buyer(self):
+        bill = self._bill("e-minor", self.consumo_partner, price=450.0)
+        bill.action_post()
+        self.assertEqual(bill.l10n_do_fiscal_number, "E430000000001")
+        self.assertIsNone(self.fake.issued[0]["buyerRnc"])
+
+    def test_09_e47_pago_exterior_uses_foreign_id(self):
+        bill = self._bill("e-exterior", self.foreigner_partner, price=5900.0)
+        bill.action_post()
+        self.assertEqual(bill.l10n_do_fiscal_number, "E470000000001")
+        payload = self.fake.issued[0]
+        self.assertEqual((payload["buyerRnc"], payload["buyerForeignId"]), (None, "847898798"))
+
+    def test_10_supplier_ncf_bills_are_not_sent(self):
+        bill = self._create_l10n_do_invoice(
+            data={"partner": self.fiscal_partner, "document_type": self.do_document_type["fiscal"],
+                  "document_number": "B0100000099", "expense_type": "02",
+                  "invoice_date": fields.Date.today()}, invoice_type="in_invoice")
+        bill.action_post()
+        self.assertEqual(bill.l10n_do_fiscal_number, "B0100000099")
+        self.assertFalse(self.fake.issued)
+
+
+    def test_11_easycount_ecf_never_asks_for_a_first_number(self):
+        """Live browser finding: the first E31 of the journal required a manual Document Number."""
+        for doc_key, partner, move_type in (("e-fiscal", self.fiscal_partner, "out_invoice"),
+                                            ("e-informal", self.consumo_partner, "in_invoice")):
+            journal = self.fiscal_sale_journal if move_type == "out_invoice" else self.fiscal_purchase_journal
+            move = self.env["account.move"].new({
+                "move_type": move_type, "journal_id": journal.id, "partner_id": partner.id,
+                "l10n_latam_document_type_id": self.do_document_type[doc_key].id,
+            })
+            self.assertTrue(move._l10n_do_numbered_by_easycount())
+            self.assertFalse(move.l10n_do_enable_first_sequence, doc_key)
+        paper = self.env["account.move"].new({
+            "move_type": "out_invoice", "journal_id": self.fiscal_sale_journal.id, "partner_id": self.fiscal_partner.id,
+            "l10n_latam_document_type_id": self.do_document_type["fiscal"].id,
+        })
+        self.assertFalse(paper._l10n_do_numbered_by_easycount())

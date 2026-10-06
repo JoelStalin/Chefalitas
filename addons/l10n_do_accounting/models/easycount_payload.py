@@ -50,12 +50,16 @@ def build_issue_payload(move, encf: str | None = None) -> dict[str, Any]:
             "exempt": exempt and tipo in ("E44", "E46", "E47"),
             "legalTip": legal_tip,
         })
+    buyer_rnc = None if foreign else (partner.vat or None)
+    if tipo == "E43":
+        buyer_rnc = None  # gastos menores: no RNCComprador in the DGII XSD
     payload: dict[str, Any] = {
         "eCfType": tipo,
         "encf": encf or move.l10n_do_fiscal_number or None,
         "odooInvoiceId": move.id,
         "issueDate": str(move.invoice_date or move.date),
-        "buyerRnc": None if foreign else (partner.vat or None),
+        # E41: the informal supplier is identified in the buyer block (DGII XSD)
+        "buyerRnc": buyer_rnc,
         "buyerForeignId": partner.vat if foreign else None,
         "buyerName": partner.name,
         "currency": move.currency_id.name,

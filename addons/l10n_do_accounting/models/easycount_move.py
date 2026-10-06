@@ -9,6 +9,9 @@ from .easycount_payload import build_issue_payload
 
 _logger = logging.getLogger(__name__)
 ACCEPTED = {"Aceptado", "Aceptado Condicional", "En Proceso"}
+# e-CF the company issues as BUYER on vendor bills: compras (informal supplier), gastos menores,
+# pagos al exterior. Other vendor bills carry the supplier's own NCF and are not sent.
+BUYER_ISSUED_TYPES = ("E41", "E43", "E47")
 
 
 class AccountMove(models.Model):
@@ -20,14 +23,30 @@ class AccountMove(models.Model):
     l10n_do_easycount_emulated = fields.Boolean("Emitido en emulador", copy=False, readonly=True)
     l10n_do_easycount_pending = fields.Boolean("Pendiente de envio", copy=False, readonly=True)
 
+    def _l10n_do_numbered_by_easycount(self):
+        """e-CF whose e-NCF EasyCount assigns: issued by the company (sales, or E41/E43/E47 bills)."""
+        self.ensure_one()
+        prefix = self.l10n_latam_document_type_id.doc_code_prefix or ""
+        return bool(
+            self.country_code == "DO"
+            and self.company_id.l10n_do_easycount_enabled
+            and prefix.startswith("E")
+            and (self.move_type in ("out_invoice", "out_refund")
+                 or (self.move_type == "in_invoice" and prefix in BUYER_ISSUED_TYPES))
+        )
+
     def _l10n_do_uses_easycount(self):
         self.ensure_one()
         doc = self.l10n_latam_document_type_id
+        prefix = (doc.doc_code_prefix or "") if doc else ""
+        issued_by_company = self.move_type in ("out_invoice", "out_refund") or (
+            self.move_type == "in_invoice" and prefix in BUYER_ISSUED_TYPES
+        )
         return bool(
             self.country_code == "DO"
-            and self.move_type in ("out_invoice", "out_refund")
+            and issued_by_company
             and self.company_id.l10n_do_easycount_enabled
-            and doc and (doc.doc_code_prefix or "").startswith("E")
+            and prefix.startswith("E")
             and not self.l10n_do_easycount_track_id
         )
 
@@ -41,7 +60,11 @@ class AccountMove(models.Model):
                 except EasyCountError as exc:
                     raise UserError(_("EasyCount no pudo asignar el e-NCF: %s", exc)) from exc
                 move.l10n_do_fiscal_number = encf
-                move.name = encf
+                if move.move_type in ("out_invoice", "out_refund"):
+                    move.name = encf
+                else:
+                    # vendor bills keep their internal journal name; the e-NCF is the fiscal number
+                    move.l10n_latam_document_number = encf
         posted = super()._post(soft)
         for move in todo.filtered(lambda m: m.state == "posted"):
             move._l10n_do_easycount_issue()

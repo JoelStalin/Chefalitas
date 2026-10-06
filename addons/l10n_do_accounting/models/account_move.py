@@ -313,7 +313,8 @@ class AccountMove(models.Model):
         "journal_id.l10n_latam_use_documents",
         "l10n_latam_manual_document_number",
         "l10n_latam_document_type_id",
-        "company_id"
+        "company_id",
+        "company_id.l10n_do_easycount_enabled",
     )
     def _compute_l10n_do_enable_first_sequence(self):
         for invoice in self:
@@ -326,6 +327,8 @@ class AccountMove(models.Model):
             and inv.l10n_latam_use_documents
             and inv.l10n_latam_document_type_id
             and not inv.l10n_latam_manual_document_number
+            # EasyCount assigns the e-NCF: there is no first number to type
+            and not inv._l10n_do_numbered_by_easycount()
         ):
             count = self.search_count([
                 ("company_id", "=", invoice.company_id.id),

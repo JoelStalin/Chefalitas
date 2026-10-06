@@ -1,0 +1,47 @@
+# Live functional demo of DGII e-CF: Odoo 20 (Chefalitas addons) + EasyCount NestJS (DGII emulator, DGII_ENV=LOCAL).
+# Throwaway environment (prefix ecflive-). Start with ./up.sh, which also creates the data and the token.
+name: ecflive
+
+services:
+  odoo-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
+      POSTGRES_DB: postgres
+    volumes: [odoo-db:/var/lib/postgresql/data]
+
+  odoo:
+    image: ${ODOO20_IMAGE:-chefalitas-odoo20:test}
+    depends_on: [odoo-db]
+    environment:
+      HOST: odoo-db
+      USER: odoo
+      PASSWORD: odoo
+    command: ["odoo", "--http-interface=0.0.0.0", "-d", "ecflive", "--db-filter=^ecflive$$", "--log-level=warn", "--workers=0"]
+    volumes:
+      - ${CHEFALITAS_ADDONS:?}:/mnt/extra-addons:ro
+      - odoo-data:/var/lib/odoo
+    ports: ["127.0.0.1:18069:8069"]
+
+  easycount-db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: ec
+      POSTGRES_PASSWORD: ec
+      POSTGRES_DB: easycount
+    volumes: [easycount-db:/var/lib/postgresql/data]
+
+  easycount:
+    image: ${EASYCOUNT_IMAGE:-easycount-api-nest:live}
+    depends_on: [easycount-db]
+    environment:
+      DGII_ENV: LOCAL
+      DATABASE_URL: postgresql://ec:ec@easycount-db:5432/easycount
+      ODOO_API_TOKENS: ${ODOO_API_TOKENS:?}
+    ports: ["127.0.0.1:18800:8000"]
+
+volumes:
+  odoo-db:
+  odoo-data:
+  easycount-db:
