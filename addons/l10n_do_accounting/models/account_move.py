@@ -343,9 +343,9 @@ class AccountMove(models.Model):
         }
         lines = self.line_ids.filtered(lambda l: l.currency_id == self.currency_id)
         if lines:
-            line_amounts = lines._get_l10n_do_line_amounts()
-            for key in amounts:
-                amounts[key] = line_amounts.get(key, 0.0)
+            # includes the *_currency keys (company currency) used e.g. by the DGII QR
+            # MontoTotal of foreign-currency invoices
+            amounts.update(lines._get_l10n_do_line_amounts())
         return amounts
     
     @api.depends("company_id", "l10n_latam_document_type_id")
