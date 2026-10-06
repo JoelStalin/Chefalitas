@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "POS Printing Suite",
-    "version": "18.0.1.0.0",
+    "version": "20.0.1.0.0",
     "license": "LGPL-3",
     "category": "Sales/Point of Sale",
     "summary": "Unified POS printing: Local Agent (Windows), HW Proxy, Self-Order",
@@ -22,7 +22,7 @@
         ],
     },
     "data": [
-        "security/ir.model.access.csv",
+        "security/ir.access.csv",
         "security/security.xml",
         "views/pos_config_views.xml",
         "views/agent_install_wizard_views.xml",

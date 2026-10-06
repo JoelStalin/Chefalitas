@@ -139,6 +139,8 @@ def sql_constraints(s, path):
 
 def py(s, path):
     s = sql_constraints(s, path)
+    # @route(type='json') is a deprecated alias of type='jsonrpc' since 19.0
+    s = re.sub(r"""(@http\.route\([^)]*type\s*=\s*)(["'])json\2""", r"\1\2jsonrpc\2", s)
     s = s.replace("self._context", "self.env.context")
     s = s.replace("from odoo.tests.common import Form", "from odoo.tests import Form")
     s = re.sub(r"\.groups_id\b", ".group_ids", s)
@@ -155,6 +157,67 @@ def py(s, path):
             report.append(f"{os.path.relpath(path, addon)}: {msg}")
     return s
 
+
+def ir_rules_to_access():
+    """Odoo 20 removed ir.rule: record rules are ir.access rows with a domain.
+    A rule without groups becomes a global restriction (empty group_id)."""
+    import csv
+    import io
+    rows = []
+    for d, _, files in os.walk(addon):
+        for f in files:
+            if not f.endswith(".xml"):
+                continue
+            path = os.path.join(d, f)
+            raw = open(path, "rb").read()
+            crlf = b"\r\n" in raw
+            s = raw.decode("utf-8").replace("\r\n", "\n")
+            recs = list(re.finditer(r'[ \t]*<record id="([^"]+)" model="ir\.rule">(.*?)</record>\n?', s, re.S))
+            if not recs:
+                continue
+            for m in recs:
+                rid, body = m.group(1), m.group(2)
+                fld = lambda n: re.search(rf'<field name="{n}"[^>]*?(?:ref="([^"]+)"|eval="([^"]+)"|>([^<]*)</field>)', body)  # noqa: E731
+                name = (fld("name") or [None, None, None, rid]).group(3) or rid
+                model_ref = fld("model_id").group(1)
+                model_key = model_ref.split(".")[-1].removeprefix("model_")
+                model = names.get(model_key) or model_key.replace("_", ".")
+                dom_m = fld("domain_force")
+                domain = (dom_m.group(3) or dom_m.group(2) or "").strip() if dom_m else ""
+                grp_m = re.search(r"""<field name="groups" eval="\[([^\]]*)\]"/>""", body)
+                groups = re.findall(r"ref\('([^']+)'\)", grp_m.group(1)) if grp_m else [""]
+                op = ""
+                for letter, perm in (("c", "perm_create"), ("r", "perm_read"), ("u", "perm_write"), ("d", "perm_unlink")):
+                    pm = re.search(rf'<field name="{perm}" eval="(\w+)"', body)
+                    if not pm or pm.group(1) in ("True", "1"):
+                        op += letter
+                for g in groups:
+                    rows.append([rid if len(groups) == 1 else f"{rid}_{g.split('.')[-1]}", name.strip(), model, g, op, domain])
+            for m in reversed(recs):
+                s = s[:m.start()] + s[m.end():]
+            open(path, "wb").write((s.replace("\n", "\r\n") if crlf else s).encode("utf-8"))
+            print("ported", os.path.relpath(path, addon), "(ir.rule -> ir.access)")
+    if rows:
+        csv_path = os.path.join(addon, "security", "ir.access.csv")
+        out = io.StringIO()
+        w = csv.writer(out, lineterminator="\n")
+        if not os.path.exists(csv_path):
+            w.writerow(["id", "name", "model_id", "group_id/id", "operation", "domain"])
+        for r in rows:
+            w.writerow(r)
+        with open(csv_path, "a", encoding="utf-8") as fh:
+            fh.write(out.getvalue())
+        print(f"ir.access.csv: +{len(rows)} rule rows")
+
+
+names = {}
+for root in [addon] + extra:
+    for d, _, files in os.walk(root):
+        for f in files:
+            if f.endswith(".py"):
+                t = open(os.path.join(d, f), encoding="utf-8", errors="ignore").read()
+                for mm in re.finditer(r"""_name\s*=\s*['"]([\w.]+)['"]""", t):
+                    names[mm.group(1).replace(".", "_")] = mm.group(1)
 
 mf = os.path.join(addon, "__manifest__.py")
 rw(mf, manifest)
@@ -173,6 +236,8 @@ if os.path.exists(os.path.join(addon, "security", "ir.model.access.csv")):
     subprocess.run([sys.executable, os.path.join(here, "port_access_csv_v20.py"), addon, *extra],
                    check=True, stdout=subprocess.DEVNULL)
     print("ported security/ir.model.access.csv -> security/ir.access.csv")
+
+ir_rules_to_access()
 
 print("\nMANUAL REVIEW NEEDED:" if report else "\nno manual items detected")
 for r in report:

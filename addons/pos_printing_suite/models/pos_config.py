@@ -10,12 +10,20 @@ import subprocess
 import zipfile
 
 from odoo import api, fields, models, _
-from odoo.modules.module import get_module_resource
+from odoo.tools import BinaryBytes, file_path
 from odoo.exceptions import AccessError, ValidationError, UserError
 from odoo.http import request
 
 _logger = logging.getLogger(__name__)
 
+
+
+def get_module_resource(*parts):
+    """Odoo 20 replacement: path inside the addons, or False when it does not exist."""
+    try:
+        return file_path("/".join(parts))
+    except (FileNotFoundError, ValueError):
+        return False
 
 class PosConfig(models.Model):
     _inherit = "pos.config"
@@ -132,7 +140,7 @@ class PosConfig(models.Model):
         group = self.env.ref("pos_printing_suite.group_pos_printing_suite_printing", raise_if_not_found=False)
         if not group:
             return False
-        return group in self.env.user.groups_id
+        return group in self.env.user.group_ids
 
     @api.depends("agent_last_seen")
     def _compute_agent_status(self):
@@ -255,7 +263,7 @@ class PosConfig(models.Model):
         attachment = self.env["ir.attachment"].create({
             "name": artifact_name,
             "type": "binary",
-            "datas": base64.b64encode(payload),
+            "raw": BinaryBytes(payload, artifact_name),
             "res_model": "pos.config",
             "res_id": self.id,
             "mimetype": mimetype,
@@ -276,7 +284,7 @@ class PosConfig(models.Model):
             if build_cmd:
                 self._run_agent_build(build_cmd, agent_root)
 
-        base_url = self._get_request_base_url() or self.env["ir.config_parameter"].sudo().get_param("web.base.url")
+        base_url = self._get_request_base_url() or self.env["ir.config_parameter"].sudo().get_str("web.base.url")
         config = {
             "server_url": base_url,
             "token": self.agent_token,
@@ -429,7 +437,7 @@ class PosConfig(models.Model):
         return buffer.getvalue()
 
     def _build_loopback_policy_script(self, base_url=None):
-        base_url = base_url or self.env["ir.config_parameter"].sudo().get_param("web.base.url") or ""
+        base_url = base_url or self.env["ir.config_parameter"].sudo().get_str("web.base.url") or ""
         base_url = base_url.rstrip("/")
         urls = set()
         if base_url:

@@ -13,6 +13,7 @@ class PosPrintingAgentPrinter(models.Model):
     company_id = fields.Many2one(related="pos_config_id.company_id", store=True, readonly=True)
     last_seen = fields.Datetime()
 
-    _sql_constraints = [
-        ("agent_printer_unique", "unique(pos_config_id, name)", "Printer must be unique per POS."),
-    ]
+    _agent_printer_unique = models.Constraint(
+        'unique(pos_config_id, name)',
+        'Printer must be unique per POS.',
+    )
