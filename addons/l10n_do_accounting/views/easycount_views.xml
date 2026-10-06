@@ -7,7 +7,7 @@
         <field name="arch" type="xml">
             <xpath expr="//block[@id='invoicing_settings']" position="after">
                 <block id="l10n_do_easycount_block" title="Facturacion electronica (EasyCount)"
-                       invisible="'DO' not in fiscal_country_codes" groups="account.group_account_manager">
+                       invisible="country_code != 'DO'" groups="account.group_account_manager">
                     <setting id="l10n_do_easycount_setting" string="Emitir e-CF con EasyCount"
                              help="EasyCount asigna el e-NCF y transmite a DGII.">
                         <field name="l10n_do_easycount_enabled"/>
