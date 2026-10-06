@@ -100,8 +100,18 @@ class PayloadTests(unittest.TestCase):
         p = build_issue_payload(move("E46", taxes=(0.0,), vat="PASS-1", country="US"))
         self.assertIsNone(p["buyerRnc"]); self.assertEqual(p["buyerForeignId"], "PASS-1")
         self.assertTrue(p["lines"][0]["exempt"])
-        p = build_issue_payload(move("E32", taxes=(18.0, 10.0)))  # propina legal 10 %
+        p = build_issue_payload(move("E32", taxes=(18.0, 5.0)))  # impuesto no modelado
         self.assertNotIn("totalAmount", p)
+
+    def test_restaurant_legal_tip_is_flagged_and_total_sent(self):
+        tip = NS(amount=10.0, amount_type="percent", name="10% Propina", tax_group_id=NS(name="Propina"))
+        m = move("E32")
+        m.invoice_line_ids.filtered(None)[0].tax_ids.append(tip)
+        p = build_issue_payload(m)
+        self.assertTrue(p["lines"][0]["legalTip"])
+        self.assertEqual(p["lines"][0]["itbisRate"], 18.0)
+        self.assertIn("totalAmount", p)
+        self.assertFalse(build_issue_payload(move("E32"))["lines"][0]["legalTip"])  # para llevar
 
 
 if __name__ == "__main__":

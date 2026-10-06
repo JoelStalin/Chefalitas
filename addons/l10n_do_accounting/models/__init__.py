@@ -8,3 +8,4 @@ from . import account_move_line
 from . import invoice_service_type_detail
 from . import easycount_company
 from . import easycount_move
+from . import l10n_do_norma_02_2026
