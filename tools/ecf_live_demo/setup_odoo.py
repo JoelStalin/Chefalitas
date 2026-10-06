@@ -30,7 +30,8 @@ company.write({
     "l10n_do_easycount_auth_mode": "token",
     "l10n_do_easycount_token": TOKEN,
 })
-env["account.journal"].search([("type", "in", ("sale", "purchase")), ("company_id", "=", company.id)]).write(
+env["account.journal"].search([("type", "in", ("sale", "purchase")), ("company_id", "=", company.id),
+                             ("l10n_latam_use_documents", "=", False)]).write(
     {"l10n_latam_use_documents": True})
 
 # USD rate for the export invoice (1 USD = 59.00 DOP)
@@ -86,6 +87,18 @@ pos = env["pos.config"].search([("module_pos_restaurant", "=", True)], limit=1)
 if not pos:
     pos = env["pos.config"].create({"name": "Chefalitas Restaurante", "module_pos_restaurant": True})
 pos.write({"name": "Chefalitas Restaurante"})
+# presets: Dine In (default, ITBIS + propina legal); Takeout and Delivery (ITBIS only, no tip)
+presets = env["pos.preset"]
+for xmlid in ("pos_restaurant.pos_takein_preset", "pos_restaurant.pos_takeout_preset", "pos_restaurant.pos_delivery_preset"):
+    presets |= env.ref(xmlid, raise_if_not_found=False) or env["pos.preset"]
+pos.write({"use_presets": True, "default_preset_id": presets[:1].id, "available_preset_ids": [(6, 0, presets.ids)]})
+# floor with 4 tables
+floor = env["restaurant.floor"].search([("name", "=", "Salon principal")], limit=1) or env["restaurant.floor"].create(
+    {"name": "Salon principal", "pos_config_ids": [(4, pos.id)]})
+for number in range(1, 5):
+    if not floor.table_ids.filtered(lambda t, n=number: t.table_number == n):
+        env["restaurant.table"].create({"floor_id": floor.id, "table_number": number, "seats": 4})
+print("floor:", floor.name, sorted(floor.table_ids.mapped("table_number")))
 print("POS:", pos.name, "presets:", [(p.name, p.fiscal_position_id.name) for p in env["pos.preset"].search([])])
 print("taxes:", sale_tax.name, "|", exempt_sale.name if exempt_sale else None, "| purchase:", purchase_tax.name)
 env.cr.commit()
