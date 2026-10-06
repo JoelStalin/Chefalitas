@@ -17,7 +17,8 @@ class AccountMove(models.Model):
     _rec_names_search = ["l10n_do_fiscal_number"]
 
     _l10n_do_sequence_field = "l10n_do_fiscal_number"
-    _l10n_do_sequence_fixed_regex = r"^(?P<prefix1>.*?)(?P<seq>\d{0,8})$"
+    # NCF = [P] serie (B/E) + tipo (2) + secuencia (8 digitos B, 10 digitos E) - DGII
+    _l10n_do_sequence_fixed_regex = r"^(?P<prefix1>P?[BE]\d{2})(?P<seq>\d{1,10})$"
 
     def _get_l10n_do_cancellation_type(self):
         return [
@@ -688,12 +689,17 @@ class AccountMove(models.Model):
         doc_type = self.l10n_latam_document_type_id
         return f"{doc_type.doc_code_prefix}{''.zfill(10 if str(doc_type.l10n_do_ncf_type).startswith('e-') else 8)}"
 
+    def _l10n_do_sequence_length(self):
+        """DGII: e-NCF = E + tipo + 10 dígitos; NCF = B + tipo + 8 dígitos."""
+        ncf_type = str(self.l10n_latam_document_type_id.l10n_do_ncf_type or "")
+        return 10 if ncf_type.startswith("e-") else 8
+
     def _get_starting_sequence(self):
         """Define la secuencia inicial para facturas dominicanas."""
         if (self.country_code == "DO" and self.l10n_latam_use_documents
                 and self.env.context.get("is_l10n_do_seq")):
             doc_type = self.l10n_latam_document_type_id
-            return f"{doc_type.doc_code_prefix}{'0'.zfill(8)}"
+            return f"{doc_type.doc_code_prefix}{'0'.zfill(self._l10n_do_sequence_length())}"
         return super()._get_starting_sequence()
     def _sequence_matches_date(self):
         """Desactiva completamente la validación de fecha para facturas dominicanas."""
@@ -779,7 +785,7 @@ class AccountMove(models.Model):
                 "day": str(date.day).zfill(2),  # Día para compatibilidad
             }
         
-        format_values["seq_length"] = 8
+        format_values["seq_length"] = self._l10n_do_sequence_length()
         format_values["seq"] = int(format_values.get("seq") or 0)
         format_values["year"] = str(date.year)
         format_values["month"] = str(date.month).zfill(2)
