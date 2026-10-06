@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_orca_bridge" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.orca_bridge</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="account.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@id='invoicing_settings']" position="after">
+                <block id="orca_bridge_block" title="ORCA" groups="base.group_system">
+                    <setting id="orca_bridge_service_setting" string="Servicio ORCA"
+                             help="Odoo consume ORCA: URL y token asignados por ORCA a esta instancia.">
+                        <div class="content-group">
+                            <div class="row mt8"><label for="orca_bridge_url" class="col-lg-3 o_light_label"/>
+                                <field name="orca_bridge_url" placeholder="https://orca.example.com"/></div>
+                            <div class="row mt8"><label for="orca_bridge_token" class="col-lg-3 o_light_label"/>
+                                <field name="orca_bridge_token" password="True"/></div>
+                            <div class="row mt8"><label for="orca_bridge_connection_id" class="col-lg-3 o_light_label"/>
+                                <field name="orca_bridge_connection_id"/></div>
+                            <div class="mt8"><button name="action_orca_bridge_test_connection" type="object"
+                                    string="Probar conexion" class="btn-link" icon="oi-arrow-right"/></div>
+                        </div>
+                    </setting>
+                    <setting id="orca_bridge_events_setting" string="Notificar cambios a ORCA"
+                             help="Facturas, pedidos POS, contactos y transferencias: ids y campos cambiados, sin valores.">
+                        <field name="orca_bridge_push_events"/>
+                    </setting>
+                    <setting id="orca_bridge_api_key_setting" string="Acceso de ORCA a Odoo"
+                             help="ORCA lee y modifica registros con la clave API del usuario ORCA (API JSON-2). Sus permisos limitan lo que ORCA puede hacer.">
+                        <div class="content-group">
+                            <div class="mt8">
+                                <field name="orca_bridge_api_key_count" class="oe_inline" readonly="1"/>
+                                <span class="o_light_label"> clave(s) activa(s)</span>
+                            </div>
+                            <div class="mt8">
+                                <button name="action_orca_bridge_generate_api_key" type="object"
+                                        string="Generar clave API para ORCA" class="btn-link" icon="oi-arrow-right"
+                                        confirm="Se revocara la clave anterior de ORCA. ¿Continuar?"/>
+                                <button name="action_orca_bridge_revoke_api_keys" type="object"
+                                        string="Revocar" class="btn-link" invisible="not orca_bridge_api_key_count"
+                                        confirm="ORCA perdera el acceso a esta instancia. ¿Continuar?"/>
+                            </div>
+                        </div>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>
