@@ -116,24 +116,37 @@ class AccountMoveReversal(models.TransientModel):
                     }
                 )
 
-                price_unit = (
-                    self.l10n_do_amount
-                    if self.l10n_do_refund_type == "fixed_amount"
-                    else move.amount_untaxed * (self.l10n_do_percentage / 100)
-                )
                 result["invoice_line_ids"] = [
-                    (
-                        0,
-                        0,
-                        {
-                            "name": self.reason or _("Credit"),
-                            "price_unit": price_unit,
-                            "quantity": 1,
-                        },
-                    )
+                    (0, 0, {"name": self.reason or _("Credit"), "price_unit": price_unit,
+                            "quantity": 1, "tax_ids": [(6, 0, taxes.ids)]})
+                    for price_unit, taxes in self._l10n_do_partial_refund_lines(move)
                 ]
 
         return result
+
+    def _l10n_do_partial_refund_lines(self, move):
+        """(base, taxes) per credit note line. The credit note keeps the taxes of the invoice
+        (found in the live e-CF test: E34 went out without ITBIS). Percentage: one line per tax
+        group of the invoice. Fixed amount: the amount is the base, with the main group's taxes.
+        Sales: after 30 days a credit note no longer adjusts ITBIS (same rule as debit notes)."""
+        groups = {}
+        for line in move.invoice_line_ids.filtered(lambda l: l.display_type == "product"):
+            groups[line.tax_ids] = groups.get(line.tax_ids, 0.0) + line.price_subtotal
+        refund_date = self.date or fields.Date.context_today(self)
+        late = (move.move_type == "out_invoice" and move.invoice_date
+                and (refund_date - move.invoice_date).days > 30)
+
+        def keep(taxes):
+            if not late:
+                return taxes
+            return taxes.flatten_taxes_hierarchy().filtered(lambda t: t.amount not in (18.0, 16.0))
+
+        if self.l10n_do_refund_type == "fixed_amount":
+            main = max(groups.items(), key=lambda g: abs(g[1]))[0] if groups else self.env["account.tax"]
+            return [(self.l10n_do_amount, keep(main))]
+        pct = self.l10n_do_percentage / 100
+        lines = [(base * pct, keep(taxes)) for taxes, base in groups.items() if base]
+        return lines or [(move.amount_untaxed * pct, self.env["account.tax"])]
 
     @api.depends("move_ids", "journal_id")
     def _compute_document_type(self):

@@ -188,3 +188,44 @@ class EasyCountIntegrationTest(common.L10nDOTestsCommon):
             "l10n_latam_document_type_id": self.do_document_type["fiscal"].id,
         })
         self.assertFalse(paper._l10n_do_numbered_by_easycount())
+
+    # ------------------------------------------------------------------ partial credit notes keep ITBIS
+
+    def _partial_refund(self, invoice, **wizard_vals):
+        wizard = self.env["account.move.reversal"].with_context(
+            active_ids=invoice.ids, active_model="account.move").create({
+                "journal_id": invoice.journal_id.id,
+                "l10n_latam_document_type_id": self.do_document_type["e-credit_note"].id,
+                **wizard_vals,
+            })
+        return self.env["account.move"].browse(wizard.reverse_moves()["res_id"])
+
+    def _posted_e31(self, days_ago=0):
+        invoice = self._invoice("e-fiscal", self.fiscal_partner)
+        invoice.invoice_date = fields.Date.add(fields.Date.today(), days=-days_ago)
+        invoice.invoice_line_ids.write({"price_unit": 1000.0, "quantity": 1,
+                                        "tax_ids": [(6, 0, self.do_company.account_sale_tax_id.ids)]})
+        invoice.action_post()
+        return invoice
+
+    def test_12_fixed_amount_credit_note_carries_the_invoice_itbis(self):
+        """Live finding: an E34 for a fixed amount went out without ITBIS."""
+        refund = self._partial_refund(self._posted_e31(), l10n_do_refund_type="fixed_amount", l10n_do_amount=100.0)
+        self.assertEqual(refund.amount_untaxed, 100.0)
+        self.assertEqual(refund.amount_tax, 18.0)
+        self.assertEqual(refund.amount_total, 118.0)
+
+    def test_13_percentage_credit_note_keeps_each_tax_group(self):
+        invoice = self._invoice("e-fiscal", self.fiscal_partner)
+        invoice.invoice_line_ids.write({"price_unit": 1000.0, "quantity": 1,
+                                        "tax_ids": [(6, 0, self.do_company.account_sale_tax_id.ids)]})
+        invoice.write({"invoice_line_ids": [(0, 0, {"name": "Exento", "price_unit": 500.0, "quantity": 1, "tax_ids": []})]})
+        invoice.action_post()
+        refund = self._partial_refund(invoice, l10n_do_refund_type="percentage", l10n_do_percentage=10)
+        self.assertEqual(refund.amount_untaxed, 150.0)
+        self.assertEqual(refund.amount_tax, 18.0, "ITBIS only on the taxed part")
+
+    def test_14_credit_note_after_30_days_does_not_adjust_itbis(self):
+        refund = self._partial_refund(self._posted_e31(days_ago=45), l10n_do_refund_type="fixed_amount",
+                                      l10n_do_amount=100.0)
+        self.assertEqual((refund.amount_untaxed, refund.amount_tax), (100.0, 0.0))
