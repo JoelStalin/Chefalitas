@@ -670,9 +670,9 @@ class AccountMoveTest(common.L10nDOTestsCommon):
             invoice_type="in_invoice",
         )
         purchase_invoice_1_id._post()
-        self.assertEqual(
-            purchase_invoice_1_id.name, "BILL/%s/0001" % fields.Date.today().year
-        )
+        # unique internal name from the journal sequence; users see the supplier NCF
+        self.assertTrue(purchase_invoice_1_id.name.startswith("BILL/%s" % fields.Date.today().year))
+        self.assertEqual(purchase_invoice_1_id.display_name, "B0100000001")
         self.assertEqual(purchase_invoice_1_id.l10n_do_fiscal_number, "B0100000001")
 
         purchase_invoice_2_id = self._create_l10n_do_invoice(
@@ -685,9 +685,9 @@ class AccountMoveTest(common.L10nDOTestsCommon):
             invoice_type="in_invoice",
         )
         purchase_invoice_2_id._post()
-        self.assertEqual(
-            purchase_invoice_2_id.name, "BILL/%s/0002" % fields.Date.today().year
-        )
+        self.assertTrue(purchase_invoice_2_id.name.startswith("BILL/%s" % fields.Date.today().year))
+        self.assertNotEqual(purchase_invoice_2_id.name, purchase_invoice_1_id.name)
+        self.assertEqual(purchase_invoice_2_id.display_name, "B1100000001")
         self.assertEqual(purchase_invoice_2_id.l10n_do_fiscal_number, "B1100000001")
 
     def test_009_invoice_sequence(self):

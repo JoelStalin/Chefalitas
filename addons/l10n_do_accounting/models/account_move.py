@@ -4,6 +4,7 @@ from werkzeug import urls
 
 from odoo import models, fields, api, _
 from odoo.fields import Domain
+from odoo.addons.l10n_latam_invoice_document.models.account_move import AccountMove as LatamAccountMove
 from odoo.models import Query
 from odoo.tools import SQL, file_path
 from odoo.exceptions import ValidationError, UserError, AccessError
@@ -109,12 +110,12 @@ class AccountMove(models.Model):
 
     l10n_do_sequence_prefix = fields.Char(
         string="Prefijo NCF",
-        compute="_compute_split_sequence",
+        compute="_compute_l10n_do_split_sequence",
         store=True,
     )
     l10n_do_sequence_number = fields.Integer(
         string="Número NCF",
-        compute="_compute_split_sequence",
+        compute="_compute_l10n_do_split_sequence",
         store=True,
     )
 
@@ -690,6 +691,10 @@ class AccountMove(models.Model):
 
     def _get_starting_sequence(self):
         """Define la secuencia inicial para facturas dominicanas."""
+        if self.country_code == "DO" and self.l10n_latam_use_documents and not self.env.context.get("is_l10n_do_seq") \
+                and self.move_type in ("in_invoice", "in_refund", "in_receipt"):
+            # internal journal numbering for vendor bills: skip l10n_latam's document-based start
+            return super(LatamAccountMove, self)._get_starting_sequence()
         if (self.country_code == "DO" and self.l10n_latam_use_documents
                 and self.env.context.get("is_l10n_do_seq")):
             doc_type = self.l10n_latam_document_type_id
@@ -731,8 +736,10 @@ class AccountMove(models.Model):
     #         if move.move_type in ('out_invoice', 'out_refund') and not move.tax_totals:
     #             raise ValidationError(_("La factura debe tener impuestos configurados."))
             
+    # NOTE: not named _compute_split_sequence: that is sequence.mixin's method for
+    # sequence_prefix/sequence_number (journal numbering); overriding it broke internal names.
     @api.depends("l10n_do_fiscal_number")
-    def _compute_split_sequence(self):
+    def _compute_l10n_do_split_sequence(self):
         for rec in self:
             sequence = rec[rec._l10n_do_sequence_field] or ""
             regex = re.sub(r"\?P<\w+>", "?:", rec._l10n_do_sequence_fixed_regex.replace(r"?P<seq>", ""))
@@ -812,10 +819,11 @@ class AccountMove(models.Model):
         self[self._l10n_do_sequence_field] = self.l10n_latam_document_type_id._format_document_number(
             fmt.format(**fmt_values)
         )
-        self._compute_split_sequence()
+        self._compute_l10n_do_split_sequence()
     
     # TODO: handle l10n_latam_invoice_document _compute_name() inheritance shit
-    @api.depends("l10n_do_fiscal_number", "move_type", "country_code", "l10n_latam_use_documents")
+    @api.depends("l10n_do_fiscal_number", "move_type", "country_code", "l10n_latam_use_documents",
+                 "posted_before", "state", "journal_id", "date", "origin_payment_id")
     def _compute_name(self):
         """Ajusta el campo `name` para usar `l10n_do_fiscal_number` en facturas dominicanas."""
         for move in self:
@@ -827,6 +835,24 @@ class AccountMove(models.Model):
             else:
                 # Lógica predeterminada de Odoo para otros países
                 super(AccountMove, move)._compute_name()
+                # DO purchases carry the supplier NCF (shown as display name); the record still
+                # needs a unique internal name: the journal sequence (BILL/...). l10n_latam leaves
+                # manually numbered documents without name.
+                if (move._l10n_do_is_purchase_document() and not move.name
+                        and move.date and move.state != "draft"):
+                    move._set_next_sequence()
+
+    def _l10n_do_is_purchase_document(self):
+        self.ensure_one()
+        return (self.country_code == "DO" and self.l10n_latam_use_documents
+                and self.move_type in ("in_invoice", "in_refund", "in_receipt"))
+
+    def _compute_display_name(self):
+        # Users see the NCF of Dominican fiscal documents; the internal name stays unique.
+        super()._compute_display_name()
+        for move in self:
+            if move.country_code == "DO" and move.l10n_latam_use_documents and move.l10n_do_fiscal_number:
+                move.display_name = move.l10n_do_fiscal_number
                 
     def unlink(self):
         if self.filtered(
