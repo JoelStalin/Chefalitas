@@ -172,7 +172,6 @@ class AccountDebitNote(models.TransientModel):
                     l10n_do_income_type=move.l10n_do_income_type,
                     invoice_origin=move.name,
                     line_ids=[(5, 0, 0)],
-                    l10n_do_fiscal_number=move.name,
                 )
             )
 

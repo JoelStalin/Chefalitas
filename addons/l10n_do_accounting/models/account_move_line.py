@@ -81,15 +81,19 @@ class AccountMoveLine(models.Model):
         Retorna un diccionario con los montos agrupados por tipo de impuesto (ITBIS, ISR).
         Incluye cálculos para diferentes tasas y retenciones.
         """
+        # Works on all the journal items of ONE move at once.
+        move = self.move_id[:1] if len(self.move_id) <= 1 else self.mapped("move_id").ensure_one()
+        currency = move.currency_id
+        company = move.company_id
         # Buscar grupos de impuestos ITBIS e ISR
         group_itbis = self.env["account.tax.group"].search([
             ("name", "ilike", "ITBIS"),
-            ("company_id", "=", self.company_id.id),
+            ("company_id", "=", company.id),
         ], limit=1)
 
         group_isr = self.env["account.tax.group"].search([
             ("name", "ilike", "ISR"),
-            ("company_id", "=", self.company_id.id),
+            ("company_id", "=", company.id),
         ], limit=1)
 
         # Separar líneas de impuestos por grupo
@@ -121,7 +125,7 @@ class AccountMoveLine(models.Model):
             "base_amount": sum(taxed_lines.mapped("price_subtotal")),
             "exempt_amount": sum(exempt_lines.mapped("price_subtotal")),
             "itbis_18_tax_amount": sum(
-                self.currency_id.round(line.amount_currency)
+                currency.round(line.amount_currency)
                 for line in itbis_tax_lines.filtered(
                     lambda l: l.tax_line_id.amount == itbis_tax_amount_map["18"]
                 )
@@ -134,7 +138,7 @@ class AccountMoveLine(models.Model):
                 ).mapped("amount_currency")
             ),
             "itbis_16_tax_amount": sum(
-                self.currency_id.round(line.amount_currency)
+                currency.round(line.amount_currency)
                 for line in itbis_tax_lines.filtered(
                     lambda l: l.tax_line_id.amount == itbis_tax_amount_map["16"]
                 )
@@ -149,7 +153,7 @@ class AccountMoveLine(models.Model):
             "itbis_0_tax_amount": 0.0,  # no soportado
             "itbis_0_base_amount": 0.0,
             "itbis_withholding_amount": sum(
-                self.currency_id.round(line.amount_currency)
+                currency.round(line.amount_currency)
                 for line in itbis_tax_lines.filtered(
                     lambda l: l.tax_line_id.amount < 0
                 )
@@ -160,7 +164,7 @@ class AccountMoveLine(models.Model):
                 ).mapped("amount_currency")
             ),
             "isr_withholding_amount": sum(
-                self.currency_id.round(line.amount_currency)
+                currency.round(line.amount_currency)
                 for line in isr_tax_lines.filtered(
                     lambda l: l.tax_line_id.amount < 0
                 )
@@ -177,16 +181,16 @@ class AccountMoveLine(models.Model):
 
         # Total general de la factura
         result["l10n_do_invoice_total"] = (
-            self.move_id.amount_untaxed
+            move.amount_untaxed
             + result["itbis_18_tax_amount"]
             + result["itbis_16_tax_amount"]
         )
 
         # Conversión a moneda base si aplica
-        if self.currency_id != self.company_id.currency_id:
-            rate = (self.currency_id + self.company_id.currency_id)._get_rates(
-                self.company_id, self.move_id.date
-            ).get(self.currency_id.id) or 1.0
+        if currency != company.currency_id:
+            rate = (currency + company.currency_id)._get_rates(
+                company, move.date
+            ).get(currency.id) or 1.0
             for k, v in list(result.items()):
                 result[k + "_currency"] = v / rate
 

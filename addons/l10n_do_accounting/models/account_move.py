@@ -183,10 +183,6 @@ class AccountMove(models.Model):
                      .mapped('balance')
             ))
     
-    _unique_l10n_do_fiscal_number_sales = models.Constraint(
-        "unique (company_id, partner_id, l10n_do_fiscal_number)",
-        "Another document with the same fiscal number already exists.",
-    )
 
     
     def _compute_tax_totals(self):
@@ -197,6 +193,10 @@ class AccountMove(models.Model):
                 
     @api.constrains("l10n_do_fiscal_number", "company_id")
     def _check_unique_fiscal_number(self):
+        # DGII: an NCF identifies a document of ONE issuer. Our sales NCF must be unique in
+        # the company; a supplier's NCF must be unique for that supplier. A customer that is
+        # also a supplier can legitimately have the same number on both sides.
+        purchase_types = ("in_invoice", "in_refund", "in_receipt")
         for rec in self.filtered(lambda r: r.l10n_do_fiscal_number and r.state != 'cancel'):
             domain = [
                 ("id", "!=", rec.id),
@@ -204,6 +204,13 @@ class AccountMove(models.Model):
                 ("l10n_do_fiscal_number", "=", rec.l10n_do_fiscal_number),
                 ("state", "!=", "cancel"),
             ]
+            if rec.move_type in purchase_types:
+                domain += [
+                    ("move_type", "in", purchase_types),
+                    ("commercial_partner_id", "=", rec.commercial_partner_id.id),
+                ]
+            else:
+                domain += [("move_type", "not in", purchase_types)]
             if self.search_count(domain):
                 raise ValidationError(_("Ya existe otro documento con ese NCF en esta empresa."))
 
@@ -333,10 +340,11 @@ class AccountMove(models.Model):
             "isr_withholding_base_amount": 0.0,
             "l10n_do_invoice_total": 0.0,
         }
-        for line in self.line_ids.filtered(lambda l: l.currency_id == self.currency_id):
-            line_amounts = line._get_l10n_do_line_amounts()
+        lines = self.line_ids.filtered(lambda l: l.currency_id == self.currency_id)
+        if lines:
+            line_amounts = lines._get_l10n_do_line_amounts()
             for key in amounts:
-                amounts[key] += line_amounts.get(key, 0.0)
+                amounts[key] = line_amounts.get(key, 0.0)
         return amounts
     
     @api.depends("company_id", "l10n_latam_document_type_id")
