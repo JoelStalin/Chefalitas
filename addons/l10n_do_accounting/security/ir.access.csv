@@ -1,3 +1,5 @@
 id,name,model_id,group_id/id,operation,domain
 access_account_move_cancel,access_account_move_cancel,account.move.cancel,account.group_account_invoice,cru,
 access_l10n_do_account_journal_document_type,access_l10n_do_account_journal_document_type,l10n_do.account.journal.document_type,base.group_user,ru,
+access_invoice_service_type_detail_user,invoice.service.type.detail.user,invoice.service.type.detail,base.group_user,r,
+access_invoice_service_type_detail_manager,invoice.service.type.detail.manager,invoice.service.type.detail,account.group_account_manager,crud,

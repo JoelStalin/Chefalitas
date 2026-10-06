@@ -853,19 +853,3 @@ class AccountMove(models.Model):
 
             if inv.amount_total >= 250000 and not vat:
                 raise ValidationError(_("Para montos iguales o mayores a RD$250,000 es obligatorio el RNC/Cédula."))
-    def _validate_ecf_xml_schema(self):
-        self.ensure_one()
-        if not self.l10n_do_ecf_edi_file:
-            return
-
-        xsd_path = file_path('l10n_do_accounting/static/xsd/ECFv1_3.xsd')
-        with open(xsd_path, 'rb') as f:
-            schema_doc = etree.XML(f.read())
-            schema = etree.XMLSchema(schema_doc)
-
-        xml_data = self.l10n_do_ecf_edi_file.content
-        doc = etree.XML(xml_data)
-        try:
-            schema.assertValid(doc)
-        except Exception as e:
-            raise ValidationError(_("El archivo e-CF no es válido según el XSD: %s") % str(e))
