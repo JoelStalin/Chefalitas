@@ -22,9 +22,13 @@ class ProductTemplate(models.Model):
             if not product.uom_id:
                 product.x_cost_per_base_uom = 0.0
                 continue
-            qty_in_base = product.uom_id._compute_quantity(1, product.uom_id)
-            yield_factor = product.x_yield_factor or 1.0
-            product.x_cost_per_base_uom = (product.standard_price / qty_in_base) / yield_factor
+            # Cost per gram for weight units (price per kg / 1000), per unit otherwise.
+            # The yield factor is applied once, in the recipe cost (rest.recipe).
+            gram = self.env.ref("uom.product_uom_gram", raise_if_not_found=False)
+            grams_per_uom = 1.0
+            if gram and product.uom_id._has_common_reference(gram):
+                grams_per_uom = product.uom_id._compute_quantity(1, gram) or 1.0
+            product.x_cost_per_base_uom = product.standard_price / grams_per_uom
 
     @api.depends("standard_price", "x_last_cost_update")
     def _compute_cost_variation_pct(self):

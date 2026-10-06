@@ -8,7 +8,7 @@
                 <page string="Kitchen">
                     <group>
                         <field name="x_is_ingredient" />
-                        <field name="x_yield_factor" attrs="{'invisible': [('x_is_ingredient','=',False)]}" />
+                        <field name="x_yield_factor" invisible="not x_is_ingredient" />
                         <field name="x_cost_per_base_uom" readonly="1" />
                         <field name="x_last_cost_update" />
                         <field name="x_cost_variation_pct" readonly="1" />

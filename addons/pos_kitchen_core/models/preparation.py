@@ -26,17 +26,19 @@ class RestPreparation(models.Model):
     )
     user_id = fields.Many2one("res.users", default=lambda self: self.env.user)
     line_consumption_ids = fields.One2many("rest.preparation.line", "preparation_id")
-    leftover_ids = fields.One2many("rest.leftover", "preparation_id")
-    waste_ids = fields.One2many("rest.waste", "preparation_id")
+    # TODO(kitchen): leftovers/waste tracking ("rest.leftover" / "rest.waste") was referenced
+    # here but the models were never written, which made the module uninstallable. Re-add the
+    # One2many fields together with the models once the merma/sobrantes design is agreed.
     real_total_cost = fields.Monetary(compute="_compute_real_costs", store=True)
     real_cost_per_portion = fields.Monetary(compute="_compute_real_costs", store=True)
     currency_id = fields.Many2one("res.currency", related="recipe_id.currency_id")
 
-    @api.model
-    def create(self, vals):
-        if vals.get("name", "/") == "/":
-            vals["name"] = self.env["ir.sequence"].next_by_code("rest.preparation") or "/"
-        return super().create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get("name", "/") == "/":
+                vals["name"] = self.env["ir.sequence"].next_by_code("rest.preparation") or "/"
+        return super().create(vals_list)
 
     @api.depends("real_total_weight_g", "expected_total_weight_g")
     def _compute_variance(self):

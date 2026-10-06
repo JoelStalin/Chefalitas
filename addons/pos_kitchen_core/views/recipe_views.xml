@@ -3,14 +3,14 @@
         <field name="name">rest.recipe.tree</field>
         <field name="model">rest.recipe</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="name" />
                 <field name="product_id" />
                 <field name="expected_portions" />
                 <field name="theoretical_total_cost" />
                 <field name="theoretical_cost_per_portion" />
                 <field name="suggested_sale_price" />
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -36,11 +36,11 @@
                     <notebook>
                         <page string="Ingredients">
                             <field name="line_ids">
-                                <tree editable="bottom">
+                                <list editable="bottom">
                                     <field name="ingredient_id" />
                                     <field name="uom_id" />
                                     <field name="qty_g" />
-                                </tree>
+                                </list>
                             </field>
                         </page>
                         <page string="Notes">
@@ -55,6 +55,6 @@
     <record id="action_rest_recipe" model="ir.actions.act_window">
         <field name="name">Recipes</field>
         <field name="res_model">rest.recipe</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 </odoo>
