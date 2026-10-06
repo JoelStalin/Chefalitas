@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- DGII printed representation: document type and NCF/e-NCF in the header -->
+        <template id="pos_order_receipt_header" inherit_id="point_of_sale.pos_order_receipt_header">
+            <div name="cashier_name" position="before">
+                <div t-if="extra_data.get('l10n_do_ncf')" name="l10n_do_fiscal" class="w-100 text-center mt-2 mb-2">
+                    <div t-if="extra_data.get('l10n_do_document_type')" class="l10n-do-document-type"
+                         t-out="extra_data['l10n_do_document_type']"/>
+                    <div class="l10n-do-ncf text-bold" t-out="extra_data['l10n_do_ncf']"/>
+                </div>
+            </div>
+        </template>
+
+        <template id="pos_order_receipt_footer" inherit_id="point_of_sale.pos_order_receipt_footer">
+            <xpath expr="//div[strong[text()='Odoo']]" position="replace"/>
+        </template>
+    </data>
+</odoo>

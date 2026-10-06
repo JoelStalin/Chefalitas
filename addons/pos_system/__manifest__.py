@@ -13,14 +13,12 @@
         'sale_management', 'point_of_sale', 'product', 'pos_loyalty'
     ],
     'data': [
+        'receipt/pos_order_receipt.xml',
        'views/pos_order/pos_order_views.xml',
     ],
     "assets": {
         'point_of_sale._assets_pos': [
             'pos_system/static/src/**/*',
-        ],
-        'point_of_sale.customer_display_assets': [
-            "pos_system/static/src/overrides/components/order_widget/*",
         ],
     },
     
