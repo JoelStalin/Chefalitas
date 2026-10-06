@@ -7,3 +7,5 @@ from . import monkey_patch
 from . import account_move_line
 from . import l10n_do_ecf_edi_file
 from . import invoice_service_type_detail
+from . import easycount_company
+from . import easycount_move

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_easycount" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.easycount</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="account.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@id='invoicing_settings']" position="after">
+                <block id="l10n_do_easycount_block" title="Facturacion electronica (EasyCount)"
+                       invisible="'DO' not in fiscal_country_codes" groups="account.group_account_manager">
+                    <setting id="l10n_do_easycount_setting" string="Emitir e-CF con EasyCount"
+                             help="EasyCount asigna el e-NCF y transmite a DGII.">
+                        <field name="l10n_do_easycount_enabled"/>
+                        <div class="content-group mt16" invisible="not l10n_do_easycount_enabled">
+                            <div class="row mt8"><label for="l10n_do_easycount_url" class="col-lg-3 o_light_label"/>
+                                <field name="l10n_do_easycount_url" required="l10n_do_easycount_enabled"/></div>
+                            <div class="row mt8"><label for="l10n_do_easycount_auth_mode" class="col-lg-3 o_light_label"/>
+                                <field name="l10n_do_easycount_auth_mode"/></div>
+                            <div class="row mt8"><label for="l10n_do_easycount_token" class="col-lg-3 o_light_label"/>
+                                <field name="l10n_do_easycount_token" password="True"
+                                       required="l10n_do_easycount_enabled and l10n_do_easycount_auth_mode == 'token'"/></div>
+                            <div class="row mt8"><label for="l10n_do_ecf_service_env" class="col-lg-3 o_light_label"/>
+                                <field name="l10n_do_ecf_service_env"/></div>
+                            <div class="mt8"><button name="action_l10n_do_easycount_test_connection" type="object"
+                                    string="Probar conexion" class="btn-link" icon="oi-arrow-right"/></div>
+                        </div>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>
