@@ -115,6 +115,8 @@ def py(s, path):
                      (r"def _name_search", "_name_search -> _search_display_name"),
                      (r"get_module_resource", "get_module_resource -> odoo.tools.file_path"),
                      (r"_get_rates\(", "_get_rates returns {id: (rate, date)} -> _get_conversion_rate"),
+                     (r"\.(get|set)_param\(", "ir.config_parameter get_param/set_param -> get_str/set_str (get_bool/int/float)"),
+                     (r"auth=['\"]none['\"]", "auth='none' route: check token handling / sudo() exposure"),
                      (r"_get_last_sequence_domain", "_get_last_sequence_domain returns SQL in Odoo 20"),
                      (r"base64\.b64(en|de)code\([^)]*\b(datas|_file)\b", "Binary fields: BinaryBytes / .content")):
         if re.search(pat, s):

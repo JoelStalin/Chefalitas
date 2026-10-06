@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import hmac
 import json
 import logging
 from odoo import http
@@ -9,13 +10,16 @@ _logger = logging.getLogger(__name__)
 class OrcaBridgeController(http.Controller):
 
     def _verify_auth(self):
-        """Verifies bearer token against ir.config_parameter orca.api_token."""
+        """Bearer token checked against ir.config_parameter ``orca.api_token``.
+
+        There is no default token: without a configured token every request is refused.
+        """
         auth_header = request.httprequest.headers.get('Authorization', '')
         if not auth_header.startswith('Bearer '):
             return False
         token = auth_header.split(' ', 1)[1].strip()
-        expected = request.env['ir.config_parameter'].sudo().get_param('orca.api_token', 'orca_sec_c9f408e71b26a8d542e19034f8a7')
-        return token == expected
+        expected = request.env['ir.config_parameter'].sudo().get_str('orca.api_token') or ''
+        return bool(token and expected) and hmac.compare_digest(token, expected)
 
     def _json_response(self, data, status=200):
         return Response(
