@@ -1,17 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo noupdate="1">
-    <!-- ORCA acts in Odoo as this user (JSON-2 API key, scope rpc). It has no password: no web login.
-         Its groups are the ceiling of what ORCA can read or change; the ORCA policy narrows it further. -->
+    <!-- ORCA acts in Odoo as this user (JSON-2 API key, scope rpc, issued when connecting through OAuth).
+         It has no password: no web login. Decision (2026-10-06): ORCA controls the whole Odoo 20 environment,
+         so the user is an administrator; what ORCA may do is governed by the permissions managed in ORCA. -->
     <record id="user_orca_bridge" model="res.users">
         <field name="name">ORCA</field>
         <field name="login">orca_bridge</field>
         <field name="email">orca@getupsoft.local</field>
         <field name="group_ids" eval="[Command.set([
             ref('base.group_user'),
+            ref('base.group_system'),
             ref('base.group_partner_manager'),
-            ref('account.group_account_invoice'),
-            ref('stock.group_stock_user'),
-            ref('point_of_sale.group_pos_user'),
+            ref('account.group_account_manager'),
+            ref('stock.group_stock_manager'),
+            ref('point_of_sale.group_pos_manager'),
         ])]"/>
     </record>
 </odoo>

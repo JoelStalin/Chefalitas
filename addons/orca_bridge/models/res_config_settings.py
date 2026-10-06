@@ -1,9 +1,5 @@
-from odoo import fields, models
+from odoo import api, fields, models
 from odoo.exceptions import AccessError
-from odoo.http import request
-
-API_KEY_SCOPE = "rpc"  # Odoo 20 JSON-2 API (/json/2/<model>/<method>)
-API_KEY_NAME = "ORCA bridge"
 
 
 class ResConfigSettings(models.TransientModel):
@@ -11,64 +7,56 @@ class ResConfigSettings(models.TransientModel):
 
     orca_bridge_url = fields.Char("URL de ORCA", config_parameter="orca_bridge.url",
                                   help="Ej. https://orca.getupsoft.com")
-    orca_bridge_token = fields.Char("Token de ORCA", config_parameter="orca_bridge.token",
-                                    groups="base.group_system",
-                                    help="Token que ORCA asigno a esta instancia (scope events)")
-    orca_bridge_connection_id = fields.Char("Conexion en ORCA", config_parameter="orca_bridge.connection_id",
-                                            help="Id de esta instancia en ORCA_ODOO_CONNECTIONS; por defecto la base de datos")
+    orca_bridge_client_id = fields.Char("Client ID", config_parameter="orca_bridge.client_id",
+                                        help="Conector OAuth registrado en ORCA > Configuracion > su compania")
+    orca_bridge_client_secret = fields.Char("Client secret", config_parameter="orca_bridge.client_secret",
+                                            groups="base.group_system")
     orca_bridge_push_events = fields.Boolean("Notificar cambios a ORCA", config_parameter="orca_bridge.push_events")
-    orca_bridge_api_key_count = fields.Integer("Claves API de ORCA", compute="_compute_orca_bridge_api_key_count")
+    orca_bridge_redirect_uri = fields.Char("URL de retorno", compute="_compute_orca_bridge_status")
+    orca_bridge_connected = fields.Boolean("Conectado a ORCA", compute="_compute_orca_bridge_status")
+    orca_bridge_status = fields.Char("Estado de ORCA", compute="_compute_orca_bridge_status")
 
-    def _orca_bridge_user(self):
-        return self.env.ref("orca_bridge.user_orca_bridge")
-
-    def _compute_orca_bridge_api_key_count(self):
-        count = self.env["res.users.apikeys"].sudo().search_count([
-            ("user_id", "=", self._orca_bridge_user().id), ("scope", "=", API_KEY_SCOPE)])
+    @api.depends_context("uid")
+    def _compute_orca_bridge_status(self):
+        client = self.env["orca.bridge.client"]
+        s = client._settings()
+        connected = client._is_connected()
+        status = (self.env._("Conectado a %(company)s como %(connection)s desde %(date)s",
+                             company=s["company"], connection=s["connection"], date=s["connected_at"])
+                  if connected else self.env._("No conectado"))
         for settings in self:
-            settings.orca_bridge_api_key_count = count
+            settings.orca_bridge_redirect_uri = client._redirect_uri()
+            settings.orca_bridge_connected = connected
+            settings.orca_bridge_status = status
+
+    def _check_orca_admin(self):
+        if not self.env.user.has_group("base.group_system"):
+            raise AccessError(self.env._("Solo un administrador puede gestionar la conexion con ORCA."))
+
+    def action_orca_bridge_connect(self):
+        """Saves the settings and starts OAuth 2.0 in the browser (ORCA login + consent screen)."""
+        self.ensure_one()
+        self._check_orca_admin()
+        self.set_values()
+        return {"type": "ir.actions.act_url", "url": "/orca_bridge/oauth/start", "target": "self"}
+
+    def action_orca_bridge_disconnect(self):
+        self.ensure_one()
+        self._check_orca_admin()
+        self.env["orca.bridge.client"]._disconnect()
+        return {"type": "ir.actions.client", "tag": "reload"}
 
     def action_orca_bridge_test_connection(self):
         self.ensure_one()
-        self.set_values()
+        self._check_orca_admin()
         whoami = self.env["orca.bridge.client"]._request("GET", "/api/orca/odoo-bridge/whoami")
-        connection = self.env["orca.bridge.client"]._settings()["connection"]
-        allowed = "*" in whoami.get("connections", []) or connection in whoami.get("connections", [])
-        ok = "events" in whoami.get("scopes", []) and allowed
+        ok = "events" in whoami.get("scopes", [])
         message = self.env._(
-            "Cliente ORCA %(client)s, permisos %(scopes)s, conexion %(connection)s %(state)s.",
-            client=whoami.get("client"), scopes=", ".join(whoami.get("scopes", [])), connection=connection,
-            state=self.env._("autorizada") if ok else self.env._("NO autorizada para eventos"),
+            "ORCA responde: %(client)s, compania %(company)s, permisos %(scopes)s.",
+            client=whoami.get("client"), company=whoami.get("company"), scopes=", ".join(whoami.get("scopes", [])),
         )
         return {
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {"title": "ORCA", "message": message, "type": "success" if ok else "warning", "sticky": False},
         }
-
-    def action_orca_bridge_generate_api_key(self):
-        """(Re)generate the JSON-2 API key ORCA uses; previous ORCA keys are revoked. Shown once."""
-        self.ensure_one()
-        if not self.env.user.has_group("base.group_system"):
-            raise AccessError(self.env._("Only administrators can generate the ORCA API key."))
-        user = self._orca_bridge_user()
-        keys = self.env["res.users.apikeys"].with_user(user).sudo()
-        keys.search([("user_id", "=", user.id), ("scope", "=", API_KEY_SCOPE)]).unlink()
-        key = keys._generate(API_KEY_SCOPE, API_KEY_NAME, None)
-        base_url = ((request and request.httprequest.url_root) or self.get_base_url()).rstrip("/")
-        return {
-            "type": "ir.actions.act_window",
-            "res_model": "res.users.apikeys.show",
-            "name": self.env._("Clave API para ORCA (copiela ahora)"),
-            "views": [(False, "form")],
-            "target": "new",
-            "context": {"default_key": key, "default_scope": API_KEY_SCOPE, "default_base_url": base_url},
-        }
-
-    def action_orca_bridge_revoke_api_keys(self):
-        self.ensure_one()
-        if not self.env.user.has_group("base.group_system"):
-            raise AccessError(self.env._("Only administrators can revoke the ORCA API key."))
-        user = self._orca_bridge_user()
-        self.env["res.users.apikeys"].sudo().search([("user_id", "=", user.id), ("scope", "=", API_KEY_SCOPE)]).unlink()
-        return True
