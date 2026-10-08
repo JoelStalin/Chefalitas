@@ -1,6 +1,6 @@
 """Data for the live e-CF demo (run inside `odoo shell -d ecflive`).
 
-Company Chefalitas (test RNC 131793916), DO chart, e-CF issuer through EasyCount (DGII_ENV=LOCAL emulator),
+Company Chefalitas (test RNC 131793916; DEMO_RNC/DEMO_NAME override it), DO chart, e-CF issuer through EasyCount,
 partners for every DGII taxpayer type, restaurant products with ITBIS 18% and an exempt service, and the
 POS restaurant. Test data only: no real customers.
 """
@@ -12,8 +12,8 @@ DO = env.ref("base.do")
 company = env.company
 
 company.write({
-    "name": "Chefalitas (PRUEBAS e-CF)",
-    "vat": "131793916",
+    "name": os.environ.get("DEMO_NAME") or "Chefalitas (PRUEBAS e-CF)",
+    "vat": os.environ.get("DEMO_RNC") or "131793916",
     "street": "Av. Winston Churchill 1099",
     "city": "Santo Domingo",
     "country_id": DO.id,

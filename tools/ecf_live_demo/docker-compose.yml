@@ -1,5 +1,6 @@
-# Live functional demo of DGII e-CF: Odoo 20 (Chefalitas addons) + EasyCount NestJS (DGII emulator, DGII_ENV=LOCAL).
-# Throwaway environment (prefix ecflive-). Start with ./up.sh, which also creates the data and the token.
+# Live functional demo of DGII e-CF: Odoo 20 (Chefalitas addons) + EasyCount NestJS.
+# Default: DGII emulator (DGII_ENV=LOCAL), project ecflive. With DGII_ENV=TEST|CERT it issues against the real DGII
+# using the certificate mounted from DGII_P12_HOST (see up.sh). Throwaway: start with ./up.sh, remove with ./down.sh.
 name: ecflive
 
 services:
@@ -22,7 +23,7 @@ services:
     volumes:
       - ${CHEFALITAS_ADDONS:?}:/mnt/extra-addons:ro
       - odoo-data:/var/lib/odoo
-    ports: ["127.0.0.1:18069:8069"]
+    ports: ["127.0.0.1:${ODOO_PORT:-18069}:8069"]
 
   easycount-db:
     image: pgvector/pgvector:pg16
@@ -36,10 +37,19 @@ services:
     image: ${EASYCOUNT_IMAGE:-easycount-api-nest:live}
     depends_on: [easycount-db]
     environment:
-      DGII_ENV: LOCAL
+      DGII_ENV: ${DGII_ENV:-LOCAL}
       DATABASE_URL: postgresql://ec:ec@easycount-db:5432/easycount
       ODOO_API_TOKENS: ${ODOO_API_TOKENS:?}
-    ports: ["127.0.0.1:18800:8000"]
+      # real DGII only (DGII_ENV=TEST|CERT): values come from the caller's environment, never from this file
+      DGII_P12_PATH: /run/dgii/cert.p12
+      DGII_P12_PASSWORD: ${DGII_P12_PASSWORD:-}
+      DGII_CERT_EXPECTED_RNC: ${DGII_CERT_EXPECTED_RNC:-}
+      DGII_SEQ_EXPIRY: ${DGII_SEQ_EXPIRY:-}
+      DGII_ISSUER_NAME: ${DEMO_NAME:-}
+      DGII_ISSUER_ADDRESS: ${DGII_ISSUER_ADDRESS:-}
+    volumes:
+      - ${DGII_P12_HOST:-/dev/null}:/run/dgii/cert.p12:ro
+    ports: ["127.0.0.1:${EC_PORT:-18800}:8000"]
 
 volumes:
   odoo-db:
