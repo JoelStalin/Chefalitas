@@ -75,12 +75,21 @@ def stats_for(name):
     return REPORT.setdefault(name, {"created": 0, "linked_or_existing": 0})
 
 
+def fit(model, vals, st):
+    """Drop fields that do not exist in Odoo 20 (renamed or removed since 18) and report them."""
+    fields_ = env[model]._fields
+    dropped = [k for k in vals if k not in fields_]
+    if dropped:
+        st.setdefault("dropped_fields", set()).update(dropped)
+    return {k: v for k, v in vals.items() if k in fields_}
+
+
 def upsert(model, table, src_id, vals, st):
     rec = target(model, table, src_id)
     if rec:
         st["linked_or_existing"] += 1
         return rec
-    rec = env[model].sudo().create(vals)
+    rec = env[model].sudo().create(fit(model, vals, st))
     remember(rec, table, src_id)
     st["created"] += 1
     return rec
@@ -206,6 +215,79 @@ def _import_templates(where, extra=None):
         else:
             pending_variants.append(t["id"])
     st["with_variants_pending"] = st.get("with_variants_pending", 0) + len(pending_variants)
+
+
+def import_variants():
+    """Templates with attributes: attributes and values by name, attribute lines on the template, then every
+    source variant is mapped to the generated variant with the same combination of values."""
+    st = stats_for("product.product (variants)")
+    attrs = {a["id"]: a for a in rows("select id, name, create_variant, display_type from product_attribute")}
+    values = {v["id"]: v for v in rows("select id, attribute_id, name, sequence from product_attribute_value")}
+    for a in attrs.values():
+        upsert("product.attribute", "product_attribute", a["id"], {
+            "name": tr(a["name"]), "create_variant": a["create_variant"], "display_type": a["display_type"]}, st)
+    for v in values.values():
+        upsert("product.attribute.value", "product_attribute_value", v["id"], {
+            "name": tr(v["name"]), "sequence": v["sequence"],
+            "attribute_id": target("product.attribute", "product_attribute", v["attribute_id"]).id}, st)
+    tmpl_ids = [r["product_tmpl_id"] for r in rows(
+        "select product_tmpl_id from product_product group by 1 having count(*) > 1")]
+    for tid in tmpl_ids:
+        tmpl = target("product.template", "product_template", tid)
+        if not tmpl:
+            st.setdefault("missing_templates", []).append(tid)
+            continue
+        line_vals = {}  # by source line: a template may repeat an attribute (e.g. pick 3 sauces)
+        for r in rows("""select l.id as line_id, l.attribute_id, rel.product_attribute_value_id as value_id
+                         from product_template_attribute_line l
+                         join product_attribute_value_product_template_attribute_line_rel rel
+                           on rel.product_template_attribute_line_id = l.id
+                         where l.product_tmpl_id = %s""", (tid,)):
+            line_vals.setdefault(r["line_id"], (r["attribute_id"], []))[1].append(r["value_id"])
+        if len(tmpl.attribute_line_ids) != len(line_vals):
+            tmpl.write({"attribute_line_ids": [(5, 0, 0)] + [(0, 0, {
+                "attribute_id": target("product.attribute", "product_attribute", a).id,
+                "value_ids": [(6, 0, [target("product.attribute.value", "product_attribute_value", v).id for v in vs])],
+            }) for a, vs in line_vals.values()]})
+        line_order = list(line_vals)  # target lines were created in this order
+        for v in rows("""select p.id, p.barcode, p.default_code, p.active,
+                                array(select ptav.attribute_line_id || ':' || ptav.product_attribute_value_id
+                                      from product_variant_combination c
+                                      join product_template_attribute_value ptav on ptav.id = c.product_template_attribute_value_id
+                                      where c.product_product_id = p.id) as pairs,
+                                array(select ptav.product_attribute_value_id
+                                      from product_variant_combination c
+                                      join product_template_attribute_value ptav on ptav.id = c.product_template_attribute_value_id
+                                      where c.product_product_id = p.id) as value_ids
+                         from product_product p where p.product_tmpl_id = %s""", (tid,)):
+            if target("product.product", "product_product", v["id"]):
+                st["linked_or_existing"] += 1
+                continue
+            wanted = sorted(target("product.attribute.value", "product_attribute_value", i).id for i in v["value_ids"])
+            match = tmpl.with_context(active_test=False).product_variant_ids.filtered(
+                lambda p: sorted(p.product_template_attribute_value_ids.product_attribute_value_id.ids) == wanted)[:1]
+            if not match and not wanted:  # the template's variant from before it had attributes: keep it archived
+                match = env["product.product"].sudo().create({"product_tmpl_id": tmpl.id, "active": False})
+            if not match:  # a combination Odoo 20 does not generate (e.g. the same sauce twice): create it archived
+                ptavs = env["product.template.attribute.value"]
+                lines = tmpl.attribute_line_ids.sorted("id")
+                for pair in v["pairs"]:
+                    line_id, value_id = (int(x) for x in pair.split(":"))
+                    if line_id not in line_order:
+                        continue
+                    value = target("product.attribute.value", "product_attribute_value", value_id)
+                    ptavs |= lines[line_order.index(line_id)].product_template_value_ids.filtered(
+                        lambda x, value=value: x.product_attribute_value_id == value)
+                if len(ptavs) != len(v["pairs"]):
+                    st.setdefault("unmatched_variants", []).append(v["id"])
+                    continue
+                match = env["product.product"].sudo().create({
+                    "product_tmpl_id": tmpl.id, "active": False,
+                    "product_template_attribute_value_ids": [(6, 0, ptavs.ids)]})
+                st["archived_created"] = st.get("archived_created", 0) + 1
+            match.write({k: v[k] for k in ("barcode", "default_code") if v[k]})
+            remember(match, "product_product", v["id"])
+            st["created"] += 1
 
 
 # ------------------------------------------------------------------------------------------------ accounting
@@ -385,15 +467,148 @@ def import_reconcile():
         st["failed"] = st["failed"][:10]
 
 
+# ------------------------------------------------------------------------------------------------ point of sale
+def import_pos_setup():
+    """Payment methods, floors/tables and the POS configurations."""
+    st = stats_for("pos.payment.method")
+    for p in rows("select * from pos_payment_method order by id"):
+        upsert("pos.payment.method", "pos_payment_method", p["id"], {
+            "name": tr(p["name"]), "split_transactions": p["split_transactions"],
+            "type": "cash" if p["is_cash_count"] else ("bank" if p["journal_id"] else "pay_later"),
+            "journal_id": target("account.journal", "account_journal", p["journal_id"]).id or False,
+            "receivable_account_id": target("account.account", "account_account", p["receivable_account_id"]).id or False,
+            "outstanding_account_id": target("account.account", "account_account", p["outstanding_account_id"]).id or False,
+            "active": p["active"]}, st)
+    st = stats_for("restaurant.floor")
+    for f in rows("select * from restaurant_floor order by id"):
+        upsert("restaurant.floor", "restaurant_floor", f["id"], {"name": f["name"], "sequence": f["sequence"],
+                                                                 "background_color": f["background_color"]}, st)
+    st = stats_for("restaurant.table")
+    for t in rows("select * from restaurant_table order by parent_id nulls first, id"):
+        upsert("restaurant.table", "restaurant_table", t["id"], {
+            "floor_id": target("restaurant.floor", "restaurant_floor", t["floor_id"]).id,
+            "table_number": t["table_number"], "seats": t["seats"], "shape": t["shape"], "color": t["color"],
+            "position_h": t["position_h"], "position_v": t["position_v"], "width": t["width"], "height": t["height"],
+            "active": t["active"]}, st)
+    st = stats_for("pos.config")
+    methods = {}
+    for r in rows("select pos_config_id, pos_payment_method_id from pos_config_pos_payment_method_rel"):
+        methods.setdefault(r["pos_config_id"], []).append(r["pos_payment_method_id"])
+    floors = {}
+    for r in rows("select pos_config_id, restaurant_floor_id from pos_config_restaurant_floor_rel"):
+        floors.setdefault(r["pos_config_id"], []).append(r["restaurant_floor_id"])
+    for c in rows("select * from pos_config order by id"):
+        vals = {"name": c["name"], "module_pos_restaurant": c["module_pos_restaurant"],
+                "journal_id": target("account.journal", "account_journal", c["journal_id"]).id,
+                "invoice_journal_id": target("account.journal", "account_journal", c["invoice_journal_id"]).id or False,
+                "payment_method_ids": [(6, 0, [target("pos.payment.method", "pos_payment_method", i).id for i in methods.get(c["id"], [])])],
+                "receipt_header": c["receipt_header"], "receipt_footer": c["receipt_footer"],
+                "iface_tipproduct": c["iface_tipproduct"], "active": c["active"]}
+        if c["module_pos_restaurant"]:
+            vals["floor_ids"] = [(6, 0, [target("restaurant.floor", "restaurant_floor", i).id for i in floors.get(c["id"], [])])]
+        if c["tip_product_id"]:
+            vals["tip_product_id"] = target("product.product", "product_product", c["tip_product_id"]).id or False
+        upsert("pos.config", "pos_config", c["id"], vals, st)
+
+
+def import_pos_sessions():
+    """Sessions keep their name, dates, state and closing entry (already imported). No accounting is generated."""
+    st = stats_for("pos.session")
+    Session = env["pos.session"].sudo().with_context(tracking_disable=True)
+    for s in rows("select * from pos_session order by id"):
+        if target("pos.session", "pos_session", s["id"]):
+            st["linked_or_existing"] += 1
+            continue
+        config = target("pos.config", "pos_config", s["config_id"])
+        env.cr.execute("UPDATE pos_session SET state='closed' WHERE config_id=%s AND state <> 'closed'", [config.id])
+        Session.invalidate_model(["state"])
+        rec = Session.create({"config_id": config.id, "user_id": target("res.users", "res_users", s["user_id"]).id or env.uid})
+        # the closing entry is already imported (its ref is the session name); Odoo 20 computes move_ids
+        env.cr.execute("UPDATE pos_session SET name=%s, state='closed', start_at=%s, stop_at=%s WHERE id=%s",
+                       [s["name"], s["start_at"], s["stop_at"], rec.id])
+        balances = fit("pos.session", {"opening_balance": s["cash_register_balance_start"],
+                                       "closing_balance": s["cash_register_balance_end_real"]}, st)
+        for col, value in balances.items():
+            if env["pos.session"]._fields[col].store:
+                env.cr.execute(f"UPDATE pos_session SET {col}=%s WHERE id=%s", [value, rec.id])
+        remember(rec, "pos_session", s["id"])
+        st["created"] += 1
+        if s["state"] != "closed":
+            st.setdefault("closed_on_import", []).append(s["name"])
+    Session.invalidate_model()
+
+
+def import_pos_orders():
+    """Order history with lines and payments, linked to the imported sessions and invoices. Plain records:
+    no stock pickings and no accounting are generated (the closing entries are already imported)."""
+    st = stats_for("pos.order")
+    taxes = {}
+    for r in rows("select pos_order_line_id, account_tax_id from account_tax_pos_order_line_rel"):
+        taxes.setdefault(r["pos_order_line_id"], []).append(r["account_tax_id"])
+    Order = env["pos.order"].sudo().with_context(tracking_disable=True, mail_create_nolog=True)
+    done = 0
+    for o in rows("select * from pos_order order by id"):
+        if target("pos.order", "pos_order", o["id"]):
+            st["linked_or_existing"] += 1
+            continue
+        lines = rows("select * from pos_order_line where order_id = %s order by id", (o["id"],))
+        payments = rows("select * from pos_payment where pos_order_id = %s order by id", (o["id"],))
+        vals = {
+            "name": o["name"], "pos_reference": o["pos_reference"], "date_order": o["date_order"],
+            "session_id": target("pos.session", "pos_session", o["session_id"]).id,
+            "partner_id": target("res.partner", "res_partner", o["partner_id"]).id or False,
+            "user_id": target("res.users", "res_users", o["user_id"]).id or env.uid,
+            "amount_tax": float(o["amount_tax"] or 0), "amount_total": float(o["amount_total"] or 0),
+            "amount_paid": float(o["amount_paid"] or 0), "amount_return": float(o["amount_return"] or 0),
+            "table_id": target("restaurant.table", "restaurant_table", o["table_id"]).id or False,
+            "customer_count": o["customer_count"], "general_customer_note": o["general_note"],
+            "lines": [(0, 0, {
+                "product_id": target("product.product", "product_product", l["product_id"]).id,
+                "full_product_name": l["full_product_name"], "qty": float(l["qty"] or 0),
+                "price_unit": float(l["price_unit"] or 0), "discount": float(l["discount"] or 0),
+                "price_subtotal": float(l["price_subtotal"] or 0), "price_subtotal_incl": float(l["price_subtotal_incl"] or 0),
+                "customer_note": l["customer_note"], "note": l["note"],
+                "tax_ids": [(6, 0, [x.id for x in (target("account.tax", "account_tax", i) for i in taxes.get(l["id"], [])) if x])],
+            }) for l in lines],
+            "payment_ids": [(0, 0, {
+                "payment_method_id": target("pos.payment.method", "pos_payment_method", p["payment_method_id"]).id,
+                "amount": float(p["amount"] or 0), "payment_date": p["payment_date"], "is_change": p["is_change"],
+                "card_type": p["card_type"], "transaction_id": p["transaction_id"],
+            }) for p in payments],
+        }
+        missing = [l["product_id"] for l, v in zip(lines, vals["lines"]) if not v[2]["product_id"]]
+        if missing:
+            st.setdefault("missing_products", set()).update(missing)
+            continue
+        order = Order.create(fit("pos.order", vals, st))
+        env.cr.execute("UPDATE pos_order SET state=%s, account_move=%s WHERE id=%s",
+                       [o["state"], target("account.move", "account_move", o["account_move"]).id or None, order.id])
+        remember(order, "pos_order", o["id"])
+        st["created"] += 1
+        done += 1
+        if done % 500 == 0:
+            env.cr.commit()
+            Order.invalidate_model()
+    if "missing_products" in st:
+        st["missing_products"] = sorted(st["missing_products"])[:20]
+
+
 PHASE_STEPS = {
     "master": [import_company, import_partners, import_uoms, import_categories, import_products, import_combos],
+    "variants": [import_variants],
     "accounts": [import_accounts],
     "moves": [import_moves],
     "reconcile": [import_reconcile],
+    "pos_setup": [import_pos_setup],
+    "pos_sessions": [import_pos_sessions],
+    "pos_orders": [import_pos_orders],
 }
 
 for phase in PHASES:
     for step in PHASE_STEPS[phase]:
         step()
         env.cr.commit()
+for v in REPORT.values():
+    if isinstance(v, dict) and isinstance(v.get("dropped_fields"), set):
+        v["dropped_fields"] = sorted(v["dropped_fields"])
 print("IMPORT18_REPORT " + json.dumps(REPORT, default=str, ensure_ascii=False))
