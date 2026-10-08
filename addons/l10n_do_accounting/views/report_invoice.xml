@@ -171,7 +171,7 @@
                                  style="width: 38mm; height: 38mm;" alt="QR e-CF"/>
                             <div style="font-size: 9pt;">Código de Seguridad: <span t-field="o.l10n_do_ecf_security_code"/></div>
                             <div t-if="o.l10n_do_ecf_sign_stamp or o.l10n_do_ecf_sign_date" style="font-size: 9pt;">
-                                Fecha de Firma Digital: <span t-out="o.l10n_do_ecf_sign_stamp or o.l10n_do_ecf_sign_date"/>
+                                Fecha de Firma Digital: <span t-if="o.l10n_do_ecf_sign_stamp" t-out="o.l10n_do_ecf_sign_stamp"/><span t-else="" t-field="o.l10n_do_ecf_sign_date" t-options="{'widget': 'datetime', 'format': 'dd-MM-yyyy HH:mm:ss', 'tz_name': 'America/Santo_Domingo'}"/>
                             </div>
                         </div>
 
