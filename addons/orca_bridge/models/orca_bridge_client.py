@@ -2,7 +2,6 @@ import base64
 import hashlib
 import logging
 import secrets
-import threading
 import time
 from urllib.parse import urlencode
 
@@ -24,7 +23,9 @@ SECRET_PARAMS = ("client_secret", "access_token", "refresh_token")
 
 
 def post_events(url, token, events):
-    """Send change events to ORCA. Runs after commit in a background thread: never raises."""
+    """Send change events to ORCA, in order. Never raises; returns (accepted, error) per event and stops at the
+    first failure, so the caller can keep the rest for a retry without reordering them."""
+    results = []
     for event in events:
         try:
             response = requests.post(
@@ -34,12 +35,17 @@ def post_events(url, token, events):
                 timeout=TIMEOUT,
             )
         except requests.RequestException as exc:
-            _logger.warning("orca_bridge: ORCA not reachable (%s); event %s/%s dropped",
+            _logger.warning("orca_bridge: ORCA not reachable (%s); event %s/%s kept for retry",
                             exc, event["model"], event["event"])
-            continue
+            results.append((False, str(exc)))
+            break
         if response.status_code >= 300:
             _logger.warning("orca_bridge: ORCA refused event %s/%s: HTTP %s",
                             event["model"], event["event"], response.status_code)
+            results.append((False, f"HTTP {response.status_code}"))
+            break
+        results.append((True, None))
+    return results + [(False, "not attempted")] * (len(events) - len(results))
 
 
 class OrcaBridgeClient(models.AbstractModel):
@@ -256,14 +262,11 @@ class OrcaBridgeClient(models.AbstractModel):
             if not events:
                 return
             try:
-                # token refresh needs the database: done here, after commit, in a fresh cursor
+                # after commit: store the events in the outbox (own cursor), then try to deliver them right away
                 with self.env.registry.cursor() as cr:
-                    token = self.with_env(self.env(cr=cr))._access_token()
+                    self.with_env(self.env(cr=cr))["orca.bridge.outbox"]._enqueue(events)
             except Exception as exc:  # noqa: BLE001 - never break the user's transaction aftermath
-                _logger.warning("orca_bridge: no ORCA access token (%s); %s event(s) dropped", exc, len(events))
+                _logger.warning("orca_bridge: could not store %s event(s) (%s)", len(events), exc)
                 return
-            threading.Thread(
-                target=post_events, args=(settings["url"], token, events),
-                name="orca-bridge-events", daemon=True,
-            ).start()
+            self.env["orca.bridge.outbox"]._send_in_background()
         return flush
