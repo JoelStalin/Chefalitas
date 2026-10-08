@@ -1,4 +1,5 @@
 import logging
+import re
 
 from odoo import _, fields, models
 from odoo.tools import BinaryBytes
@@ -94,6 +95,9 @@ class AccountMove(models.Model):
             "l10n_do_ecf_sign_date": fields.Datetime.now(),
         }
         if result.get("xml"):
+            signed = re.search(r"<FechaHoraFirma>([^<]+)</FechaHoraFirma>", result["xml"])
+            if signed:
+                vals["l10n_do_ecf_sign_stamp"] = signed.group(1).strip()
             vals["l10n_do_ecf_edi_file"] = BinaryBytes(
                 result["xml"].encode(), f"{self.l10n_do_fiscal_number}.xml"
             )

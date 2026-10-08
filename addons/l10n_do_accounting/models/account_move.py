@@ -115,6 +115,8 @@ class AccountMove(models.Model):
 
     l10n_do_ecf_security_code = fields.Char(string="Código de Seguridad e-CF", copy=False)
     l10n_do_ecf_sign_date = fields.Datetime(string="Fecha de Firma e-CF", copy=False)
+    # FechaHoraFirma exactly as signed in the e-CF (dd-mm-yyyy HH:MM:SS, DR time): goes in the QR and the printout
+    l10n_do_ecf_sign_stamp = fields.Char(string="Fecha y hora de firma (e-CF)", copy=False, readonly=True)
     l10n_do_electronic_stamp = fields.Char(
         string="Sello Electrónico",
         compute="_compute_l10n_do_electronic_stamp",
@@ -394,7 +396,7 @@ class AccountMove(models.Model):
                 ], limit=1))
             invoice.l10n_do_company_in_contingency = issued_ecf[company.id]
 
-    @api.depends("l10n_do_ecf_security_code", "l10n_do_ecf_sign_date", "invoice_date")
+    @api.depends("l10n_do_ecf_security_code", "l10n_do_ecf_sign_date", "l10n_do_ecf_sign_stamp", "invoice_date")
     def _compute_l10n_do_electronic_stamp(self):
         ecf_invoices = self.filtered(
             lambda i: i.is_ecf_invoice and not i.l10n_latam_manual_document_number and i.l10n_do_ecf_security_code and i.state == "posted"
@@ -422,7 +424,7 @@ class AccountMove(models.Model):
                 query["FechaEmision"] = (invoice.invoice_date or fields.Date.today()).strftime("%d-%m-%Y")
             query["MontoTotal"] = ("%f" % total).rstrip("0").rstrip(".")
             if not is_rfc:
-                query["FechaFirma"] = invoice.l10n_do_ecf_sign_date.strftime("%d-%m-%Y %H:%M:%S")
+                query["FechaFirma"] = invoice.l10n_do_ecf_sign_stamp or invoice.l10n_do_ecf_sign_date.strftime("%d-%m-%Y %H:%M:%S")
             query["CodigoSeguridad"] = security_code
             qr_string = base_url + "&".join(f"{k}={v}" for k, v in query.items())
             invoice.l10n_do_electronic_stamp = urls.url_quote_plus(qr_string, safe="%")

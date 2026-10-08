@@ -165,6 +165,16 @@
                             </div>
                         </div>
 
+                        <!-- DGII standard printout: QR, then security code and signature date/time below it -->
+                        <div t-if="o.l10n_do_electronic_stamp" class="mt-4" style="page-break-inside: avoid;">
+                            <img t-att-src="'/report/barcode/?barcode_type=QR&amp;value=%s&amp;width=160&amp;height=160' % o.l10n_do_electronic_stamp"
+                                 style="width: 38mm; height: 38mm;" alt="QR e-CF"/>
+                            <div style="font-size: 9pt;">Código de Seguridad: <span t-field="o.l10n_do_ecf_security_code"/></div>
+                            <div t-if="o.l10n_do_ecf_sign_stamp or o.l10n_do_ecf_sign_date" style="font-size: 9pt;">
+                                Fecha de Firma Digital: <span t-out="o.l10n_do_ecf_sign_stamp or o.l10n_do_ecf_sign_date"/>
+                            </div>
+                        </div>
+
 
                     </t>
                 </div>
