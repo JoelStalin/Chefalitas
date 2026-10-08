@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="purchase_intake_list" model="ir.ui.view">
+        <field name="name">purchase.intake.list</field>
+        <field name="model">purchase.intake</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="create_date"/>
+                <field name="sender_id"/>
+                <field name="vendor_name"/>
+                <field name="ncf"/>
+                <field name="amount_total"/>
+                <field name="reader"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+    <record id="purchase_intake_form" model="ir.ui.view">
+        <field name="name">purchase.intake.form</field>
+        <field name="model">purchase.intake</field>
+        <field name="arch" type="xml">
+            <form>
+                <header><field name="state" widget="statusbar"/></header>
+                <sheet>
+                    <h1><field name="name"/></h1>
+                    <group>
+                        <group>
+                            <field name="sender_id"/>
+                            <field name="vendor_name"/>
+                            <field name="vendor_vat"/>
+                            <field name="ncf"/>
+                            <field name="invoice_date"/>
+                        </group>
+                        <group>
+                            <field name="amount_tax"/>
+                            <field name="amount_total"/>
+                            <field name="reader"/>
+                            <field name="confidence" widget="percentage"/>
+                            <field name="purchase_id"/>
+                            <field name="bill_id"/>
+                            <field name="error" invisible="not error"/>
+                        </group>
+                    </group>
+                    <field name="line_ids">
+                        <list editable="bottom">
+                            <field name="sequence"/>
+                            <field name="description"/>
+                            <field name="product_id"/>
+                            <field name="quantity"/>
+                            <field name="price_unit"/>
+                            <field name="tax_rate"/>
+                        </list>
+                    </field>
+                    <field name="attachment_id" widget="many2one"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="action_purchase_intake" model="ir.actions.act_window">
+        <field name="name">Facturas por WhatsApp</field>
+        <field name="res_model">purchase.intake</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_purchase_intake" name="Facturas por WhatsApp" parent="purchase.menu_procurement_management"
+              action="action_purchase_intake" sequence="20"/>
+    <record id="res_partner_form_purchase_intake" model="ir.ui.view">
+        <field name="name">res.partner.form.purchase.intake</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='category_id']" position="after">
+                <field name="purchase_intake_allowed"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
