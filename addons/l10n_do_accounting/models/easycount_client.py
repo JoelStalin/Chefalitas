@@ -65,3 +65,11 @@ class EasyCountClient:
 
     def status(self, encf: str) -> dict[str, Any]:
         return self._request("GET", f"/invoices/{encf}/status")
+
+    def get_credentials(self) -> dict[str, Any]:
+        """Public status of the company's DGII credentials in EasyCount (never the secrets)."""
+        return self._request("GET", "/credentials")
+
+    def upload_credentials(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Certificate (.p12 base64) + its password + certification-portal password; EasyCount stores them encrypted."""
+        return self._request("POST", "/credentials", payload)

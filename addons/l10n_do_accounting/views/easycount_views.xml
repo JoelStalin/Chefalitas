@@ -23,6 +23,8 @@
                                 <field name="l10n_do_ecf_service_env"/></div>
                             <div class="mt8"><button name="action_l10n_do_easycount_test_connection" type="object"
                                     string="Probar conexion" class="btn-link" icon="oi-arrow-right"/></div>
+                            <div class="mt8"><button name="action_l10n_do_easycount_credentials" type="object"
+                                    string="Credenciales DGII (certificado y portal)" class="btn-link" icon="oi-arrow-right"/></div>
                         </div>
                     </setting>
                 </block>

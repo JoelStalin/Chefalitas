@@ -32,3 +32,4 @@ Revertir: `git revert 20dcf5c c478dd1 63d4be7 77376d3 0f6a923 dce2510 fe918d1 d5
 - Resultado (proyecto ecfcert, Odoo 20 :18070 -> EasyCount :18801 -> CerteCF, RNC emisor de pruebas del titular): 11/11 aceptados.
 - Revertir: git revert de este commit; COMPOSE_PROJECT_NAME=ecfcert ./down.sh borra el entorno.
 - 2026-10-08: docker-compose de ecf_live_demo con restart: unless-stopped (el entorno vuelve tras reiniciar el host).
+- 2026-10-08: l10n_do_accounting: asistente "Credenciales DGII (certificado y portal)" en Ajustes > EasyCount; envía .p12, claves y datos de la empresa a EasyCount y borra los secretos de Odoo. Tests Odoo 20: 18/18.

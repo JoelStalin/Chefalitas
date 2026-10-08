@@ -23,6 +23,7 @@
         "wizard/account_move_reversal_views.xml",
         "wizard/account_move_cancel_views.xml",
         "wizard/account_debit_note_views.xml",
+        "wizard/easycount_credentials_views.xml",
         "views/res_config_settings_view.xml",
         "views/easycount_views.xml",
         "views/easycount_move_views.xml",

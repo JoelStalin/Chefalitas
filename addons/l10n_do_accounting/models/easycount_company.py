@@ -54,6 +54,10 @@ class ResConfigSettings(models.TransientModel):
     l10n_do_easycount_token = fields.Char(related="company_id.l10n_do_easycount_token", readonly=False)
     l10n_do_ecf_service_env = fields.Selection(related="company_id.l10n_do_ecf_service_env", readonly=False)
 
+    def action_l10n_do_easycount_credentials(self):
+        self.ensure_one()
+        return self.env["ir.actions.act_window"]._for_xml_id("l10n_do_accounting.action_l10n_do_easycount_credentials_wizard")
+
     def action_l10n_do_easycount_test_connection(self):
         self.ensure_one()
         client = self.company_id._l10n_do_easycount_client()

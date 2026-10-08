@@ -1,4 +1,5 @@
 id,name,model_id,group_id/id,operation,domain
+access_l10n_do_easycount_credentials_wizard,access_l10n_do_easycount_credentials_wizard,l10n_do.easycount.credentials.wizard,account.group_account_manager,crud,
 access_account_move_cancel,access_account_move_cancel,account.move.cancel,account.group_account_invoice,cru,
 access_l10n_do_account_journal_document_type,access_l10n_do_account_journal_document_type,l10n_do.account.journal.document_type,base.group_user,ru,
 access_invoice_service_type_detail_user,invoice.service.type.detail.user,invoice.service.type.detail,base.group_user,r,
