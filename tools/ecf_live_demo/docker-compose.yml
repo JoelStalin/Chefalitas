@@ -5,6 +5,7 @@ name: ecflive
 
 services:
   odoo-db:
+    restart: unless-stopped
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: odoo
@@ -13,6 +14,7 @@ services:
     volumes: [odoo-db:/var/lib/postgresql/data]
 
   odoo:
+    restart: unless-stopped
     image: ${ODOO20_IMAGE:-chefalitas-odoo20:test}
     depends_on: [odoo-db]
     environment:
@@ -26,6 +28,7 @@ services:
     ports: ["127.0.0.1:${ODOO_PORT:-18069}:8069"]
 
   easycount-db:
+    restart: unless-stopped
     image: pgvector/pgvector:pg16
     environment:
       POSTGRES_USER: ec
@@ -34,6 +37,7 @@ services:
     volumes: [easycount-db:/var/lib/postgresql/data]
 
   easycount:
+    restart: unless-stopped
     image: ${EASYCOUNT_IMAGE:-easycount-api-nest:live}
     depends_on: [easycount-db]
     environment:
