@@ -208,8 +208,188 @@ def _import_templates(where, extra=None):
     st["with_variants_pending"] = st.get("with_variants_pending", 0) + len(pending_variants)
 
 
+# ------------------------------------------------------------------------------------------------ accounting
+def import_accounts():
+    """Accounts by code, taxes by (use, rate, name), journals by code. Missing ones are created with the same code."""
+    st = stats_for("account.account")
+    for a in rows("select a.id, a.code_store->>'1' as code, a.name, a.account_type, a.reconcile from account_account a "
+                  "where a.id in (select distinct account_id from account_move_line)"):
+        if target("account.account", "account_account", a["id"]):
+            st["linked_or_existing"] += 1
+            continue
+        rec = env["account.account"].search([("code", "=", a["code"])], limit=1)
+        if rec:
+            remember(rec, "account_account", a["id"])
+            st["linked_or_existing"] += 1
+        else:
+            upsert("account.account", "account_account", a["id"], {
+                "code": a["code"], "name": tr(a["name"]), "account_type": a["account_type"], "reconcile": a["reconcile"]}, st)
+    st = stats_for("account.tax")
+    for t in rows("select id, type_tax_use, amount, name from account_tax"):
+        if target("account.tax", "account_tax", t["id"]):
+            st["linked_or_existing"] += 1
+            continue
+        rec = env["account.tax"].with_context(active_test=False).search([
+            ("type_tax_use", "=", t["type_tax_use"]), ("amount", "=", float(t["amount"])), ("name", "=", tr(t["name"]))], limit=1)
+        if rec:
+            remember(rec, "account_tax", t["id"])
+            st["linked_or_existing"] += 1
+        else:
+            st.setdefault("unmapped", []).append(tr(t["name"]))
+    st = stats_for("account.journal")
+    for j in rows("select j.*, a.code_store->>'1' as account_code from account_journal j "
+                  "left join account_account a on a.id = j.default_account_id order by j.id"):
+        if target("account.journal", "account_journal", j["id"]):
+            st["linked_or_existing"] += 1
+            continue
+        rec = env["account.journal"].search([("code", "=", j["code"])], limit=1)
+        if rec:
+            remember(rec, "account_journal", j["id"])
+            st["linked_or_existing"] += 1
+            continue
+        vals = {"name": tr(j["name"]), "code": j["code"], "type": j["type"]}
+        if j["account_code"]:
+            vals["default_account_id"] = target("account.account", "account_account", j["default_account_id"]).id or \
+                env["account.account"].search([("code", "=", j["account_code"])], limit=1).id
+        upsert("account.journal", "account_journal", j["id"], vals, st)
+    # products were imported before the taxes were mapped: set their sale taxes now
+    tax_rel = {}
+    for r in rows("select prod_id, tax_id from product_taxes_rel"):
+        tax_rel.setdefault(r["prod_id"], []).append(r["tax_id"])
+    for tmpl_id, tax_ids in tax_rel.items():
+        tmpl = target("product.template", "product_template", tmpl_id)
+        if tmpl:
+            tmpl.taxes_id = [(6, 0, [x.id for x in (target("account.tax", "account_tax", i) for i in tax_ids) if x])]
+
+
+def _repartition(tax, src_line):
+    """Tax line -> the matching repartition line of the mapped tax (invoice or refund, 'tax' type)."""
+    lines = tax.refund_repartition_line_ids if src_line["refund"] else tax.invoice_repartition_line_ids
+    return lines.filtered(lambda r: r.repartition_type == "tax")[:1]
+
+
+MOVE_LINE_SQL = """
+select l.*, coalesce(r.document_type = 'refund', false) as refund,
+       array(select account_tax_id from account_move_line_account_tax_rel where account_move_line_id = l.id) as tax_ids
+from account_move_line l left join account_tax_repartition_line r on r.id = l.tax_repartition_line_id
+where l.move_id = %s order by l.id"""
+
+
+def import_moves():
+    """Every journal entry and invoice, same name, dates, amounts and NCF. Posted ones are posted again in Odoo 20
+    without any e-CF sending (EasyCount stays disabled on the company)."""
+    st = stats_for("account.move")
+    doc_prefix = {r["id"]: r["doc_code_prefix"] for r in rows("select id, doc_code_prefix from l10n_latam_document_type")}
+    ctx = {"check_move_validity": False, "skip_invoice_sync": True, "skip_account_move_synchronization": True,
+           "tracking_disable": True, "mail_notrack": True, "mail_create_nolog": True}
+    Move = env["account.move"].sudo().with_context(**ctx)
+    done = 0
+    for m in rows("select * from account_move order by date, id"):
+        if target("account.move", "account_move", m["id"]):
+            st["linked_or_existing"] += 1
+            continue
+        line_vals = []
+        for l in rows(MOVE_LINE_SQL, (m["id"],)):
+            if l["display_type"] in ("line_section", "line_note"):
+                line_vals.append((0, 0, {"display_type": l["display_type"], "name": l["name"] or "-"}))
+                continue
+            vals = {
+                "display_type": l["display_type"] or "product",
+                "account_id": target("account.account", "account_account", l["account_id"]).id,
+                "partner_id": target("res.partner", "res_partner", l["partner_id"]).id or False,
+                "name": l["name"], "debit": float(l["debit"] or 0), "credit": float(l["credit"] or 0),
+                "date_maturity": l["date_maturity"],
+                "tax_ids": [(6, 0, [x.id for x in (target("account.tax", "account_tax", i) for i in l["tax_ids"]) if x])],
+            }
+            if l["product_id"]:
+                vals["product_id"] = target("product.product", "product_product", l["product_id"]).id or False
+            if l["display_type"] == "product" and m["move_type"] != "entry":
+                vals.update(quantity=float(l["quantity"] or 0), price_unit=float(l["price_unit"] or 0),
+                             discount=float(l["discount"] or 0))
+            if l["tax_line_id"]:
+                tax = target("account.tax", "account_tax", l["tax_line_id"])
+                vals["tax_repartition_line_id"] = _repartition(tax, l).id
+            line_vals.append((0, 0, vals))
+        vals = {
+            "move_type": m["move_type"], "date": m["date"], "invoice_date": m["invoice_date"],
+            "invoice_date_due": m["invoice_date_due"], "ref": m["ref"],
+            "journal_id": target("account.journal", "account_journal", m["journal_id"]).id,
+            "partner_id": target("res.partner", "res_partner", m["partner_id"]).id or False,
+            "narration": m["narration"], "line_ids": line_vals,
+        }
+        if m["l10n_latam_document_type_id"]:
+            vals["l10n_latam_document_type_id"] = env["l10n_latam.document.type"].search(
+                [("doc_code_prefix", "=", doc_prefix[m["l10n_latam_document_type_id"]]), ("country_id.code", "=", "DO")], limit=1).id
+            if m["name"] and m["name"] != "/":  # drafts have no NCF yet
+                vals["l10n_latam_document_number"] = m["name"]
+        move = Move.create(vals)
+        remember(move, "account_move", m["id"])
+        if m["state"] == "posted":
+            try:
+                with env.cr.savepoint():
+                    move._post(soft=False)
+            except Exception as exc:  # noqa: BLE001 - recorded and posted below without business checks
+                st.setdefault("post_fallback", []).append(f"{m['name']}: {str(exc).splitlines()[0][:120]}")
+                env.cr.execute("UPDATE account_move SET state='posted' WHERE id=%s", [move.id])
+                env.cr.execute("UPDATE account_move_line SET parent_state='posted' WHERE move_id=%s", [move.id])
+        elif m["state"] == "cancel":
+            move.button_cancel()
+        if move.name != m["name"] and m["name"] not in ("/", None):
+            env.cr.execute("UPDATE account_move SET name=%s WHERE id=%s", [m["name"], move.id])  # keep the historical name
+            st["renamed"] = st.get("renamed", 0) + 1
+        st["created"] += 1
+        done += 1
+        if done % 200 == 0:
+            env.cr.commit()
+    if "post_fallback" in st:
+        st["post_fallback_count"] = len(st["post_fallback"])
+        st["post_fallback"] = st["post_fallback"][:10]
+
+
+def import_reconcile():
+    """Reconcile the same journal items as in Odoo 18, group by group (full reconcile, or a lone partial).
+    Source and target lines of a move were created in the same order, so a line maps by its position."""
+    st = stats_for("account.reconcile")
+    src_lines = {}
+    for r in rows("select id, move_id from account_move_line order by move_id, id"):
+        src_lines.setdefault(r["move_id"], []).append(r["id"])
+    position = {lid: (mid, i) for mid, ids in src_lines.items() for i, lid in enumerate(ids)}
+    target_lines = {}
+
+    def line(src_line_id):
+        mid, i = position[src_line_id]
+        if mid not in target_lines:
+            move = target("account.move", "account_move", mid)
+            lines = move.line_ids.sorted("id")
+            if len(lines) != len(src_lines[mid]):
+                raise ValueError(f"move {mid}: {len(src_lines[mid])} source lines, {len(lines)} target lines")
+            target_lines[mid] = lines
+        return target_lines[mid][i]
+
+    groups = {}
+    for p in rows("select id, debit_move_id, credit_move_id, full_reconcile_id from account_partial_reconcile order by id"):
+        groups.setdefault(p["full_reconcile_id"] or f"p{p['id']}", set()).update((p["debit_move_id"], p["credit_move_id"]))
+    for key, ids in groups.items():
+        lines = env["account.move.line"].browse([line(i).id for i in ids])
+        if all(l.reconciled for l in lines) or lines.matched_debit_ids or lines.matched_credit_ids:
+            st["linked_or_existing"] += 1
+            continue
+        try:
+            with env.cr.savepoint():
+                lines.with_context(no_exchange_difference=True).reconcile()
+            st["created"] += 1
+        except Exception as exc:  # noqa: BLE001 - reported, the rest continues
+            st.setdefault("failed", []).append(f"{key}: {str(exc).splitlines()[0][:120]}")
+    if "failed" in st:
+        st["failed_count"] = len(st["failed"])
+        st["failed"] = st["failed"][:10]
+
+
 PHASE_STEPS = {
     "master": [import_company, import_partners, import_uoms, import_categories, import_products, import_combos],
+    "accounts": [import_accounts],
+    "moves": [import_moves],
+    "reconcile": [import_reconcile],
 }
 
 for phase in PHASES:
