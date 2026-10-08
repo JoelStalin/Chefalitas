@@ -1,0 +1,4 @@
+id,name,model_id,group_id/id,operation,domain
+access_gs_whatsapp_account_admin,gs.whatsapp.account admin,gs.whatsapp.account,base.group_system,crud,
+access_gs_whatsapp_conversation_user,gs.whatsapp.conversation user,gs.whatsapp.conversation,base.group_user,cru,
+access_gs_whatsapp_message_user,gs.whatsapp.message user,gs.whatsapp.message,base.group_user,cr,

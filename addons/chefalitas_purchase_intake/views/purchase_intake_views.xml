@@ -21,7 +21,11 @@
         <field name="model">purchase.intake</field>
         <field name="arch" type="xml">
             <form>
-                <header><field name="state" widget="statusbar"/></header>
+                <header>
+                    <button name="action_register" type="object" string="Registrar" class="btn-primary"
+                            invisible="state not in ('manual', 'awaiting_confirmation')"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
                 <sheet>
                     <h1><field name="name"/></h1>
                     <group>

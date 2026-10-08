@@ -27,12 +27,13 @@ class PurchaseIntake(models.Model):
     name = fields.Char(default="/", readonly=True, copy=False)
     state = fields.Selection([
         ("received", "Recibida"),
+        ("manual", "Pendiente de registro manual"),
         ("awaiting_confirmation", "Esperando confirmación"),
         ("done", "Registrada"),
         ("rejected", "Descartada"),
         ("error", "Error de lectura"),
     ], default="received", required=True, tracking=True, index=True)
-    channel_id = fields.Many2one("discuss.channel", readonly=True)
+    conversation_id = fields.Many2one("gs.whatsapp.conversation", readonly=True)
     sender_id = fields.Many2one("res.partner", "Enviada por", readonly=True)
     attachment_id = fields.Many2one("ir.attachment", "Imagen", readonly=True)
     reader = fields.Char("Leída con", readonly=True, help="ORCA layer that produced the reading (ocr+local, cloud...)")
@@ -50,18 +51,19 @@ class PurchaseIntake(models.Model):
 
     # ------------------------------------------------------------------ WhatsApp entry point
     @api.model
-    def _on_whatsapp_message(self, channel, message):
-        sender = message.author_id
+    def _on_whatsapp_message(self, conversation, message):
+        """gs.whatsapp.conversation inbound hook: a photo opens an intake, text answers the pending one."""
+        sender = conversation.partner_id
         if not sender.purchase_intake_allowed:
             return False
-        images = message.attachment_ids.filtered(lambda a: (a.mimetype or "").startswith("image/"))
-        if images:
-            intake = self.create({"channel_id": channel.id, "sender_id": sender.id, "attachment_id": images[0].id})
+        image = message.attachment_id if (message.attachment_id.mimetype or "").startswith("image/") else None
+        if image:
+            intake = self.create({"conversation_id": conversation.id, "sender_id": sender.id, "attachment_id": image.id})
             intake._read_invoice()
             return intake
-        pending = self.search([("channel_id", "=", channel.id), ("state", "=", "awaiting_confirmation")], limit=1)
+        pending = self.search([("conversation_id", "=", conversation.id), ("state", "=", "awaiting_confirmation")], limit=1)
         if pending:
-            pending._handle_reply(message.preview or "")
+            pending._handle_reply(message.body or "")
             return pending
         return False
 
@@ -73,12 +75,15 @@ class PurchaseIntake(models.Model):
         return super().create(vals_list)
 
     # ------------------------------------------------------------------ reading (ORCA)
+    def _orca_available(self):
+        """ORCA is optional: without the orca_bridge module, or not connected, a person registers the invoice."""
+        client = self.env.get("orca.bridge.client")
+        return client is not None and bool(client._settings().get("url"))
+
     def _orca_extract(self, image_b64, mimetype):
         """Ask ORCA to read the invoice. ORCA picks the layer (local OCR + local model, cloud if configured)."""
         client = self.env["orca.bridge.client"]
         settings = client._settings()
-        if not settings["url"]:
-            raise UserError(_("ORCA is not configured (Settings > ORCA)."))
         response = requests.post(
             f"{settings['url']}/api/orca/purchase-intake/extract",
             json={"image_base64": image_b64, "mimetype": mimetype, "company_vat": self.env.company.vat},
@@ -90,12 +95,16 @@ class PurchaseIntake(models.Model):
 
     def _read_invoice(self):
         self.ensure_one()
+        if not self._orca_available():
+            self.state = "manual"
+            self._reply(_("Factura %s recibida. Un encargado la registrará en Odoo.", self.name))
+            return
         try:
             data = self._orca_extract(base64.b64encode(self.attachment_id.raw).decode(), self.attachment_id.mimetype)
-        except Exception as exc:  # noqa: BLE001 - the employee is told, nothing is created
+        except Exception as exc:  # noqa: BLE001 - the employee is told; a person registers it
             _logger.warning("purchase intake %s: ORCA reading failed: %s", self.name, exc)
-            self.write({"state": "error", "error": str(exc)[:250]})
-            self._reply(_("No pude leer la factura (%s). Envíe una foto más clara o regístrela manualmente.", self.name))
+            self.write({"state": "manual", "error": str(exc)[:250]})
+            self._reply(_("No pude leer la factura %s automáticamente; un encargado la registrará en Odoo.", self.name))
             return
         self._apply_reading(data)
         self.state = "awaiting_confirmation"
@@ -174,9 +183,24 @@ class PurchaseIntake(models.Model):
 
     def _reply(self, text):
         """Answer in the same WhatsApp conversation (free-form message inside the 24 h window)."""
-        if self.channel_id:
-            self.channel_id.message_post(body=Markup("<br/>").join(escape(t) for t in text.split("\n")),
-                                         message_type="whatsapp_message")
+        if not self.conversation_id:
+            return
+        try:
+            self.conversation_id.send_text(text)
+        except Exception as exc:  # noqa: BLE001 - the intake is kept; the text stays visible in Odoo
+            _logger.warning("purchase intake %s: WhatsApp reply failed: %s", self.name, exc)
+            self.message_post(body=Markup("<br/>").join(escape(t) for t in text.split("\n")))
+
+    def action_register(self):
+        """Form button (works without ORCA): a person checks or types the lines, then the order, receipt and
+        bill are created exactly as when the employee confirms over WhatsApp."""
+        for intake in self.filtered(lambda i: i.state in ("manual", "awaiting_confirmation")):
+            if not intake.line_ids:
+                raise UserError(_("Agregue las líneas de la factura antes de registrarla."))
+            intake.line_ids._match_products(intake._vendor())
+            intake._register_purchase()
+            intake._reply(_("%(name)s registrada: orden %(po)s.", name=intake.name, po=intake.purchase_id.name))
+        return True
 
     # ------------------------------------------------------------------ registration in Odoo
     def _vendor(self):

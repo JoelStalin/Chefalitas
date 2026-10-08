@@ -6,7 +6,7 @@
                "Odoo creates the purchase order, the receipt and the vendor bill with the photo attached",
     "author": "GetUpSoft",
     "license": "LGPL-3",
-    "depends": ["purchase_stock", "whatsapp", "orca_bridge", "l10n_do_accounting"],
+    "depends": ["purchase_stock", "getupsoft_whatsapp"],  # ORCA optional (orca_bridge detected at runtime)
     "data": [
         "security/ir.access.csv",
         "data/ir_sequence.xml",
