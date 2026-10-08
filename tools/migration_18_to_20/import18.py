@@ -467,6 +467,24 @@ def import_reconcile():
         st["failed"] = st["failed"][:10]
 
 
+def import_employees():
+    """Employees (no contracts or payroll data in the source). The admin's employee links by external id."""
+    st = stats_for("hr.employee")
+    for e in rows("select * from hr_employee order by id"):
+        user = target("res.users", "res_users", e["user_id"]) if e.get("user_id") else env["res.users"]
+        existing = user.employee_id if user else env["hr.employee"]
+        if existing and not target("hr.employee", "hr_employee", e["id"]):
+            remember(existing, "hr_employee", e["id"])  # Odoo 20 already made this user's employee
+        upsert("hr.employee", "hr_employee", e["id"], {
+            "name": e["name"], "job_title": e["job_title"], "work_email": e["work_email"],
+            "work_phone": e["work_phone"], "mobile_phone": e["mobile_phone"], "active": e["active"]}, st)
+    # Odoo 18 stock is not imported: every internal quant is negative (POS consumption with no receipts),
+    # so the opening stock must come from a physical count in Odoo 20.
+    neg = rows("select count(*) as n, coalesce(sum(q.quantity), 0) as qty from stock_quant q "
+               "join stock_location l on l.id = q.location_id where l.usage = 'internal'")[0]
+    REPORT["stock.quant (not imported)"] = {"internal_quants": neg["n"], "total_qty": float(neg["qty"])}
+
+
 # ------------------------------------------------------------------------------------------------ point of sale
 def import_pos_setup():
     """Payment methods, floors/tables and the POS configurations."""
@@ -599,6 +617,7 @@ PHASE_STEPS = {
     "accounts": [import_accounts],
     "moves": [import_moves],
     "reconcile": [import_reconcile],
+    "hr": [import_employees],
     "pos_setup": [import_pos_setup],
     "pos_sessions": [import_pos_sessions],
     "pos_orders": [import_pos_orders],
