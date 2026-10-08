@@ -101,3 +101,16 @@ class GsWhatsappQrWebhook(http.Controller):
             return request.make_response(f"Meta no autorizó la vinculación: {error_description or ''}", status=400)
         account._meta_complete(code)
         return request.redirect(f"/odoo/action-getupsoft_whatsapp.action_gs_whatsapp_account/{account.id}")
+
+
+class GsGoogleMailbox(http.Controller):
+    @http.route("/getupsoft_whatsapp/google/callback", type="http", auth="user", methods=["GET"])
+    def google_callback(self, code=None, state=None, error=None, **kwargs):
+        inbox_id = int((state or "0:").split(":")[0] or 0)
+        inbox = request.env["gs.mail.inbox"].browse(inbox_id).exists()
+        if not inbox or not state or inbox.sudo().oauth_state != state:
+            return request.make_response("Solicitud de vinculación no válida o vencida.", status=400)
+        if not code:
+            return request.make_response(f"Google no autorizó el acceso: {error or ''}", status=400)
+        inbox._google_complete(code)
+        return request.redirect(f"/odoo/action-getupsoft_whatsapp.action_gs_mail_inbox/{inbox.id}")
