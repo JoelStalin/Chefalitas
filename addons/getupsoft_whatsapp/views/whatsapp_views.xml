@@ -1,25 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
+    <record id="gs_whatsapp_account_list" model="ir.ui.view">
+        <field name="name">gs.whatsapp.account.list</field>
+        <field name="model">gs.whatsapp.account</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="provider"/>
+                <field name="display_number"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
     <record id="gs_whatsapp_account_form" model="ir.ui.view">
         <field name="name">gs.whatsapp.account.form</field>
         <field name="model">gs.whatsapp.account</field>
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_send_test" type="object" string="Probar conexión" class="btn-primary"/>
+                    <button name="action_qr_link" type="object" string="Vincular con QR" class="btn-primary"
+                            invisible="provider != 'qr' or state == 'connected'"/>
+                    <button name="action_qr_refresh" type="object" string="Actualizar estado" invisible="provider != 'qr'"/>
+                    <button name="action_qr_logout" type="object" string="Desvincular" invisible="provider != 'qr' or state == 'draft'"
+                            confirm="¿Cerrar la sesión de WhatsApp de este número?"/>
+                    <button name="action_meta_connect" type="object" string="Vincular con Meta" class="btn-primary"
+                            invisible="provider != 'cloud' or state == 'connected'"/>
+                    <button name="action_send_test" type="object" string="Probar conexión"/>
+                    <field name="state" widget="statusbar"/>
                 </header>
                 <sheet>
                     <group>
                         <group>
                             <field name="name"/>
+                            <field name="provider" widget="radio"/>
                             <field name="company_id" groups="base.group_multi_company"/>
-                            <field name="phone_number_id"/>
                             <field name="display_number" readonly="1"/>
                             <field name="active"/>
+                            <field name="last_error" invisible="not last_error"/>
                         </group>
-                        <group>
-                            <field name="token" password="True"/>
+                        <group invisible="provider != 'qr'" string="WhatsApp Web (QR)">
+                            <field name="gateway_url"/>
+                            <field name="gateway_token" password="True"/>
+                            <field name="gateway_session" readonly="1"/>
+                            <field name="qr_image" widget="image" invisible="not qr_image" options="{'size': [260, 260]}"/>
+                            <div colspan="2" class="text-muted" invisible="state != 'qr'">
+                                Escanee desde WhatsApp &gt; Dispositivos vinculados &gt; Vincular dispositivo y pulse "Actualizar estado".
+                            </div>
+                            <div colspan="2" class="text-warning">
+                                Automatizar WhatsApp Web está fuera de los términos de WhatsApp: el número puede ser bloqueado.
+                                La API oficial de Meta es la alternativa de bajo riesgo.
+                            </div>
+                        </group>
+                        <group invisible="provider != 'cloud'" string="Meta Cloud API">
+                            <field name="meta_app_id"/>
+                            <field name="meta_config_id"/>
                             <field name="app_secret" password="True"/>
+                            <field name="phone_number_id"/>
+                            <field name="waba_id"/>
+                            <field name="token" password="True"/>
                             <field name="verify_token"/>
                             <field name="webhook_url" readonly="1" widget="CopyClipboardChar"/>
                         </group>
@@ -34,6 +72,7 @@
         <field name="arch" type="xml">
             <list>
                 <field name="display_label"/>
+                <field name="is_group"/>
                 <field name="account_id"/>
                 <field name="last_message_at"/>
             </list>
@@ -46,7 +85,9 @@
             <form>
                 <sheet>
                     <group>
-                        <field name="partner_id"/>
+                        <field name="partner_id" invisible="is_group"/>
+                        <field name="name" invisible="not is_group"/>
+                        <field name="is_group"/>
                         <field name="wa_number"/>
                         <field name="account_id"/>
                         <field name="last_inbound_at"/>
@@ -55,6 +96,7 @@
                         <list>
                             <field name="create_date"/>
                             <field name="direction"/>
+                            <field name="author_id"/>
                             <field name="kind"/>
                             <field name="body"/>
                             <field name="attachment_id"/>
@@ -77,6 +119,6 @@
     </record>
     <menuitem id="menu_gs_whatsapp_root" name="WhatsApp" sequence="60" web_icon="mail,static/description/icon.png"/>
     <menuitem id="menu_gs_whatsapp_conversations" parent="menu_gs_whatsapp_root" action="action_gs_whatsapp_conversation" sequence="10"/>
-    <menuitem id="menu_gs_whatsapp_accounts" parent="menu_gs_whatsapp_root" action="action_gs_whatsapp_account"
+    <menuitem id="menu_gs_whatsapp_accounts" name="Configuración" parent="menu_gs_whatsapp_root" action="action_gs_whatsapp_account"
               sequence="20" groups="base.group_system"/>
 </odoo>

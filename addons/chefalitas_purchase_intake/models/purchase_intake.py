@@ -53,7 +53,7 @@ class PurchaseIntake(models.Model):
     @api.model
     def _on_whatsapp_message(self, conversation, message):
         """gs.whatsapp.conversation inbound hook: a photo opens an intake, text answers the pending one."""
-        sender = conversation.partner_id
+        sender = message.author_id or conversation.partner_id  # in a purchases group: the employee who wrote
         if not sender.purchase_intake_allowed:
             return False
         image = message.attachment_id if (message.attachment_id.mimetype or "").startswith("image/") else None
@@ -61,7 +61,8 @@ class PurchaseIntake(models.Model):
             intake = self.create({"conversation_id": conversation.id, "sender_id": sender.id, "attachment_id": image.id})
             intake._read_invoice()
             return intake
-        pending = self.search([("conversation_id", "=", conversation.id), ("state", "=", "awaiting_confirmation")], limit=1)
+        pending = self.search([("conversation_id", "=", conversation.id), ("sender_id", "=", sender.id),
+                               ("state", "=", "awaiting_confirmation")], limit=1)
         if pending:
             pending._handle_reply(message.body or "")
             return pending
