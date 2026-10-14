@@ -5,3 +5,4 @@ from . import test_easycount_integration
 from . import test_easycount_credentials
 from . import test_norma_02_2026
 from . import test_l10n_do_adoption
+from . import test_ecf_enabled_flag

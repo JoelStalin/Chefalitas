@@ -11,7 +11,11 @@ class ResCompany(models.Model):
 
     l10n_do_ecf_issuer = fields.Boolean(
         string="Es emisor de e-CF",
-        help="Cuando está activado, la empresa puede emitir comprobantes fiscales electrónicos (e-CF)."
+        related="partner_id.l10n_do_ecf_enabled",
+        readonly=False,
+        store=True,
+        help="Cuando está activado, la empresa puede emitir comprobantes fiscales electrónicos (e-CF). "
+             "Se controla con 'Facturación electrónica habilitada' en el contacto de la empresa."
     )
 
     l10n_do_ecf_deferred_submissions = fields.Boolean(

@@ -39,6 +39,14 @@ class Partner(models.Model):
         store=True,
     )
 
+    l10n_do_ecf_enabled = fields.Boolean(
+        string="Facturación electrónica habilitada",
+        default=False,
+        tracking=True,
+        help="Habilita la emisión de comprobantes fiscales electrónicos (e-CF) para la empresa de este contacto. "
+             "Mientras esté apagado la empresa emite NCF serie B y nada se envía a la DGII.",
+    )
+
     l10n_do_expense_type = fields.Selection(
         selection="_get_l10n_do_expense_type",
         string="Tipo de Gasto",
