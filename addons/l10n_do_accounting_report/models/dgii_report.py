@@ -981,7 +981,8 @@ class DgiiReport(models.Model):
                     "income_type": inv.l10n_do_income_type,
                     "invoice_date": inv.invoice_date,
                     "withholding_date": inv.payment_date
-                    if (inv.move_type != "out_refund" and show_payment_date)
+                    if (inv.move_type != "out_refund" and show_payment_date
+                        and (inv.third_withheld_itbis or inv.third_income_withholding))
                     else False,
                     "invoiced_amount": abs(inv.amount_untaxed_signed),
                     "invoiced_itbis": inv.invoiced_itbis,

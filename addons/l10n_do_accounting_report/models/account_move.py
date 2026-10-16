@@ -237,7 +237,11 @@ class AccountMove(models.Model):
                 tax = line.tax_line_id
                 if tax and move._l10n_do_is_invoiced_itbis(tax):
                     itbis_amount += line.balance
-            move.invoiced_itbis = itbis_amount
+            move.invoiced_itbis = move._l10n_do_report_amount(itbis_amount)
+
+    def _l10n_do_report_amount(self, amount):
+        """606/607 amounts are magnitudes; on sales the tax lines are credits (negative balance)."""
+        return abs(amount) if self.move_type in ("out_invoice", "out_refund") else amount
 
     @staticmethod
     def _l10n_do_is_invoiced_itbis(tax):
@@ -343,15 +347,15 @@ class AccountMove(models.Model):
                     elif "PROPINA" in group_name:
                         legal_tip += line.balance
                     else:
-                        if tax_type not in ("itbis", "ritbis", "isr", "rext"):
+                        if tax_type not in ("itbis", "ritbis", "isr", "rext") and not move._l10n_do_is_invoiced_itbis(tax):
                             others += line.balance
 
             move.payment_date = pay_date
             move.proportionality_tax = proportionality
             move.cost_itbis = cost_itbis
-            move.selective_tax = selective
-            move.other_taxes = others
-            move.legal_tip = legal_tip
+            move.selective_tax = move._l10n_do_report_amount(selective)
+            move.other_taxes = move._l10n_do_report_amount(others)
+            move.legal_tip = move._l10n_do_report_amount(legal_tip)
 
     @api.depends("invoiced_itbis", "proportionality_tax", "cost_itbis", "move_type")
     def _compute_advance_itbis(self):
