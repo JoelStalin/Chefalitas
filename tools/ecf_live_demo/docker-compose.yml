@@ -7,6 +7,11 @@ services:
   odoo-db:
     restart: unless-stopped
     image: postgres:16-alpine
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
     environment:
       POSTGRES_USER: odoo
       POSTGRES_PASSWORD: odoo
@@ -16,7 +21,11 @@ services:
   odoo:
     restart: unless-stopped
     image: ${ODOO20_IMAGE:-chefalitas-odoo20:test}
-    depends_on: [odoo-db]
+    depends_on:
+      odoo-db: {condition: service_healthy}
+    # After a reboot dockerd starts every container at once and ignores depends_on; Postgres may need minutes of
+    # recovery and the image's entrypoint only waits 30 s. Wait up to 10 min, then run the stock entrypoint.
+    entrypoint: ["sh", "-c", "wait-for-psql.py --db_host \"$$HOST\" --db_port 5432 --db_user \"$$USER\" --db_password \"$$PASSWORD\" --timeout=600 && exec /entrypoint.sh \"$$@\"", "odoo-entrypoint"]
     environment:
       HOST: odoo-db
       USER: odoo
