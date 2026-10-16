@@ -291,35 +291,6 @@ class Partner(models.Model):
         else False
     )
 
-    @api.constrains("vat", "country_id")
-    def _check_l10n_do_vat_checksum(self):
-        """Valida matemáticamente el RNC o Cédula según las normas de la DGII / JCE."""
-        for partner in self:
-            if not partner.vat:
-                continue
-            # Solo validar si el país es República Dominicana o no tiene país pero tiene formato 9/11 dígitos
-            is_do = (partner.country_code == "DO") or (not partner.country_id and len(_clean_rnc_string(partner.vat)) in [9, 11])
-            if not is_do:
-                continue
-
-            cleaned = _clean_rnc_string(partner.vat)
-            if not cleaned:
-                continue
-
-            if len(cleaned) not in [9, 11]:
-                raise ValidationError(
-                    _("El RNC/Cédula dominicano '%s' debe tener exactamente 9 dígitos (RNC) u 11 dígitos (Cédula).")
-                    % partner.vat
-                )
-
-            is_valid, doc_type, expected_digit = _validate_dominican_vat_checksum(cleaned)
-            if not is_valid:
-                raise ValidationError(
-                    _("El número de %s '%s' es INVÁLIDO según el algoritmo oficial de control de la DGII/JCE "
-                      "(el dígito verificador recibido es '%s', pero se calculó '%s').")
-                    % (doc_type, partner.vat, cleaned[-1], expected_digit)
-                )
-
     def _check_l10n_do_fiscal_fields(self, vals):
         if not self or self.parent_id:
             return
@@ -426,7 +397,7 @@ class Partner(models.Model):
         regime = info.get("regime", "")
         if regime:
             vals["l10n_do_tax_regime"] = regime
-        if info.get("name") and info["name"] != self.name:
+        if info.get("name") and not self.name:
             vals["name"] = info["name"]
 
         comment_block = (
@@ -440,7 +411,7 @@ class Partner(models.Model):
             f"• Administración: {info.get('local_admin', '')}\n"
             f"• Facturación Electrónica: {'SÍ' if info.get('electronic_billing') else 'NO'}"
         )
-        vals["comment"] = comment_block
+        vals["comment"] = f"{self.comment}<br/>{comment_block}" if self.comment else comment_block
 
         if len(cleaned) == 9:
             vals["is_company"] = True

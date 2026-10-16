@@ -8,7 +8,6 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='vat']" position="after">
                 <button name="action_dgii_consult" type="object" string="Consultar DGII" class="btn btn-secondary btn-sm" icon="fa-search" invisible="not vat"/>
-                <button name="action_evaluate_rst_advisory" type="object" string="Evaluar RST (EasyCount)" class="btn btn-outline-primary btn-sm" icon="fa-calculator" invisible="not vat"/>
                 <field name="l10n_do_dgii_tax_payer_type" readonly="parent_id" required="[]"/>
                 <field name="l10n_do_tax_regime" readonly="1" invisible="not vat"/>
                 <field name="l10n_do_is_rst" readonly="1" invisible="not vat" widget="boolean_toggle"/>
