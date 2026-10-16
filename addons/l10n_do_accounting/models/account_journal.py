@@ -131,7 +131,7 @@ class AccountJournal(models.Model):
         if self.type == "purchase":
             return []
         elif self.type == "sale" and self.company_id.l10n_do_ecf_issuer:
-            return ["E"]
+            return ["E", "B"]
         return ["B"]
 
     def _l10n_do_create_document_types(self):
