@@ -120,6 +120,22 @@
     <!-- Main Report Inheritance -->
     <template id="report_invoice_document_inherited" inherit_id="account.report_invoice_document"
         primary="True">
+        <xpath expr="//t[@t-set='layout_document_title']" position="replace">
+            <t t-set="layout_document_title">
+                <t t-if="proforma or o.state == 'draft'">
+                    <span t-if="o.move_type == 'out_invoice'">Proforma Invoice </span>
+                    <span t-elif="o.move_type == 'out_refund'">Proforma Credit Note </span>
+                    <span t-else="">Proforma </span>
+                </t>
+                <t t-elif="o.state == 'cancel'">
+                    <span>Cancelled </span>
+                </t>
+                <t t-elif="o.move_type == 'out_refund'">
+                    <span>Credit Note </span>
+                </t>
+                <span t-if="o.name and o.name != '/'" t-field="o.name" />
+            </t>
+        </xpath>
         <xpath expr="//div[contains(@class, 'invoice_main')]" position="replace">
             <div class="clearfix invoice_main">
                 <div class="page mb-4">
@@ -205,6 +221,15 @@
                 t-call="l10n_do_accounting.report_invoice_document_inherited"
                 t-lang="lang" />
             <t t-else="" t-call="account.report_invoice_document" t-lang="lang" />
+        </xpath>
+    </template>
+
+    <!-- Suppress default Odoo logo if company has no custom logo -->
+    <template id="external_layout_standard_no_default_logo" inherit_id="web.external_layout_standard">
+        <xpath expr="//td[@t-if='company.logo']" position="replace">
+            <td t-if="company.logo and not getattr(company, 'uses_default_logo', False)" class="align-top pe-3">
+                <img class="o_company_logo_big" t-att-src="image_data_uri(company.logo)" alt="Logo"/>
+            </td>
         </xpath>
     </template>
 </odoo>
