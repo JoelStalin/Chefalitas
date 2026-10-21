@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<odoo>
-    <data noupdate="1">
-        <record id="orca_api_token_param" model="ir.config_parameter">
-            <field name="key">orca.api_token</field>
-            <field name="value">orca_sec_c9f408e71b26a8d542e19034f8a7</field>
-        </record>
-    </data>
-</odoo>

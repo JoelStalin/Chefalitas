@@ -181,8 +181,10 @@ class AccountJournalDocumentType(models.Model):
     _name = "l10n_do.account.journal.document_type"
     _description = "Tipo de documento fiscal por diario"
 
+    # cascade: per-journal configuration; without it deleting a journal (e.g. a chart
+    # switch) fails on the NOT NULL foreign key (found in the live e-CF test)
     journal_id = fields.Many2one(
-        "account.journal", string="Diario", required=True, readonly=True
+        "account.journal", string="Diario", required=True, readonly=True, ondelete="cascade"
     )
 
     l10n_latam_document_type_id = fields.Many2one(

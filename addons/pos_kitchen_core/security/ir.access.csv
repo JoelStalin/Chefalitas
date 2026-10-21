@@ -1,0 +1,5 @@
+id,name,model_id,group_id/id,operation,domain
+access_rest_recipe,rest.recipe,rest.recipe,base.group_user,crud,
+access_rest_recipe_line,rest.recipe.line,rest.recipe.line,base.group_user,crud,
+access_rest_preparation,rest.preparation,rest.preparation,base.group_user,crud,
+access_rest_preparation_line,rest.preparation.line,rest.preparation.line,base.group_user,crud,

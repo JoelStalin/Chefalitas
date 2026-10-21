@@ -50,11 +50,16 @@
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
-            <!-- Add exterior-related fields before ref for vendor bills -->
-            <xpath expr="//group[@id='header_left_group']/field[@name='ref']" position="before">
+            <!-- Exterior fields before the Bill Reference label: anchoring on field ref put them between the
+                 label and its field and shifted the grid (labels and values swapped, live e-CF test) -->
+            <xpath expr="//group[@id='header_left_group']/label[@for='ref']" position="before">
                 <field name="is_exterior" invisible="1"/>
-                <field name="service_type" invisible="not is_exterior" required="is_exterior" readonly="state != 'draft'"/>
-                <field name="service_type_detail" options="{'no_create': True, 'no_open': True}" invisible="not is_exterior" readonly="not service_type or state != 'draft'" required="service_type"/>
+                <!-- 609 (pagos al exterior) is a purchase report: never on sales, e.g. E46 exports (live e-CF test) -->
+                <field name="service_type" invisible="not is_exterior or move_type not in ('in_invoice', 'in_refund')"
+                       required="is_exterior and move_type in ('in_invoice', 'in_refund')" readonly="state != 'draft'"/>
+                <field name="service_type_detail" options="{'no_create': True, 'no_open': True}"
+                       invisible="not is_exterior or move_type not in ('in_invoice', 'in_refund')"
+                       readonly="not service_type or state != 'draft'" required="service_type"/>
             </xpath>
             <!-- Add DGII page for vendor bills after Other Info -->
             <xpath expr="//notebook/page[@name='other_info']" position="after">

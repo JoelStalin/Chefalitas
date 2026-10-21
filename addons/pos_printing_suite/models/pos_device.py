@@ -34,10 +34,10 @@ class PosPrintDevice(models.Model):
         tracking=True,
     )
 
-    _sql_constraints = [
-        ("token_uniq", "unique(token)", "Token must be unique."),
-    ]
-
+    _token_uniq = models.Constraint(
+        'unique(token)',
+        'Token must be unique.',
+    )
     def _generate_token(self):
         return secrets.token_urlsafe(32)
 

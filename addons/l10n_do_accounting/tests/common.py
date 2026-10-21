@@ -1,19 +1,32 @@
-from odoo.tests.common import Form
+from odoo.tests import Form
 from odoo.addons.account.tests.common import AccountTestInvoicingCommon
 
 
 class L10nDOTestsCommon(AccountTestInvoicingCommon):
     @classmethod
-    def setUpClass(cls, chart_template_ref="do"):
-        super(L10nDOTestsCommon, cls).setUpClass(chart_template_ref=chart_template_ref)
+    def setup_independent_company(cls, **kwargs):
+        # l10n_do_accounting refuses fiscal journals for a company without RNC,
+        # so the company must have one before the DO chart template is loaded.
+        kwargs.setdefault("vat", "131793916")
+        return super().setup_independent_company(**kwargs)
 
-        cls.do_company = cls.setup_company_data(
-            "INDEXA SRL",
-            chart_template=chart_template_ref,
-            vat="131793916",
-            street="dummy address",
-            country_id=cls.env.ref("base.do").id,
-        )["company"]
+    @classmethod
+    @AccountTestInvoicingCommon.setup_country("do")
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.do_company = cls.company_data["company"]
+        cls.env.user.group_ids |= (
+            cls.env.ref("l10n_do_accounting.group_l10n_do_fiscal_credit_note")
+            | cls.env.ref("l10n_do_accounting.group_l10n_do_fiscal_invoice_cancel")
+            | cls.env.ref("l10n_do_accounting.group_l10n_do_edit_fiscal_partner")
+            | cls.env.ref("l10n_do_accounting.group_l10n_do_debit_note")
+        )
+        cls.do_company.write({
+            "name": "INDEXA SRL",
+            "vat": "131793916",
+            "street": "dummy address",
+        })
 
         # multi-currency variables
         cls.usd_currency = cls.env.ref("base.USD")
@@ -96,10 +109,10 @@ class L10nDOTestsCommon(AccountTestInvoicingCommon):
             "governmental": cls.env.ref("l10n_do_accounting.ncf_gov_client"),
             "export": cls.env.ref("l10n_do_accounting.ncf_export_client"),
             "exterior": cls.env.ref("l10n_do_accounting.ncf_exterior_supplier"),
-            "e-fiscal": cls.env.ref("l10n_do_accounting.ecf_fiscal_client"),
-            "e-consumer": cls.env.ref("l10n_do_accounting.ecf_consumer_supplier"),
-            "e-debit_note": cls.env.ref("l10n_do_accounting.ecf_debit_note_client"),
-            "e-credit_note": cls.env.ref("l10n_do_accounting.ecf_credit_note_client"),
+            "e-fiscal": cls.env.ref("l10n_do.ecf_31"),
+            "e-consumer": cls.env.ref("l10n_do.ecf_32"),
+            "e-debit_note": cls.env.ref("l10n_do.ecf_33"),
+            "e-credit_note": cls.env.ref("l10n_do.ecf_34"),
             "e-informal": cls.env.ref("l10n_do_accounting.ecf_informal_supplier"),
             "e-minor": cls.env.ref("l10n_do_accounting.ecf_minor_supplier"),
             "e-special": cls.env.ref("l10n_do_accounting.ecf_special_client"),
@@ -128,6 +141,19 @@ class L10nDOTestsCommon(AccountTestInvoicingCommon):
                 invoice_form.currency_id = data.get("currency")
             if data.get("expense_type"):
                 invoice_form.l10n_do_expense_type = data.get("expense_type")
+            # With l10n_do_accounting_report installed, purchases from abroad require the
+            # 609 service type (and its detail) on the form.
+            if "service_type" in self.env["account.move"]._fields and "in_" in invoice_type:
+                try:
+                    exterior = invoice_form.is_exterior
+                except Exception:
+                    exterior = False
+                if exterior:
+                    invoice_form.service_type = data.get("service_type", "02")
+                    detail = self.env["invoice.service.type.detail"].search(
+                        [("parent_code", "=", invoice_form.service_type)], limit=1)
+                    if detail:
+                        invoice_form.service_type_detail = detail
             for line in data.get("lines", [{}]):
                 with invoice_form.invoice_line_ids.new() as invoice_line_form:
                     invoice_line_form.product_id = line.get(

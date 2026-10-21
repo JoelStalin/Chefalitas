@@ -2,12 +2,12 @@
     "name": "DO Accounting Report",
     "author": "Santos J. Marte M. <alejandro@neotec.do>, Neotec SRL",
     "website": "https://neotec.do/",
-    "version": "18.0.1.0.0",  # Updated to Odoo 18
+    "version": "20.0.1.0.0",  # Updated to Odoo 18
     "category": "Accounting",
     "depends": ["base", "account", "l10n_do_accounting"],  # Verify if l10n_do_accounting is available for Odoo 18
     "data": [
         "data/invoice_service_type_detail_data.xml",
-        "security/ir.model.access.csv",
+        "security/ir.access.csv",
         "views/res_partner_view.xml",
         "views/account_tax_view.xml",
         "views/account_account_view.xml",

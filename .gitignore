@@ -11,3 +11,7 @@ nginx/ssl/*
 !nginx/ssl/.gitkeep
 backups/*.tgz
 backups/*.sql.gz
+
+# Odoo Enterprise addons (licensed) - never commit
+**/addons/orca_addons/
+addons/orca_addons/

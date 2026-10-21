@@ -3,7 +3,6 @@ import re
 from werkzeug import urls
 
 from odoo import models, fields, api, _
-from odoo.osv import expression
 from odoo.exceptions import ValidationError, UserError, AccessError
 from odoo.tools.sql import column_exists, create_column, drop_index, index_exists
 from lxml import etree
@@ -82,21 +81,29 @@ class AccountMoveLine(models.Model):
         Retorna un diccionario con los montos agrupados por tipo de impuesto (ITBIS, ISR).
         Incluye cálculos para diferentes tasas y retenciones.
         """
-        # Buscar grupos de impuestos ITBIS e ISR
-        group_itbis = self.env["account.tax.group"].search([
-            ("name", "ilike", "ITBIS"),
-            ("company_id", "=", self.company_id.id),
-        ], limit=1)
+        # Works on all the journal items of ONE move at once.
+        move = self.move_id[:1] if len(self.move_id) <= 1 else self.mapped("move_id").ensure_one()
+        currency = move.currency_id
+        company = move.company_id
+        # Taxes are classified per tax (DGII 606: ITBIS vs ISR, facturado vs retenido).
+        # ITBIS rates live in "ITBIS x%" groups and ISR in "ISR" groups; withholdings such as
+        # "-100% ITBIS (R293-11)" live in the generic withholdings group, so the tax name
+        # decides between ITBIS and ISR there.
+        TaxGroup = self.env["account.tax.group"]
+        groups_itbis = TaxGroup.search([("name", "ilike", "ITBIS"), ("company_id", "=", company.id)])
+        groups_isr = TaxGroup.search([("name", "ilike", "ISR"), ("company_id", "=", company.id)])
 
-        group_isr = self.env["account.tax.group"].search([
-            ("name", "ilike", "ISR"),
-            ("company_id", "=", self.company_id.id),
-        ], limit=1)
+        def _is_itbis(tax):
+            return tax.tax_group_id in groups_itbis or (
+                tax.tax_group_id not in groups_isr and "ITBIS" in (tax.name or "").upper())
 
-        # Separar líneas de impuestos por grupo
-        tax_lines = self.filtered(lambda x: x.tax_group_id in (group_itbis, group_isr))
-        itbis_tax_lines = tax_lines.filtered(lambda x: x.tax_group_id == group_itbis)
-        isr_tax_lines = tax_lines.filtered(lambda x: x.tax_group_id == group_isr)
+        def _is_isr(tax):
+            return tax.tax_group_id in groups_isr or (
+                tax.tax_group_id not in groups_itbis and "ISR" in (tax.name or "").upper())
+
+        # Separar líneas de impuestos por tipo
+        itbis_tax_lines = self.filtered(lambda x: x.tax_line_id and _is_itbis(x.tax_line_id))
+        isr_tax_lines = self.filtered(lambda x: x.tax_line_id and _is_isr(x.tax_line_id))
 
         # Separar líneas de producto facturables
         invoice_lines = self.filtered(lambda x: x.display_type == "product")
@@ -105,10 +112,10 @@ class AccountMoveLine(models.Model):
 
         # Separar líneas con ITBIS e ISR
         itbis_taxed_lines = taxed_lines.filtered(
-            lambda l: group_itbis in l.tax_ids.mapped("tax_group_id")
+            lambda l: any(_is_itbis(t) for t in l.tax_ids.flatten_taxes_hierarchy())
         )
         isr_taxed_lines = taxed_lines.filtered(
-            lambda l: group_isr in l.tax_ids.mapped("tax_group_id")
+            lambda l: any(_is_isr(t) for t in l.tax_ids.flatten_taxes_hierarchy())
         )
 
         # Mapas de tasas
@@ -122,7 +129,7 @@ class AccountMoveLine(models.Model):
             "base_amount": sum(taxed_lines.mapped("price_subtotal")),
             "exempt_amount": sum(exempt_lines.mapped("price_subtotal")),
             "itbis_18_tax_amount": sum(
-                self.currency_id.round(line.amount_currency)
+                currency.round(line.amount_currency)
                 for line in itbis_tax_lines.filtered(
                     lambda l: l.tax_line_id.amount == itbis_tax_amount_map["18"]
                 )
@@ -135,7 +142,7 @@ class AccountMoveLine(models.Model):
                 ).mapped("amount_currency")
             ),
             "itbis_16_tax_amount": sum(
-                self.currency_id.round(line.amount_currency)
+                currency.round(line.amount_currency)
                 for line in itbis_tax_lines.filtered(
                     lambda l: l.tax_line_id.amount == itbis_tax_amount_map["16"]
                 )
@@ -150,25 +157,25 @@ class AccountMoveLine(models.Model):
             "itbis_0_tax_amount": 0.0,  # no soportado
             "itbis_0_base_amount": 0.0,
             "itbis_withholding_amount": sum(
-                self.currency_id.round(line.amount_currency)
+                currency.round(line.amount_currency)
                 for line in itbis_tax_lines.filtered(
                     lambda l: l.tax_line_id.amount < 0
                 )
             ),
             "itbis_withholding_base_amount": sum(
                 itbis_taxed_lines.filtered(
-                    lambda l: any(t.amount < 0 for t in l.tax_ids)
+                    lambda l: any(t.amount < 0 and _is_itbis(t) for t in l.tax_ids.flatten_taxes_hierarchy())
                 ).mapped("amount_currency")
             ),
             "isr_withholding_amount": sum(
-                self.currency_id.round(line.amount_currency)
+                currency.round(line.amount_currency)
                 for line in isr_tax_lines.filtered(
                     lambda l: l.tax_line_id.amount < 0
                 )
             ),
             "isr_withholding_base_amount": sum(
                 isr_taxed_lines.filtered(
-                    lambda l: any(t.amount < 0 for t in l.tax_ids)
+                    lambda l: any(t.amount < 0 and _is_isr(t) for t in l.tax_ids.flatten_taxes_hierarchy())
                 ).mapped("amount_currency")
             ),
         }
@@ -178,17 +185,19 @@ class AccountMoveLine(models.Model):
 
         # Total general de la factura
         result["l10n_do_invoice_total"] = (
-            self.move_id.amount_untaxed
+            move.amount_untaxed
             + result["itbis_18_tax_amount"]
             + result["itbis_16_tax_amount"]
         )
 
         # Conversión a moneda base si aplica
-        if self.currency_id != self.company_id.currency_id:
-            rate = (self.currency_id + self.company_id.currency_id)._get_rates(
-                self.company_id, self.move_id.date
-            ).get(self.currency_id.id) or 1.0
+        if currency != company.currency_id:
+            # Odoo 20: _get_rates returns {id: (rate, date)}; the conversion factor
+            # (move currency -> company currency) is the stable API.
+            factor = currency._get_conversion_rate(
+                currency, company.currency_id, company, move.date or move.invoice_date
+            )
             for k, v in list(result.items()):
-                result[k + "_currency"] = v / rate
+                result[k + "_currency"] = v * factor
 
         return result

@@ -83,16 +83,14 @@ class L10nLatamDocumentType(models.Model):
         if not ncf_code:
             raise ValidationError(_("El tipo de NCF seleccionado no es válido o no está definido."))
 
-        # Expresión regular según normativas 2025:
-        # ECF: E + tipo + 10 dígitos = 13 caracteres
-        # NCF físico: B + tipo + 8 dígitos = 11 caracteres
+        # Estructura DGII (Informe Técnico e-CF v1.0, sección 7 y nota 44):
+        # e-NCF: serie E + tipo (2) + 10 dígitos = 13 posiciones (tipos electrónicos)
+        # NCF:   serie B + tipo (2) + 8 dígitos  = 11 posiciones (tipos no electrónicos)
+        # La serie depende del tipo de documento y fija la longitud de la secuencia.
         # Opcionalmente se permite el prefijo P para preimpresos: PE / PB
-        regex = (
-            r"^(P?)"                       # Prefijo opcional "P"
-            r"([EB])"                      # Debe comenzar con E o B
-            r"%s"                          # Código del tipo (ej. 31, 02)
-            r"(\d{10}|\d{8})$"             # 10 dígitos si es E, 8 si es B
-        ) % ncf_code
+        is_electronic = str(self.l10n_do_ncf_type or "").startswith("e-")
+        series, digits = ("E", 10) if is_electronic else ("B", 8)
+        regex = r"^P?%s%s\d{%d}$" % (series, ncf_code, digits)
 
         pattern = compile(regex)
 

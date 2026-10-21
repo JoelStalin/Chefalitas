@@ -9,13 +9,29 @@ import secrets
 import subprocess
 import zipfile
 
+from odoo.fields import Command
 from odoo import api, fields, models, _
-from odoo.modules.module import get_module_resource
+from odoo.tools import BinaryBytes, file_path
 from odoo.exceptions import AccessError, ValidationError, UserError
 from odoo.http import request
 
 _logger = logging.getLogger(__name__)
 
+
+
+def get_module_resource(*parts):
+    """Odoo 20 replacement: path inside the addons, or False when it does not exist."""
+    try:
+        return file_path("/".join(parts))
+    except (FileNotFoundError, ValueError):
+        return False
+
+# printing_mode -> pos.printer.printer_type used by the suite (Odoo 20 printer records)
+PRINTING_SUITE_PRINTER_TYPES = {"local_agent": "local_agent", "hw_proxy": "hw_proxy_any_printer"}
+PRINTING_SUITE_SYNC_FIELDS = {
+    "printing_mode", "local_printer_cashier_name", "local_printer_kitchen_name", "any_printer_ip",
+    "local_printer_cashier_id", "local_printer_kitchen_id",
+}
 
 class PosConfig(models.Model):
     _inherit = "pos.config"
@@ -132,7 +148,7 @@ class PosConfig(models.Model):
         group = self.env.ref("pos_printing_suite.group_pos_printing_suite_printing", raise_if_not_found=False)
         if not group:
             return False
-        return group in self.env.user.groups_id
+        return group in self.env.user.group_ids
 
     @api.depends("agent_last_seen")
     def _compute_agent_status(self):
@@ -255,7 +271,7 @@ class PosConfig(models.Model):
         attachment = self.env["ir.attachment"].create({
             "name": artifact_name,
             "type": "binary",
-            "datas": base64.b64encode(payload),
+            "raw": BinaryBytes(payload, artifact_name),
             "res_model": "pos.config",
             "res_id": self.id,
             "mimetype": mimetype,
@@ -276,7 +292,7 @@ class PosConfig(models.Model):
             if build_cmd:
                 self._run_agent_build(build_cmd, agent_root)
 
-        base_url = self._get_request_base_url() or self.env["ir.config_parameter"].sudo().get_param("web.base.url")
+        base_url = self._get_request_base_url() or self.env["ir.config_parameter"].sudo().get_str("web.base.url")
         config = {
             "server_url": base_url,
             "token": self.agent_token,
@@ -429,7 +445,7 @@ class PosConfig(models.Model):
         return buffer.getvalue()
 
     def _build_loopback_policy_script(self, base_url=None):
-        base_url = base_url or self.env["ir.config_parameter"].sudo().get_param("web.base.url") or ""
+        base_url = base_url or self.env["ir.config_parameter"].sudo().get_str("web.base.url") or ""
         base_url = base_url.rstrip("/")
         urls = set()
         if base_url:
@@ -631,6 +647,7 @@ class PosConfig(models.Model):
                 )
         records = super().create(vals_list)
         records._ensure_agent_token()
+        records._sync_printing_suite_printers()
         return records
 
     def write(self, vals):
@@ -648,10 +665,53 @@ class PosConfig(models.Model):
                 vals.get("any_printer_ip"), _("HW Proxy Host")
             )
         res = super().write(vals)
+        if PRINTING_SUITE_SYNC_FIELDS.intersection(vals) and not self.env.context.get("printing_suite_sync"):
+            self._sync_printing_suite_printers()
         if "agent_token" in vals:
             return res
         self._ensure_agent_token()
         return res
+
+    def _sync_printing_suite_printers(self):
+        """Odoo 20 prints through the config's pos.printer records: keep one receipt printer
+        (cashier) and one preparation printer (kitchen, all categories) of the suite type."""
+        Printer = self.env["pos.printer"].sudo()
+        categories = self.env["pos.category"].sudo().search([])
+        for config in self.sudo():
+            linked = config.receipt_printer_ids | config.preparation_printer_ids
+            suite = linked.filtered(lambda p: p.printer_type in PRINTING_SUITE_PRINTER_TYPES.values())
+            printer_type = PRINTING_SUITE_PRINTER_TYPES.get(config.printing_mode)
+            wanted = {}
+            if printer_type:
+                if config.local_printer_cashier_name:
+                    wanted["receipt"] = config.local_printer_cashier_name
+                if config.local_printer_kitchen_name:
+                    wanted["preparation"] = config.local_printer_kitchen_name
+            keep = Printer
+            for use_type, printer_name in wanted.items():
+                vals = {
+                    "name": f"{config.name} - {printer_name}",
+                    "printer_type": printer_type,
+                    "use_type": use_type,
+                    "local_printer_name": printer_name,
+                    "hw_proxy_ip": config.any_printer_ip if printer_type == "hw_proxy_any_printer" else False,
+                }
+                if use_type == "preparation":
+                    vals["product_categories_ids"] = [Command.set(categories.ids)]
+                printer = suite.filtered(lambda p: p.use_type == use_type)[:1]
+                if printer:
+                    printer.write(vals)
+                else:
+                    printer = Printer.create(vals)
+                keep |= printer
+            stale = suite - keep
+            config.with_context(printing_suite_sync=True).write({
+                "receipt_printer_ids": [Command.set(((config.receipt_printer_ids - stale)
+                                                    | keep.filtered(lambda p: p.use_type == "receipt")).ids)],
+                "preparation_printer_ids": [Command.set(((config.preparation_printer_ids - stale)
+                                                         | keep.filtered(lambda p: p.use_type == "preparation")).ids)],
+            })
+            stale.filtered(lambda p: not (p.pos_config_ids - config)).unlink()
 
     def _normalize_existing_hw_proxy_ports(self):
         for rec in self.sudo().search([]):

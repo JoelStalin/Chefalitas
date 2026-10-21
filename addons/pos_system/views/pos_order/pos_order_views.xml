@@ -24,7 +24,6 @@
         <field name="model">pos.order</field>
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">pos_system.report_pos_order_receipt</field>
-        <field name="report_file">pos_system.report_pos_order_receipt</field>
         <field name="print_report_name">'POS_Receipt_' + (object.name or '')</field>
         <field name="paperformat_id" ref="pos_system.paperformat_pos_ticket_80mm" />
         <!-- Esto “adhiere” el reporte al menú Imprimir de pos.order -->

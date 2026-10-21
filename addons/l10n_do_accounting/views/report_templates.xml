@@ -1,36 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
-    <!-- Heredar plantilla de dirección -->
+    <!-- Dominican invoices print their own DGII header, so the standard
+         recipient and company address blocks are hidden for them.
+         Odoo 20: address_layout renders <div t-if="address">, and every
+         external layout prints the company block through web.company_address_list. -->
     <template id="web_address_layout_inherited" inherit_id="web.address_layout">
-        <xpath expr="//div[@name='address']" position="attributes">
-            <attribute name="t-if">doc_model != 'account.move' or (doc_model == 'account.move' and o.country_code != 'DO')</attribute>
+        <xpath expr="//div[@t-if='address']" position="attributes">
+            <attribute name="t-if">address and not (doc_model == 'account.move' and o and o.country_code == 'DO')</attribute>
         </xpath>
     </template>
 
-    <!-- Para layout striped (nuevo diseño de Odoo 18) -->
-    <template id="external_layout_striped_inherited" inherit_id="web.external_layout_striped">
-        <xpath expr="//div[@name='company_address']" position="attributes">
-            <attribute name="t-if">doc_model != 'account.move' or (doc_model == 'account.move' and o.country_code != 'DO')</attribute>
-        </xpath>
-    </template>
-
-    <!-- Revisión opcional para otros layouts si no cambió la estructura -->
-    <template id="external_layout_boxed_inherited" inherit_id="web.external_layout_boxed">
-        <xpath expr="//div[@name='company_address']"  position="attributes">
-            <attribute name="t-value">'' if doc_model == 'account.move' and o.country_code == 'DO' else company_id.partner_id.contact_address</attribute>
-        </xpath>
-    </template>
-
-    <template id="external_layout_bold_inherited" inherit_id="web.external_layout_bold">
-        <xpath expr="//div[@name='company_address']"  position="attributes">
-            <attribute name="t-value">'' if doc_model == 'account.move' and o.country_code == 'DO' else company_id.partner_id.contact_address</attribute>
-        </xpath>
-    </template>
-
-    <template id="external_layout_standard_inherited" inherit_id="web.external_layout_standard">
-        <xpath expr="//div[@name='company_address']"  position="attributes">
-            <attribute name="t-value">'' if doc_model == 'account.move' and o.country_code == 'DO' else company_id.partner_id.contact_address</attribute>
+    <template id="company_address_list_inherited" inherit_id="web.company_address_list">
+        <xpath expr="//ul[@name='company_address_list']" position="attributes">
+            <attribute name="t-if">not (doc_model == 'account.move' and o and o.country_code == 'DO')</attribute>
         </xpath>
     </template>
 

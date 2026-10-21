@@ -11,15 +11,10 @@ class InvoiceServiceTypeDetail(models.Model):
     code = fields.Char(string="Code", required=True)
     parent_code = fields.Char(string="Parent Code")
 
-    _sql_constraints = [
-        (
-            "invoice_service_type_detail_code_unique",
-            "unique (code)",
-            "El código debe ser único.",  # SIN _(), texto plano (no traducible)
-        ),
-    ]
-
-
+    _invoice_service_type_detail_code_unique = models.Constraint(
+        'unique (code)',
+        'El código debe ser único.',
+    )
 class AccountMove(models.Model):
     """
     Extensión de facturas para reportes DGII (606 / 607 / 608 / 609).
@@ -233,13 +228,27 @@ class AccountMove(models.Model):
 
     @api.depends("line_ids.tax_line_id", "line_ids.balance")
     def _compute_invoiced_itbis(self):
+        # DGII "ITBIS facturado" is all the ITBIS on the document (deductible or not; the part
+        # taken to cost is reported separately). purchase_tax_type is only editable on purchase
+        # taxes, so sale taxes are recognised by their ITBIS tax group as well.
         for move in self:
             itbis_amount = 0.0
             for line in move.line_ids:
                 tax = line.tax_line_id
-                if tax and tax.purchase_tax_type == "itbis":
+                if tax and move._l10n_do_is_invoiced_itbis(tax):
                     itbis_amount += line.balance
-            move.invoiced_itbis = itbis_amount
+            move.invoiced_itbis = move._l10n_do_report_amount(itbis_amount)
+
+    def _l10n_do_report_amount(self, amount):
+        """606/607 amounts are magnitudes; on sales the tax lines are credits (negative balance)."""
+        return abs(amount) if self.move_type in ("out_invoice", "out_refund") else amount
+
+    @staticmethod
+    def _l10n_do_is_invoiced_itbis(tax):
+        if tax.purchase_tax_type == "itbis":
+            return True
+        group = (tax.tax_group_id.name or "").upper()
+        return tax.amount > 0 and "ITBIS" in group and tax.purchase_tax_type in (False, "none")
 
     @api.depends(
         "move_type",
@@ -338,15 +347,15 @@ class AccountMove(models.Model):
                     elif "PROPINA" in group_name:
                         legal_tip += line.balance
                     else:
-                        if tax_type not in ("itbis", "ritbis", "isr", "rext"):
+                        if tax_type not in ("itbis", "ritbis", "isr", "rext") and not move._l10n_do_is_invoiced_itbis(tax):
                             others += line.balance
 
             move.payment_date = pay_date
             move.proportionality_tax = proportionality
             move.cost_itbis = cost_itbis
-            move.selective_tax = selective
-            move.other_taxes = others
-            move.legal_tip = legal_tip
+            move.selective_tax = move._l10n_do_report_amount(selective)
+            move.other_taxes = move._l10n_do_report_amount(others)
+            move.legal_tip = move._l10n_do_report_amount(legal_tip)
 
     @api.depends("invoiced_itbis", "proportionality_tax", "cost_itbis", "move_type")
     def _compute_advance_itbis(self):

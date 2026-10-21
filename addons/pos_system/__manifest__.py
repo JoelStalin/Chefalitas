@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Cambios para Punto de Venta',
-    'version': '1.0.0',
+    'version': '20.0.1.0.0',
     'license': 'LGPL-3',
     'category': 'Punto de Venta',
     "sequence": 2,
@@ -9,17 +9,16 @@
     'complexity': "easy",
     'author': 'Emy Saul Soto',
     'depends': [
+        'l10n_latam_invoice_document',
         'sale_management', 'point_of_sale', 'product', 'pos_loyalty'
     ],
     'data': [
+        'receipt/pos_order_receipt.xml',
        'views/pos_order/pos_order_views.xml',
     ],
     "assets": {
         'point_of_sale._assets_pos': [
             'pos_system/static/src/**/*',
-        ],
-        'point_of_sale.customer_display_assets': [
-            "pos_system/static/src/overrides/components/order_widget/*",
         ],
     },
     

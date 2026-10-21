@@ -15,10 +15,10 @@ class RestRecipeLine(models.Model):
 
     @api.onchange("uom_id")
     def _onchange_uom_id(self):
-        if self.uom_id and self.uom_id.category_id:
-            gram_uom = self.env.ref("uom.product_uom_gram", raise_if_not_found=False)
-            if gram_uom:
-                self.qty_g = self.uom_id._compute_quantity(self.qty_g, gram_uom)
+        gram_uom = self.env.ref("uom.product_uom_gram", raise_if_not_found=False)
+        # Odoo 20 has no UoM categories: convert only between units sharing a reference (g, kg...)
+        if self.uom_id and gram_uom and self.uom_id._has_common_reference(gram_uom):
+            self.qty_g = self.uom_id._compute_quantity(self.qty_g, gram_uom)
 
     @api.constrains("qty_g")
     def _check_qty(self):

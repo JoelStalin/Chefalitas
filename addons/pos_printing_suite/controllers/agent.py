@@ -18,7 +18,7 @@ class PosPrintingSuiteAgentController(http.Controller):
             return auth.split(" ", 1)[1].strip()
         return request.params.get("token")
 
-    @http.route("/pos_printing_suite/agent/build", type="json", auth="user")
+    @http.route("/pos_printing_suite/agent/build", type="jsonrpc", auth="user")
     def build_agent(self, config_id=None):
         self._ensure_admin()
         if not config_id:
@@ -44,7 +44,7 @@ class PosPrintingSuiteAgentController(http.Controller):
         if not config.agent_artifact_id:
             config._build_agent_installer()
         attachment = config.agent_artifact_id
-        data = base64.b64decode(attachment.datas or b"")
+        data = attachment.raw.content if attachment.raw else b""
         mimetype = attachment.mimetype or "application/octet-stream"
         headers = [
             ("Content-Type", mimetype),
@@ -61,7 +61,7 @@ class PosPrintingSuiteAgentController(http.Controller):
         config = request.env["pos.config"].browse(int(config_id)).exists()
         if not config:
             return request.not_found()
-        base_url = request.env["ir.config_parameter"].sudo().get_param("web.base.url") or ""
+        base_url = request.env["ir.config_parameter"].sudo().get_str("web.base.url") or ""
         if not base_url:
             base_url = request.httprequest.host_url.rstrip("/")
         base_url = base_url.rstrip("/")
@@ -89,7 +89,7 @@ class PosPrintingSuiteAgentController(http.Controller):
         ]
         return request.make_response(script, headers)
 
-    @http.route("/pos_printing_suite/agent/ping", type="json", auth="public", csrf=False)
+    @http.route("/pos_printing_suite/agent/ping", type="jsonrpc", auth="public", csrf=False)
     def agent_ping(self, token=None, version=None, status=None, pos_config_id=None, printers=None, **kwargs):
         token = token or self._get_agent_token()
         if not token:
@@ -135,7 +135,7 @@ class PosPrintingSuiteAgentController(http.Controller):
         if to_remove:
             to_remove.unlink()
 
-    @http.route("/pos_printing_suite/agent/config", type="json", auth="public", csrf=False)
+    @http.route("/pos_printing_suite/agent/config", type="jsonrpc", auth="public", csrf=False)
     def agent_config(self, token=None, **kwargs):
         token = token or self._get_agent_token()
         if not token:
@@ -145,7 +145,7 @@ class PosPrintingSuiteAgentController(http.Controller):
             return {"ok": False, "error": "invalid_token"}
         return {
             "ok": True,
-            "server_url": request.env["ir.config_parameter"].sudo().get_param("web.base.url"),
+            "server_url": request.env["ir.config_parameter"].sudo().get_str("web.base.url"),
             "pos_config_id": config.id,
             "printing_mode": config.printing_mode,
             "local_agent_host": config.local_agent_host,
