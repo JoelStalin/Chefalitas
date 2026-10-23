@@ -33,3 +33,9 @@ Revertir: `git revert 20dcf5c c478dd1 63d4be7 77376d3 0f6a923 dce2510 fe918d1 d5
 - Revertir: git revert de este commit; COMPOSE_PROJECT_NAME=ecfcert ./down.sh borra el entorno.
 - 2026-10-08: docker-compose de ecf_live_demo con restart: unless-stopped (el entorno vuelve tras reiniciar el host).
 - 2026-10-08: l10n_do_accounting: asistente "Credenciales DGII (certificado y portal)" en Ajustes > EasyCount; envía .p12, claves y datos de la empresa a EasyCount y borra los secretos de Odoo. Tests Odoo 20: 18/18.
+
+## 2026-10-21 — Formato DGII de la factura restaurado en odoo.getupsoft.com (PR #46)
+- La factura E310000000001 (FLAI SRL) salió con el formato simple: el formato validado en la certificación (commit 7cff457, 2026-10-17) estaba solo en la rama fix/print-format-dgii-qr. PR #46 lo fusionó en feature/etapa1-easycount-ecf (2e6db0d) y deploy-odoo20-thinkcentre.yml actualizó l10n_do_accounting en getupsoft (ecflive estaba detenido: se omitió).
+- Para poder desplegar se guardó en `git stash` (stash@{0} en ~/workspaces/chefalitas del ThinkCentre) un cambio sin commit del 2026-10-17 en report_invoice.xml (ocultar el título "Invoice …" y el logo por defecto). Quedó superado por PR #47 (95694ce, desplegado 2026-10-21 22:18 UTC): quita la palabra Invoice, prefijo Proforma en borradores y sin logo por defecto. El stash ya no hace falta.
+- Pendiente: homologar el formato en el repositorio global JoelStalin/odoo-l10n-do-ecf (su report_invoice.xml es la versión inicial e144cf6).
+- Revertir: git revert 2e6db0d (y despliegue); el stash se recupera con `git stash pop`.
