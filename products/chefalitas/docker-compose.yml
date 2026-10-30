@@ -1,0 +1,54 @@
+# Chefalitas SRL en produccion: Odoo 20 + PostgreSQL 16 + nginx. Secretos en .env (no se versiona): scripts/odoo20/init-env.sh.
+# nginx deja pasar /websocket al puerto 8072 de Odoo; el tunel de Cloudflare apunta a 127.0.0.1:${HTTP_PORT}.
+name: chefalitas-odoo20
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD en .env}
+    volumes: [db:/var/lib/postgresql/data]
+    command: >
+      postgres -c shared_buffers=512MB -c effective_cache_size=1536MB -c work_mem=32MB
+      -c maintenance_work_mem=128MB -c max_connections=150 -c checkpoint_completion_target=0.9 -c wal_buffers=16MB
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+    mem_limit: 1536m
+
+  odoo:
+    build: {context: ., dockerfile: Dockerfile}
+    image: chefalitas-odoo:20.0
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+    # tras un reinicio dockerd arranca todo a la vez: se espera a PostgreSQL hasta 10 minutos
+    entrypoint: ["sh", "-c", "wait-for-psql.py --db_host db --db_port 5432 --db_user odoo --db_password \"$$PASSWORD\" --timeout=600 && exec /entrypoint.sh \"$$@\"", "--"]
+    environment:
+      HOST: db
+      USER: odoo
+      PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD en .env}
+    command: ["odoo", "--http-interface=0.0.0.0", "-d", "chefalitas", "--db-filter=^chefalitas$$", "--proxy-mode",
+      "--db_host=db", "--db_user=odoo", "--db_password=${POSTGRES_PASSWORD}", "--workers=3", "--max-cron-threads=1",
+      "--limit-memory-soft=1073741824", "--limit-memory-hard=1342177280", "--limit-request=8192", "--no-database-list"]
+    volumes:
+      - ./addons:/mnt/extra-addons:ro
+      - data:/var/lib/odoo
+    mem_limit: 3g
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    depends_on: [odoo]
+    volumes: ["./nginx/odoo20.conf:/etc/nginx/conf.d/default.conf:ro"]
+    ports: ["127.0.0.1:${HTTP_PORT:-18080}:80"]
+    mem_limit: 128m
+
+volumes:
+  db:
+  data:

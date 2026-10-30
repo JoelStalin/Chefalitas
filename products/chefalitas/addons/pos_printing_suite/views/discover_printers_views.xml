@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="pos_printing_discover_wizard_form" model="ir.ui.view">
+        <field name="name">pos.printing.discover.wizard.form</field>
+        <field name="model">pos.printing.discover.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Buscar impresoras en la red local">
+                <group>
+                    <field name="config_id"/>
+                    <field name="network"/>
+                    <field name="use_type"/>
+                </group>
+                <field name="line_ids">
+                    <list editable="bottom" create="0" delete="0">
+                        <field name="selected"/>
+                        <field name="ip"/>
+                        <field name="name"/>
+                        <field name="known"/>
+                    </list>
+                </field>
+                <footer>
+                    <button string="Buscar" name="action_scan" type="object" class="btn-primary"/>
+                    <button string="Agregar seleccionadas" name="action_create" type="object" invisible="not line_ids"/>
+                    <button string="Cerrar" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="pos_printing_discover_wizard_action" model="ir.actions.act_window">
+        <field name="name">Buscar impresoras en la red</field>
+        <field name="res_model">pos.printing.discover.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_pos_printing_discover" name="Buscar impresoras en la red"
+              parent="point_of_sale.menu_point_config_product"
+              action="pos_printing_discover_wizard_action" groups="point_of_sale.group_pos_manager" sequence="90"/>
+</odoo>

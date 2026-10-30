@@ -1,0 +1,5 @@
+<odoo>
+    <record id="uom_category_kitchen" model="uom.category">
+        <field name="name">Kitchen</field>
+    </record>
+</odoo>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="product_template_form_recipe" model="ir.ui.view">
+        <field name="name">product.template.form.recipe</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='list_price']" position="after">
+                <field name="recipe_bom_id" invisible="not recipe_bom_id"/>
+                <field name="recipe_cost" invisible="not recipe_bom_id"/>
+                <field name="recipe_margin" invisible="not recipe_bom_id"/>
+                <field name="target_margin" invisible="not recipe_bom_id"/>
+                <field name="suggested_price" invisible="not suggested_price" decoration-danger="suggested_price"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="product_category_form_target" model="ir.ui.view">
+        <field name="name">product.category.form.target</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="product.product_category_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='parent_id']" position="after">
+                <field name="target_margin"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="recipe_variance_wizard_form" model="ir.ui.view">
+        <field name="name">recipe.variance.wizard.form</field>
+        <field name="model">recipe.variance.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="date_from"/>
+                    <field name="date_to"/>
+                    <field name="tolerance"/>
+                </group>
+                <field name="line_ids">
+                    <list decoration-danger="flagged">
+                        <field name="product_id"/>
+                        <field name="purchased"/>
+                        <field name="consumed"/>
+                        <field name="waste"/>
+                        <field name="waste_pct"/>
+                        <field name="flagged"/>
+                    </list>
+                </field>
+                <footer>
+                    <button name="action_compute" type="object" string="Calcular" class="btn-primary"/>
+                    <button special="cancel" string="Cerrar"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="action_recipe_variance" model="ir.actions.act_window">
+        <field name="name">Merma por insumo</field>
+        <field name="res_model">recipe.variance.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+    <menuitem id="menu_recipe_variance" name="Merma por insumo" parent="stock.menu_warehouse_report"
+              action="action_recipe_variance" sequence="90"/>
+</odoo>
