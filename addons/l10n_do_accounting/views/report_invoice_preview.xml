@@ -6,62 +6,64 @@
               name="Invoice Document Preview (DO Custom)"
               primary="True"> 
 
-        <div id="informations" class="row mt-4 mb-4">
-            <!-- Company Information (Left Column) -->
-            <div class="col-6">
-                <strong t-field="o.company_id.partner_id.name"/>
-                <br/>
-                <span t-field="o.company_id.partner_id"
-                      class="text-muted"
-                      t-options='{"widget": "contact", "fields": ["address"], "no_marker": true}'/>
-                <br/>
-                <strong>RNC:</strong>
-                <span t-if="o.company_id.vat" t-field="o.company_id.vat"/>
-                <br/>
-                <strong>Emission Date:</strong>
-                <span t-field="o.invoice_date" t-options='{"format": "dd/MM/yyyy"}'/>
-                <br/>
-                <t t-if="o.invoice_date_due and o.move_type == 'out_invoice' and o.state == 'posted'">
-                    <strong>Due Date:</strong>
-                    <span t-field="o.invoice_date_due" t-options='{"format": "dd/MM/yyyy"}'/>
-                </t>
-            </div>
-            <!-- Document Information (Right Column) -->
-            <div class="col-6 text-end">
-                <t t-if="o.l10n_latam_document_type_id">
-                    <h2 t-field="o.l10n_latam_document_type_id.report_name"/>
-                </t>
-                <strong>NCF:</strong>
-                <span t-field="o.l10n_do_fiscal_number"/>
-                <br/>
-                <t t-if="o.l10n_do_ncf_expiration_date">
-                    <strong>Valid Until:</strong>
-                    <span t-field="o.l10n_do_ncf_expiration_date" t-options='{"format": "dd/MM/yyyy"}'/>
-                </t>
-            </div>
-        </div>
+                <table id="informations" class="w-100 mb-4" style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+            <tr>
+                <!-- Company Information (Left Column) -->
+                <td style="width: 55%; vertical-align: top; padding-right: 15px;">
+                    <div style="font-size: 13pt; font-weight: bold; line-height: 1.2;">
+                        <strong t-field="o.company_id.partner_id.name"/>
+                    </div>
+                    <div class="text-muted" style="font-size: 10pt; margin-top: 4px; line-height: 1.3;">
+                        <span t-field="o.company_id.partner_id"
+                              class="text-muted"
+                              t-options='{"widget": "contact", "fields": ["address"], "no_marker": true}'/>
+                    </div>
+                    <div style="font-size: 10pt; margin-top: 6px; line-height: 1.4;">
+                        <strong>RNC:</strong> <span t-if="o.company_id.vat" t-field="o.company_id.vat"/><br/>
+                        <strong>Fecha Emisión:</strong> <span t-field="o.invoice_date" t-options='{"format": "dd/MM/yyyy"}'/><br/>
+                        <t t-if="o.invoice_date_due and o.move_type == 'out_invoice' and o.state == 'posted'">
+                            <strong>Vencimiento:</strong> <span t-field="o.invoice_date_due" t-options='{"format": "dd/MM/yyyy"}'/><br/>
+                        </t>
+                    </div>
+                </td>
+                <!-- Document Information (Right Column) -->
+                <td style="width: 45%; vertical-align: top; text-align: right;">
+                    <t t-if="o.l10n_latam_document_type_id">
+                        <h2 style="font-size: 18pt; font-weight: bold; margin: 0 0 10px 0; color: #111;" t-field="o.l10n_latam_document_type_id.report_name"/>
+                    </t>
+                    <div style="font-size: 11pt; line-height: 1.5;">
+                        <strong>NCF:</strong> <span style="font-weight: bold;" t-field="o.l10n_do_fiscal_number"/><br/>
+                        <t t-if="o.l10n_do_ncf_expiration_date">
+                            <strong>Válida hasta:</strong> <span t-field="o.l10n_do_ncf_expiration_date" t-options='{"format": "dd/MM/yyyy"}'/><br/>
+                        </t>
+                    </div>
+                </td>
+            </tr>
+        </table>
         <!-- Receiver Information -->
-        <div id="receiver_info" class="row mt-4 mb-4">
-            <t t-set="vat_len" t-value="len(o.commercial_partner_id.vat or '')"/>
-            <div class="col-7">
-                <strong>
-                    <t t-if="vat_len == 9">RNC:</t>
-                    <t t-elif="vat_len == 11">Cédula:</t>
-                    <t t-else="">Customer ID:</t>
-                </strong>
-                <span t-field="o.commercial_partner_id.vat"/>
-                <br/>
-                <strong>
-                    <t t-if="vat_len == 9">Business Name:</t>
-                    <t t-else="">Name:</t>
-                </strong>
-                <span t-field="o.commercial_partner_id.name"/>
-                <br/>
-                <span t-if="o.partner_id.street"
-                      t-field="o.partner_id"
-                      t-options='{"widget": "contact", "fields": ["address"], "no_marker": true}'/>
-            </div>
-        </div>
+        <table id="receiver_info" class="w-100 mb-4" style="width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 24px;">
+            <tr>
+                <td style="width: 100%; vertical-align: top;">
+                    <t t-set="vat_len" t-value="len(o.commercial_partner_id.vat or '')"/>
+                    <div style="font-size: 10pt; line-height: 1.4;">
+                        <strong>
+                            <t t-if="vat_len == 9">RNC:</t>
+                            <t t-elif="vat_len == 11">Cédula:</t>
+                            <t t-else="">ID Cliente:</t>
+                        </strong>
+                        <span t-field="o.commercial_partner_id.vat"/><br/>
+                        <strong>
+                            <t t-if="vat_len == 9">Razón Social:</t>
+                            <t t-else="">Nombre:</t>
+                        </strong>
+                        <span t-field="o.commercial_partner_id.name"/><br/>
+                        <span t-if="o.partner_id.street"
+                              t-field="o.partner_id"
+                              t-options='{"widget": "contact", "fields": ["address"], "no_marker": true}'/>
+                    </div>
+                </td>
+            </tr>
+        </table>
     </template>
 
     <!-- Template for Tax Totals -->
