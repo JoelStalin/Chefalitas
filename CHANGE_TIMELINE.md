@@ -45,3 +45,10 @@ Revertir: `git revert 20dcf5c c478dd1 63d4be7 77376d3 0f6a923 dce2510 fe918d1 d5
   modules.txt y scripts/odoo20 (init-env, install-modules, trim-modules, deploy); modulos propios incorporados: l10n_do_hr_payroll, ai_provider, pos_scale_gateway.
 - Workflows: deploy.yml (Odoo 18 por SSH desde GitHub, fallaba) queda como deploy-odoo18-legacy.yml solo manual; nuevo deploy-prod-odoo20.yml en runner propio (chefalitas-prod) al publicar v20.*.
 - Revertir: revertir el commit squash del PR.
+
+## 2026-10-30 Despliegue de produccion de Odoo 20 desde el ThinkCentre (tag v20.0.0)
+- Autorizado por el usuario: usar solo runners del ThinkCentre, sin crear otras credenciales. La produccion vieja (Odoo 18, PC de la oficina) tiene el tunel caido; no se toca.
+- Runner nuevo del repo Chefalitas: thinkcentre-chefalitas (label chefalitas-prod), servicio systemd actions.runner.JoelStalin-Chefalitas.thinkcentre-chefalitas, carpeta ~/actions-runner-chefalitas, con .env: HTTP_PORT=18082 (18080 ya lo usa getupsoft-site-prod) y DEPLOY_DIR=/home/ubuntu/chefalitas-odoo20.
+- Disparo: tag v20.0.0 sobre 2ca215d -> workflow deploy-prod-odoo20.yml (run 41113587487).
+- Pendiente del usuario: apuntar chefalitas.com.do / www al puerto 18082 del tunel de Cloudflare (no hay credenciales para hacerlo) y migrar datos de la base chefalitas del PC de la oficina.
+- Revertir: cd /home/ubuntu/chefalitas-odoo20 && docker compose down (-v borra los datos); sudo ~/actions-runner-chefalitas/svc.sh stop && sudo ./svc.sh uninstall; git push origin :refs/tags/v20.0.0 && git tag -d v20.0.0; quitar el runner en GitHub (Settings > Actions > Runners).
