@@ -77,3 +77,9 @@ Revertir: `git revert 20dcf5c c478dd1 63d4be7 77376d3 0f6a923 dce2510 fe918d1 d5
 - Causa: en el redespliegue v20.0.1 (run 41133982657) la actualizacion de modulos termino bien, pero trim-modules.sh fallo al desinstalar el extra "rpc": el Odoo que seguia sirviendo ejecutaba un cron y Odoo bloquea las operaciones de modulos en ese momento ("Odoo is currently processing a scheduled action"). En el primer despliegue no ocurrio porque aun no habia un Odoo corriendo.
 - Arreglo: ante ese error se hace rollback, se espera 20 s y se reintenta (hasta 15 veces).
 - Revertir: revertir el commit del PR y publicar un tag nuevo (v20.0.3) para redesplegar.
+
+## 2026-10-30 Estado final: Odoo 20 de Chefalitas en el ThinkCentre (tag v20.0.2)
+- Run 41136187011 (tag v20.0.2) terminado en success: construccion de imagen, actualizacion de modulos (-u) y recorte (trim-modules.sh) completos. El run anterior (v20.0.1, 41133982657) habia fallado solo en el recorte, por un cron de Odoo en curso; lo corrige el PR #56.
+- Verificado a las 22:17 UTC en la base real chefalitas (proyecto chefalitas-prod, puerto 18082): login HTTP 200, menu "Buscar impresoras en la red" activo (ir_ui_menu 336), modelos pos.printing.discover.wizard y .line registrados, 57 modulos instalados, contenedores nginx, odoo y db arriba.
+- Pendiente del usuario: apuntar chefalitas.com.do y www al puerto 18082 en el tunel de Cloudflare, actualizar la politica G14 del guard (trata chefalitas-odoo20-* como de prueba), y migrar datos de la base del PC de la oficina. Modulo de codigo de barras: llega en un repo nuevo de Gemini.
+- Revertir: git revert del commit en main y publicar un tag nuevo (v20.0.3) para redesplegar; para bajar el servicio: COMPOSE_PROJECT_NAME=chefalitas-prod docker compose down en /home/ubuntu/chefalitas-odoo20.
