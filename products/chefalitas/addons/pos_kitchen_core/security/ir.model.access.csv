@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_rest_recipe,rest.recipe,model_rest_recipe,base.group_user,1,1,1,1
+access_rest_recipe_line,rest.recipe.line,model_rest_recipe_line,base.group_user,1,1,1,1
+access_rest_preparation,rest.preparation,model_rest_preparation,base.group_user,1,1,1,1
+access_rest_preparation_line,rest.preparation.line,model_rest_preparation_line,base.group_user,1,1,1,1
