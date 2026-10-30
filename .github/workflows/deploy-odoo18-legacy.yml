@@ -1,10 +1,7 @@
-name: Deploy
+name: Deploy Odoo 18 legado (solo manual)
 
 on:
-  push:
-    branches:
-      - 'main'        # Solo actualiza addons cuando el branch es main
-      - 'main-full'   # Actualiza todo cuando el branch es main-full
+  workflow_dispatch:
 
 jobs:
   deploy-addons:
