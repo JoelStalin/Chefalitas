@@ -1,0 +1,6 @@
+<odoo>
+    <record id="view_orca_ai_provider_job_tree" model="ir.ui.view">
+        <field name="name">orca.ai.provider.job.tree</field><field name="model">orca.ai.provider.job</field>
+        <field name="arch" type="xml"><list><field name="name"/><field name="provider"/><field name="model"/><field name="state"/><field name="attempts"/></list></field>
+    </record>
+</odoo>
