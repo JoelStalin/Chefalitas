@@ -17,7 +17,7 @@ EX="$(extras)"
 [ -z "$EX" ] && { echo "Sin extras: solo modulos pedidos y dependencias obligatorias."; exit 0; }
 echo "Extras a desinstalar: $EX"
 docker compose run --rm -T -e EX="$EX" odoo odoo shell -d chefalitas --db_host=db --db_user=odoo --db_password="$PW" --no-database-list <<'PY' 2>&1 | tail -14
-import os, re
+import os, re, time
 from odoo.exceptions import UserError
 extras = os.environ['EX'].split(',')
 for attempt in range(15):
@@ -27,6 +27,9 @@ for attempt in range(15):
     try:
         print('desinstalando', len(mods), 'modulos'); mods.button_immediate_uninstall(); env.cr.commit(); print('hecho'); break
     except UserError as e:
+        if 'scheduled action' in str(e):
+            # el Odoo que sigue sirviendo ejecuta un cron y Odoo no deja tocar modulos en ese momento: se espera y se reintenta
+            env.cr.rollback(); print('Odoo ejecuta una accion programada; reintento en 20 s (intento %d)' % (attempt + 1)); time.sleep(20); continue
         m = re.search(r'cannot be uninstalled: (.+)$', str(e))
         if not m: raise
         skip = [x.strip() for x in m.group(1).split(',')]
