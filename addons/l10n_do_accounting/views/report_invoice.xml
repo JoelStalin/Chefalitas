@@ -71,14 +71,29 @@
                         t-options='{"widget": "monetary", "display_currency": o.currency_id}' />
                 </td>
             </tr>
-            <!-- Total Impuestos con amount_tax_signed -->
-            <tr>
-                <td>ITBIS</td>
-                <td class="text-end">
-                    <span t-field="o.itbis_amount"
-                        t-options='{"widget": "monetary", "display_currency": o.currency_id}' />
-                </td>
-            </tr>
+            <!-- Desglose por grupos de impuestos (ITBIS, Retenciones, etc.) -->
+            <t t-if="o.tax_totals and o.tax_totals.get('subtotals')">
+                <t t-foreach="o.tax_totals.get('subtotals', [])" t-as="subtotal">
+                    <t t-foreach="subtotal.get('tax_groups', [])" t-as="tax_group">
+                        <tr>
+                            <td><span t-out="tax_group.get('group_name')" /></td>
+                            <td class="text-end">
+                                <span t-out="tax_group.get('tax_amount_currency')"
+                                    t-options='{"widget": "monetary", "display_currency": o.currency_id}' />
+                            </td>
+                        </tr>
+                    </t>
+                </t>
+            </t>
+            <t t-else="">
+                <tr>
+                    <td>ITBIS</td>
+                    <td class="text-end">
+                        <span t-field="o.itbis_amount"
+                            t-options='{"widget": "monetary", "display_currency": o.currency_id}' />
+                    </td>
+                </tr>
+            </t>
             <!-- Propina (10%) solo si o.propina_amount != 0 -->
             <t t-if="o.propina_amount">
                 <tr>
@@ -105,6 +120,12 @@
     <!-- Main Report Inheritance -->
     <template id="report_invoice_document_inherited" inherit_id="account.report_invoice_document"
         primary="True">
+        <xpath expr="//t[@t-set='layout_document_title']" position="replace">
+            <t t-set="layout_document_title">
+                <span t-if="o.l10n_do_fiscal_number" t-field="o.l10n_do_fiscal_number" />
+                <span t-elif="o.name and o.name != '/'" t-field="o.name" />
+            </t>
+        </xpath>
         <xpath expr="//div[contains(@class, 'invoice_main')]" position="replace">
             <div class="clearfix invoice_main">
                 <div class="page mb-4">
@@ -189,6 +210,16 @@
                 t-if="o._get_name_invoice_report() == 'l10n_do_accounting.report_invoice_document_inherited'"
                 t-call="l10n_do_accounting.report_invoice_document_inherited"
                 t-lang="lang" />
+            <t t-else="" t-call="account.report_invoice_document" t-lang="lang" />
+        </xpath>
+    </template>
+
+    <!-- Suppress default Odoo logo if company has no custom logo -->
+    <template id="external_layout_standard_no_default_logo" inherit_id="web.external_layout_standard">
+        <xpath expr="//td[@t-if='company.logo']" position="replace">
+            <td t-if="company.logo and not getattr(company, 'uses_default_logo', False)" class="align-top pe-3">
+                <img class="o_company_logo_big" t-att-src="image_data_uri(company.logo)" alt="Logo"/>
+            </td>
         </xpath>
     </template>
 </odoo>
