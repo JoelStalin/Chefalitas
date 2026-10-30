@@ -61,3 +61,9 @@ Revertir: `git revert 20dcf5c c478dd1 63d4be7 77376d3 0f6a923 dce2510 fe918d1 d5
 - Pruebas ejecutadas en una base temporal (tmp_discover, ya eliminada) con la imagen de produccion y la rama montada: 0 fallos, 0 errores (12 tests de pos_printing_suite, incluidos los 3 nuevos de test_discover_printers.py).
 - No se toco la base de produccion. Pendiente: fusionar el PR a feat/odoo-20-production y redesplegar; unificar las conexiones directa/gateway de fripick_orders (requiere migrar datos de Fripick).
 - Revertir: revertir el commit del PR y volver a ejecutar el workflow deploy-prod-odoo20.
+
+## 2026-10-30 Merges a main autorizados y redespliegue v20.0.1
+- Autorizado por el usuario: cualquier merge a main. Fusionados: Chefalitas#51 (timeline), #52 (a feat/odoo-20-production) y #53 (asistente "Buscar impresoras en la red", cherry-pick de #52 sobre main porque main ya tenia el trabajo de Odoo 20 por #50); odoo-l10n-do-ecf#2 (nomina Odoo 20) y #3 (modulo l10n_do_recipe_margin).
+- Redespliegue de produccion en el ThinkCentre: tag v20.0.1 sobre main (7f8b838), workflow deploy-prod-odoo20 (run 41133982657), proyecto Docker chefalitas-prod, puerto 18082.
+- El servidor de la oficina sigue caido; el usuario pidio probar con el contenedor local. El modulo de codigo de barras llega en un repo nuevo de Gemini (pendiente de integrar).
+- Revertir: git revert del commit del PR en main y publicar un tag v20.0.2 (el workflow redespliega); para quitar el contenedor: COMPOSE_PROJECT_NAME=chefalitas-prod docker compose down en /home/ubuntu/chefalitas-odoo20.
