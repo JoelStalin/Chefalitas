@@ -45,3 +45,19 @@ Revertir: `git revert 20dcf5c c478dd1 63d4be7 77376d3 0f6a923 dce2510 fe918d1 d5
   modules.txt y scripts/odoo20 (init-env, install-modules, trim-modules, deploy); modulos propios incorporados: l10n_do_hr_payroll, ai_provider, pos_scale_gateway.
 - Workflows: deploy.yml (Odoo 18 por SSH desde GitHub, fallaba) queda como deploy-odoo18-legacy.yml solo manual; nuevo deploy-prod-odoo20.yml en runner propio (chefalitas-prod) al publicar v20.*.
 - Revertir: revertir el commit squash del PR.
+
+## 2026-10-30 Despliegue de produccion de Odoo 20 desde el ThinkCentre (tag v20.0.0)
+- Autorizado por el usuario: usar solo runners del ThinkCentre, sin crear otras credenciales. La produccion vieja (Odoo 18, PC de la oficina) tiene el tunel caido; no se toca.
+- Runner nuevo del repo Chefalitas: thinkcentre-chefalitas (label chefalitas-prod), servicio systemd actions.runner.JoelStalin-Chefalitas.thinkcentre-chefalitas, carpeta ~/actions-runner-chefalitas, con .env: HTTP_PORT=18082 (18080 ya lo usa getupsoft-site-prod) y DEPLOY_DIR=/home/ubuntu/chefalitas-odoo20.
+- Disparo: tag v20.0.0 sobre 2ca215d -> workflow deploy-prod-odoo20.yml (run 41113587487 cancelado: el guard G14 detuvo la base porque chefalitas-odoo20-* figura como prueba; relanzado con COMPOSE_PROJECT_NAME=chefalitas-prod, run 41116309952).
+- Pendiente del usuario: apuntar chefalitas.com.do / www al puerto 18082 del tunel de Cloudflare (no hay credenciales para hacerlo) y migrar datos de la base chefalitas del PC de la oficina.
+- Revertir: cd /home/ubuntu/chefalitas-odoo20 && COMPOSE_PROJECT_NAME=chefalitas-prod docker compose down (-v borra los datos); sudo ~/actions-runner-chefalitas/svc.sh stop && sudo ./svc.sh uninstall; git push origin :refs/tags/v20.0.0 && git tag -d v20.0.0; quitar el runner en GitHub (Settings > Actions > Runners).
+- Resultado (2026-10-30 20:07 UTC): run 41116309952 con todos los pasos en success; 109 modulos instalados y recortados a 57 por trim-modules.sh; Odoo 20 responde HTTP 200 en http://127.0.0.1:18082/web/login (ThinkCentre, proyecto Docker chefalitas-prod, carpeta /home/ubuntu/chefalitas-odoo20). Base nueva y vacia: no se migraron datos de la base chefalitas del PC de la oficina.
+- Falta (usuario): apuntar chefalitas.com.do / www al puerto 18082 en el tunel de Cloudflare; la politica G14 del guard trata chefalitas-odoo20-* como de prueba (por eso se usa chefalitas-prod).
+- Nota: queda un volumen Docker vacio huerfano chefalitas-odoo20_db (creado por un error de un script de pruebas); se puede borrar con docker volume rm cuando Docker lo libere. Base temporal de pruebas tmp_discover: se elimina al terminar el script de pruebas.
+
+## 2026-10-30 Asistente "Buscar impresoras en la red" de pos_printing_suite (feat/pos-printing-discover, PR Chefalitas#52)
+- Menu Punto de venta > Configuracion > Buscar impresoras en la red: escanea el puerto 9100 de una red privada (maximo 1024 equipos; rechaza redes publicas) y agrega las elegidas al punto de venta como impresora de caja o cocina, sin duplicar las ya registradas.
+- Pruebas ejecutadas en una base temporal (tmp_discover, ya eliminada) con la imagen de produccion y la rama montada: 0 fallos, 0 errores (12 tests de pos_printing_suite, incluidos los 3 nuevos de test_discover_printers.py).
+- No se toco la base de produccion. Pendiente: fusionar el PR a feat/odoo-20-production y redesplegar; unificar las conexiones directa/gateway de fripick_orders (requiere migrar datos de Fripick).
+- Revertir: revertir el commit del PR y volver a ejecutar el workflow deploy-prod-odoo20.
