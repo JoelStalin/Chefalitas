@@ -72,3 +72,8 @@ Revertir: `git revert 20dcf5c c478dd1 63d4be7 77376d3 0f6a923 dce2510 fe918d1 d5
 - Verificado en la base real chefalitas del ThinkCentre (proyecto chefalitas-prod, puerto 18082) a las 22:04 UTC: el menu "Buscar impresoras en la red" existe y esta activo (ir_ui_menu id 336), los modelos pos.printing.discover.wizard y pos.printing.discover.line estan registrados y pos_printing_suite figura installed 20.0.1.0.0. Login HTTP 200 durante y despues de la actualizacion.
 - Pruebas automaticas previas en base temporal: 0 fallos, 0 errores.
 - Revertir: git revert del commit del PR #53 en main y publicar el tag v20.0.2 (el workflow redespliega y -u quita las vistas).
+
+## 2026-10-30 trim-modules.sh reintenta cuando Odoo ejecuta una accion programada (fix/trim-modules-cron-retry)
+- Causa: en el redespliegue v20.0.1 (run 41133982657) la actualizacion de modulos termino bien, pero trim-modules.sh fallo al desinstalar el extra "rpc": el Odoo que seguia sirviendo ejecutaba un cron y Odoo bloquea las operaciones de modulos en ese momento ("Odoo is currently processing a scheduled action"). En el primer despliegue no ocurrio porque aun no habia un Odoo corriendo.
+- Arreglo: ante ese error se hace rollback, se espera 20 s y se reintenta (hasta 15 veces).
+- Revertir: revertir el commit del PR y publicar un tag nuevo (v20.0.3) para redesplegar.
