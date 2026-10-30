@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_company_form_fripick" model="ir.ui.view">
+        <field name="name">res.company.form.fripick</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Fripick" name="fripick">
+                    <group>
+                        <group string="Facturación mensual">
+                            <field name="fripick_external_id"/>
+                            <field name="fripick_invoice_issuer" widget="radio"/>
+                            <field name="fripick_partner_id"/>
+                            <field name="fripick_last_sync"/>
+                        </group>
+                        <group string="Impresión">
+                            <field name="fripick_kitchen_printer_id"/>
+                            <field name="fripick_cashier_printer_id"/>
+                            <field name="fripick_labels_enabled"/>
+                            <field name="fripick_label_format" invisible="not fripick_labels_enabled" widget="radio"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

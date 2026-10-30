@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="cron_fripick_daily_sync" model="ir.cron">
+        <field name="name">Fripick: sincronización diaria de empresas</field>
+        <field name="model_id" ref="model_fripick_sync"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_daily_sync()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+    </record>
+    <record id="cron_fripick_monthly_invoice" model="ir.cron">
+        <field name="name">Fripick: factura mensual (día 1)</field>
+        <field name="model_id" ref="model_fripick_billing"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_monthly()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+    </record>
+    <record id="cron_fripick_print_retry" model="ir.cron">
+        <field name="name">Fripick: reintentar impresiones</field>
+        <field name="model_id" ref="model_fripick_print_job"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_retry()</field>
+        <field name="interval_number">2</field>
+        <field name="interval_type">minutes</field>
+    </record>
+</odoo>
