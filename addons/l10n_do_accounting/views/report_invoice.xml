@@ -1,60 +1,62 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-        <template id="informations">
-        <table class="w-100 mb-4" style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
-            <tr>
-                <td style="width: 55%; vertical-align: top; padding-right: 15px;">
-                    <div style="font-size: 13pt; font-weight: bold; line-height: 1.2;">
-                        <span t-field="o.company_id.partner_id.name" />
-                    </div>
-                    <div class="text-muted" style="font-size: 10pt; margin-top: 4px; line-height: 1.3;">
-                        <span t-field="o.company_id.partner_id"
-                            t-options='{"widget": "contact", "fields": ["address"], "no_marker": true}' />
-                    </div>
-                    <div style="font-size: 10pt; margin-top: 6px; line-height: 1.4;">
-                        <strong>RNC:</strong> <span t-if="o.company_id.vat" t-field="o.company_id.vat" /><br />
-                        <strong>Fecha Emisión:</strong> <span t-field="o.invoice_date" t-options='{"format": "dd/MM/yyyy"}' /><br />
-                        <t t-if="o.invoice_date_due and o.move_type == 'out_invoice' and o.state == 'posted'">
-                            <strong>Vencimiento:</strong> <span t-field="o.invoice_date_due" t-options='{"format": "dd/MM/yyyy"}' /><br />
-                        </t>
-                    </div>
-                </td>
-                <td style="width: 45%; vertical-align: top; text-align: right;">
-                    <t t-if="o.l10n_latam_document_type_id">
-                        <h2 style="font-size: 18pt; font-weight: bold; margin: 0 0 10px 0; color: #111;">
-                            <span t-field="o.l10n_latam_document_type_id.report_name" />
-                        </h2>
-                    </t>
-                    <div style="font-size: 11pt; line-height: 1.5;">
-                        <strong>NCF:</strong> <span style="font-weight: bold;" t-field="o.l10n_do_fiscal_number" /><br />
-                        <strong>Válida hasta:</strong> <span t-field="o.l10n_do_ncf_expiration_date" t-options='{"format": "dd/MM/yyyy"}' /><br />
-                    </div>
-                </td>
-            </tr>
-        </table>
-        <table id="receiver_info" class="w-100 mb-4" style="width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 24px;">
-            <tr>
-                <td style="width: 100%; vertical-align: top;">
-                    <t t-set="vat_len" t-value="len(o.commercial_partner_id.vat or '')" />
-                    <div style="font-size: 10pt; line-height: 1.4;">
-                        <strong>
-                            <t t-if="vat_len == 9">RNC:</t>
-                            <t t-elif="vat_len == 11">Cédula:</t>
-                            <t t-else="">ID Cliente:</t>
-                        </strong>
-                        <span class="m-0" t-field="o.commercial_partner_id.vat" /><br />
-                        <strong>
-                            <t t-if="vat_len == 9">Razón Social:</t>
-                            <t t-else="">Nombre:</t>
-                        </strong>
-                        <span class="m-0" t-field="o.commercial_partner_id.name" /><br />
-                        <span t-if="o.partner_id.street" class="m-0"
-                            t-field="o.partner_id"
-                            t-options='{"widget": "contact", "fields": ["address"], "no_marker": true}' />
-                    </div>
-                </td>
-            </tr>
-        </table>
+    <template id="informations">
+        <div id="informations" class="row mt36 mb32">
+            <div class="col-6">
+                <strong t-field="o.company_id.partner_id.name" />
+                <br />
+                <span t-field="o.company_id.partner_id"
+                    class="text-muted"
+                    t-options='{"widget": "contact", "fields": ["address"], "no_marker": true}' />
+                <br />
+                <strong>RNC:</strong>
+                <span t-if="o.company_id.vat" t-field="o.company_id.vat" />
+                <br />
+                <strong>Fecha Emisión:</strong>
+                <span t-field="o.invoice_date" t-options='{"format": "dd/MM/yyyy"}' />
+                <br />
+                <t
+                    t-if="o.invoice_date_due and o.move_type == 'out_invoice' and o.state == 'posted'">
+                    <strong>Vencimiento:</strong>
+                    <span t-field="o.invoice_date_due" t-options='{"format": "dd/MM/yyyy"}' />
+                </t>
+            </div>
+            <div class="col-6">
+                <t t-if="o.l10n_latam_document_type_id">
+                    <h2>
+                        <span t-field="o.l10n_latam_document_type_id.report_name" />
+                    </h2>
+                </t>
+                <strong>NCF:</strong>
+                <span t-field="o.l10n_do_fiscal_number" />
+                <br />
+                <!-- <t t-if="o.l10n_do_ncf_expiration_date"> -->
+                <strong>Válida hasta:</strong>
+                <span t-field="o.l10n_do_ncf_expiration_date" t-options='{"format": "dd/MM/yyyy"}' />
+                <!-- </t> -->
+            </div>
+        </div>
+        <div id="receiver_info" class="row mt32 mb32">
+            <t t-set="vat_len" t-value="len(o.commercial_partner_id.vat or '')" />
+            <div class="col-auto col-7 mw-100 mb-2">
+                <strong>
+                    <t t-if="vat_len == 9">RNC:</t>
+                    <t t-elif="vat_len == 11">Cédula:</t>
+                    <t t-else="">ID Cliente:</t>
+                </strong>
+                <span class="m-0" t-field="o.commercial_partner_id.vat" />
+                <br />
+                <strong>
+                    <t t-if="vat_len == 9">Razón Social:</t>
+                    <t t-else="">Nombre:</t>
+                </strong>
+                <span class="m-0" t-field="o.commercial_partner_id.name" />
+                <br />
+                <span t-if="o.partner_id.street" class="m-0"
+                    t-field="o.partner_id"
+                    t-options='{"widget": "contact", "fields": ["address"], "no_marker": true}' />
+            </div>
+        </div>
     </template>
 
     <!-- Tax Totals Template -->
@@ -69,29 +71,14 @@
                         t-options='{"widget": "monetary", "display_currency": o.currency_id}' />
                 </td>
             </tr>
-            <!-- Desglose por grupos de impuestos (ITBIS, Retenciones, etc.) -->
-            <t t-if="o.tax_totals and o.tax_totals.get('subtotals')">
-                <t t-foreach="o.tax_totals.get('subtotals', [])" t-as="subtotal">
-                    <t t-foreach="subtotal.get('tax_groups', [])" t-as="tax_group">
-                        <tr>
-                            <td><span t-out="tax_group.get('group_name')" /></td>
-                            <td class="text-end">
-                                <span t-out="tax_group.get('tax_amount_currency')"
-                                    t-options='{"widget": "monetary", "display_currency": o.currency_id}' />
-                            </td>
-                        </tr>
-                    </t>
-                </t>
-            </t>
-            <t t-else="">
-                <tr>
-                    <td>ITBIS</td>
-                    <td class="text-end">
-                        <span t-field="o.itbis_amount"
-                            t-options='{"widget": "monetary", "display_currency": o.currency_id}' />
-                    </td>
-                </tr>
-            </t>
+            <!-- Total Impuestos con amount_tax_signed -->
+            <tr>
+                <td>ITBIS</td>
+                <td class="text-end">
+                    <span t-field="o.itbis_amount"
+                        t-options='{"widget": "monetary", "display_currency": o.currency_id}' />
+                </td>
+            </tr>
             <!-- Propina (10%) solo si o.propina_amount != 0 -->
             <t t-if="o.propina_amount">
                 <tr>
@@ -118,10 +105,6 @@
     <!-- Main Report Inheritance -->
     <template id="report_invoice_document_inherited" inherit_id="account.report_invoice_document"
         primary="True">
-                <xpath expr="//t[@t-set='layout_document_title']" position="replace">
-            <!-- DGII Dominican fiscal compliance: never display Proforma Invoice or generic titles -->
-            <t t-set="layout_document_title"/>
-        </xpath>
         <xpath expr="//div[contains(@class, 'invoice_main')]" position="replace">
             <div class="clearfix invoice_main">
                 <div class="page mb-4">
@@ -206,16 +189,6 @@
                 t-if="o._get_name_invoice_report() == 'l10n_do_accounting.report_invoice_document_inherited'"
                 t-call="l10n_do_accounting.report_invoice_document_inherited"
                 t-lang="lang" />
-            <t t-else="" t-call="account.report_invoice_document" t-lang="lang" />
-        </xpath>
-    </template>
-
-    <!-- Suppress default Odoo logo if company has no custom logo -->
-    <template id="external_layout_standard_no_default_logo" inherit_id="web.external_layout_standard">
-        <xpath expr="//td[@t-if='company.logo']" position="replace">
-            <td t-if="company.logo and not getattr(company, 'uses_default_logo', False)" class="align-top pe-3">
-                <img class="o_company_logo_big" t-att-src="image_data_uri(company.logo)" alt="Logo"/>
-            </td>
         </xpath>
     </template>
 </odoo>
