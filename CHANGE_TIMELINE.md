@@ -55,3 +55,9 @@ Revertir: `git revert 20dcf5c c478dd1 63d4be7 77376d3 0f6a923 dce2510 fe918d1 d5
 - Resultado (2026-10-30 20:07 UTC): run 41116309952 con todos los pasos en success; 109 modulos instalados y recortados a 57 por trim-modules.sh; Odoo 20 responde HTTP 200 en http://127.0.0.1:18082/web/login (ThinkCentre, proyecto Docker chefalitas-prod, carpeta /home/ubuntu/chefalitas-odoo20). Base nueva y vacia: no se migraron datos de la base chefalitas del PC de la oficina.
 - Falta (usuario): apuntar chefalitas.com.do / www al puerto 18082 en el tunel de Cloudflare; la politica G14 del guard trata chefalitas-odoo20-* como de prueba (por eso se usa chefalitas-prod).
 - Nota: queda un volumen Docker vacio huerfano chefalitas-odoo20_db (creado por un error de un script de pruebas); se puede borrar con docker volume rm cuando Docker lo libere. Base temporal de pruebas tmp_discover: se elimina al terminar el script de pruebas.
+
+## 2026-10-30 Asistente "Buscar impresoras en la red" de pos_printing_suite (feat/pos-printing-discover, PR Chefalitas#52)
+- Menu Punto de venta > Configuracion > Buscar impresoras en la red: escanea el puerto 9100 de una red privada (maximo 1024 equipos; rechaza redes publicas) y agrega las elegidas al punto de venta como impresora de caja o cocina, sin duplicar las ya registradas.
+- Pruebas ejecutadas en una base temporal (tmp_discover, ya eliminada) con la imagen de produccion y la rama montada: 0 fallos, 0 errores (12 tests de pos_printing_suite, incluidos los 3 nuevos de test_discover_printers.py).
+- No se toco la base de produccion. Pendiente: fusionar el PR a feat/odoo-20-production y redesplegar; unificar las conexiones directa/gateway de fripick_orders (requiere migrar datos de Fripick).
+- Revertir: revertir el commit del PR y volver a ejecutar el workflow deploy-prod-odoo20.
