@@ -21,3 +21,6 @@ orca_bridge
 ai_provider
 # Balanza
 pos_scale_gateway
+
+# Escaner de codigos de barras para inventario y recepciones (repo odoo-orca-global-addons, commit 23691e5)
+orca_stock_logistics_barcode

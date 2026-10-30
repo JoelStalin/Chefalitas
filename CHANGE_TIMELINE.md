@@ -83,3 +83,9 @@ Revertir: `git revert 20dcf5c c478dd1 63d4be7 77376d3 0f6a923 dce2510 fe918d1 d5
 - Verificado a las 22:17 UTC en la base real chefalitas (proyecto chefalitas-prod, puerto 18082): login HTTP 200, menu "Buscar impresoras en la red" activo (ir_ui_menu 336), modelos pos.printing.discover.wizard y .line registrados, 57 modulos instalados, contenedores nginx, odoo y db arriba.
 - Pendiente del usuario: apuntar chefalitas.com.do y www al puerto 18082 en el tunel de Cloudflare, actualizar la politica G14 del guard (trata chefalitas-odoo20-* como de prueba), y migrar datos de la base del PC de la oficina. Modulo de codigo de barras: llega en un repo nuevo de Gemini.
 - Revertir: git revert del commit en main y publicar un tag nuevo (v20.0.3) para redesplegar; para bajar el servicio: COMPOSE_PROJECT_NAME=chefalitas-prod docker compose down en /home/ubuntu/chefalitas-odoo20.
+
+## 2026-10-30 Modulo de codigos de barras de Gemini en Chefalitas (feat/orca-stock-logistics-barcode)
+- Se incorpora addons/orca_stock_logistics_barcode (20.0.1.0.0, LGPL-3, autor GetUpSoft) tomado del repo nuevo JoelStalin/odoo-orca-global-addons, rama feat/orca-stock-logistics-barcode-v20, commit 23691e5. Depende solo de modulos community (stock, barcodes, product, uom, web). Se agrega a modules.txt.
+- Revision previa: sin secretos; unicas llamadas externas a Open Food Facts / Open Products Facts (APIs publicas, solo se envia el codigo de barras).
+- No se fusiono el PR #1 de odoo-l10n-do-ecf (feat/orca-stock-logistics-barcode-v20): reescribe el README del repo (borra la documentacion normativa DGII) y cambia update-client-module.sh para apuntar al repo nuevo, lo que rompe a los clientes que descargan ese script de main. Decision pendiente del usuario sobre ese repo.
+- Revertir: revertir el commit del PR y publicar un tag nuevo (el modulo queda instalado en la base: desinstalarlo desde Aplicaciones o con odoo shell).
