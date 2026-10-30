@@ -67,3 +67,8 @@ Revertir: `git revert 20dcf5c c478dd1 63d4be7 77376d3 0f6a923 dce2510 fe918d1 d5
 - Redespliegue de produccion en el ThinkCentre: tag v20.0.1 sobre main (7f8b838), workflow deploy-prod-odoo20 (run 41133982657), proyecto Docker chefalitas-prod, puerto 18082.
 - El servidor de la oficina sigue caido; el usuario pidio probar con el contenedor local. El modulo de codigo de barras llega en un repo nuevo de Gemini (pendiente de integrar).
 - Revertir: git revert del commit del PR en main y publicar un tag v20.0.2 (el workflow redespliega); para quitar el contenedor: COMPOSE_PROJECT_NAME=chefalitas-prod docker compose down en /home/ubuntu/chefalitas-odoo20.
+
+## 2026-10-30 Resultado del redespliegue v20.0.1 (run 41133982657)
+- Verificado en la base real chefalitas del ThinkCentre (proyecto chefalitas-prod, puerto 18082) a las 22:04 UTC: el menu "Buscar impresoras en la red" existe y esta activo (ir_ui_menu id 336), los modelos pos.printing.discover.wizard y pos.printing.discover.line estan registrados y pos_printing_suite figura installed 20.0.1.0.0. Login HTTP 200 durante y despues de la actualizacion.
+- Pruebas automaticas previas en base temporal: 0 fallos, 0 errores.
+- Revertir: git revert del commit del PR #53 en main y publicar el tag v20.0.2 (el workflow redespliega y -u quita las vistas).
