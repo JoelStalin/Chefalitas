@@ -39,3 +39,9 @@ Revertir: `git revert 20dcf5c c478dd1 63d4be7 77376d3 0f6a923 dce2510 fe918d1 d5
 - Para poder desplegar se guardó en `git stash` (stash@{0} en ~/workspaces/chefalitas del ThinkCentre) un cambio sin commit del 2026-10-17 en report_invoice.xml (ocultar el título "Invoice …" y el logo por defecto). Quedó superado por PR #47 (95694ce, desplegado 2026-10-21 22:18 UTC): quita la palabra Invoice, prefijo Proforma en borradores y sin logo por defecto. El stash ya no hace falta.
 - Pendiente: homologar el formato en el repositorio global JoelStalin/odoo-l10n-do-ecf (su report_invoice.xml es la versión inicial e144cf6).
 - Revertir: git revert 2e6db0d (y despliegue); el stash se recupera con `git stash pop`.
+
+## 2026-10-31 Formato de factura de odoo.getupsoft.com: se restaura el validado y el despliegue recrea contenedores obsoletos
+- Dano: la rama fix/remove-proforma-label-dgii (Gemini) quedo activa en ~/workspaces/chefalitas (el directorio que monta odoo.getupsoft.com) y su l10n_do_accounting se aplico a la base getupsoft (2026-10-31 02:37 UTC). Cambiaba la cabecera de dos columnas por una tabla, quitaba los estados Proforma/Cancelled/Credit Note del titulo y agregaba una plantilla que oculta el titulo en web.external_layout_body (todos los reportes).
+- Correccion: se redespliega feature/etapa1-easycount-ecf, cuyo report_invoice.xml es identico al validado (51117e3, PR #47), con deploy-odoo20-thinkcentre.yml y -u l10n_do_accounting. La rama de Gemini NO se borra y NO debe desplegarse.
+- Causa del primer intento fallido (run 41198020870): el contenedor getupsoft-odoo20-odoo-1 habia perdido su capa de disco (docker exec: rootfs no such file). El workflow ahora detecta eso y lo recrea desde su proyecto compose antes de actualizar (unos 30-40 s de caida).
+- Revertir: git revert del commit del PR y volver a ejecutar el workflow.
