@@ -1,0 +1,7 @@
+# Formato de factura validado en la certificacion DGII: todo cambio lo revisa el titular.
+/addons/l10n_do_accounting/views/report_invoice.xml            @JoelStalin
+/addons/l10n_do_accounting/views/report_invoice_preview.xml    @JoelStalin
+/scripts/guard/                                                @JoelStalin
+/.githooks/                                                    @JoelStalin
+/.github/workflows/guard-invoice-format.yml                    @JoelStalin
+/.github/CODEOWNERS                                            @JoelStalin

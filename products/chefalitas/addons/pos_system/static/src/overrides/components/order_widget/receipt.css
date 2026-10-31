@@ -1,0 +1,44 @@
+/* tabla */
+.pos-receipt table.custom-lines {
+  table-layout: auto;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* columnas */
+.pos-receipt .custom-lines col.col-qty   { width: 22%; }
+.pos-receipt .custom-lines col.col-desc  { width: auto; }
+.pos-receipt .custom-lines col.col-total { width: 34%; }
+
+/* alineación */
+.pos-receipt .ta-center { text-align: center; }
+.pos-receipt .ta-right  { text-align: right; }
+
+/* cantidad: no se parte */
+.pos-receipt .col-qty {
+  white-space: nowrap;
+  overflow: visible;
+}
+
+/* descripción: puede envolver */
+.pos-receipt .col-desc {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* total: permite saltar de línea si es necesario */
+.pos-receipt .col-total .product-price {
+  white-space: normal;      /* ← aquí la clave */
+  word-break: break-word;   /* si es muy largo, lo parte */
+  overflow-wrap: anywhere;
+  text-align: right;
+  font-size: 0.95em;        /* opcional para caber mejor */
+}
+
+/* Evita que la dirección se quede en una sola línea; permite quebrar palabras largas */
+.pos-receipt .receipt-address {
+  white-space: normal !important;
+  word-break: break-word;     /* Soporta quiebre dentro de palabras largas */
+  overflow-wrap: anywhere;    /* Fuerza quiebre aun sin espacios */
+}

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Cambiar las plantillas protegidas exige la marca [formato-factura-aprobado] en el mensaje del commit.
+staged="$(git diff --cached --name-only)"
+echo "$staged" | grep -qE '^(addons/l10n_do_accounting/views/report_invoice(_preview)?\.xml|scripts/guard/invoice_format\.sha256)$' || exit 0
+grep -q '\[formato-factura-aprobado\]' "$1" || {
+  echo "Este commit cambia el formato de factura validado por la DGII."
+  echo "Solo con aprobacion del titular: agrega [formato-factura-aprobado] al mensaje."
+  exit 1
+}

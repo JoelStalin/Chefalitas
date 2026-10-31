@@ -1,0 +1,4 @@
+id,name,model_id,group_id/id,operation,domain
+access_pos_printing_suite_agent_install_wizard,pos_printing_suite_agent_install_wizard,pos.printing.suite.agent.install.wizard,base.group_system,crud,
+access_pos_printing_agent_printer,pos_printing_agent_printer,pos.printing.agent.printer,point_of_sale.group_pos_manager,r,
+rule_pos_printing_agent_printer_company,Agent Printers: multi-company,pos.printing.agent.printer,,crud,"['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]"
