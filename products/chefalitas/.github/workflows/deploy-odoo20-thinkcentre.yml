@@ -1,0 +1,106 @@
+name: Deploy Odoo 20 (ThinkCentre)
+
+# Upgrades the changed addons in the Odoo 20 instances on the ThinkCentre (GetUpSoft billing and the ecflive lab),
+# which mount ~/workspaces/chefalitas/addons. Odoo 18 production keeps its own workflow (deploy.yml, main).
+on:
+  push:
+    branches: [feature/etapa1-easycount-ecf]
+    paths: ['addons/**', '.github/workflows/deploy-odoo20-thinkcentre.yml']
+  workflow_dispatch:
+    inputs:
+      modules:
+        description: Comma-separated modules to upgrade (empty = the ones changed by the last push)
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-odoo20-thinkcentre
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: thinkcentre-odoo20
+      url: https://odoo.getupsoft.com
+    steps:
+      - name: Install cloudflared
+        env:
+          CLOUDFLARED_VERSION: "2026.9.3"
+        run: |
+          curl -fsSL -o /tmp/cloudflared.deb "https://github.com/cloudflare/cloudflared/releases/download/${CLOUDFLARED_VERSION}/cloudflared-linux-amd64.deb"
+          sudo dpkg -i /tmp/cloudflared.deb
+
+      - name: SSH config
+        env:
+          KEY: ${{ secrets.THINKCENTRE_SSH_KEY }}
+          HOST: ${{ secrets.THINKCENTRE_SSH_HOST }}
+          USER_: ${{ secrets.THINKCENTRE_SSH_USER }}
+          CF_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          cat > ~/.ssh/config <<CONF
+          Host thinkcentre
+            HostName ${HOST}
+            User ${USER_}
+            IdentityFile ~/.ssh/deploy_key
+            IdentitiesOnly yes
+            StrictHostKeyChecking accept-new
+            ServerAliveInterval 30
+            ProxyCommand cloudflared access ssh --hostname %h --service-token-id ${CF_ID} --service-token-secret ${CF_SECRET}
+          CONF
+
+      - name: Update the checkout and upgrade the modules
+        env:
+          BRANCH: ${{ github.ref_name }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+          MODULES: ${{ inputs.modules }}
+        run: |
+          ssh thinkcentre "BRANCH='$BRANCH' BEFORE='$BEFORE' AFTER='$AFTER' MODULES='$MODULES' bash -s" <<'REMOTE'
+          set -Eeuo pipefail
+          cd ~/workspaces/chefalitas
+          if [ -n "$(git status --porcelain --untracked-files=no)" ]; then echo "checkout has local changes, refusing to deploy"; exit 1; fi
+          git fetch -q origin "$BRANCH"
+          git checkout -q "$BRANCH"
+          git merge -q --ff-only "origin/$BRANCH"
+          [ "$(git rev-parse HEAD)" = "$AFTER" ] || git merge-base --is-ancestor "$AFTER" HEAD
+          MARKER=~/.chefalitas-odoo20-deployed
+          BASE=$(cat "$MARKER" 2>/dev/null || echo "$BEFORE")
+          if [ -z "$MODULES" ] && git cat-file -e "${BASE}^{commit}" 2>/dev/null; then
+            MODULES=$(git diff --name-only "$BASE" "$AFTER" -- addons | cut -d/ -f2 | sort -u | while read -r m; do if [ -f "addons/$m/__manifest__.py" ]; then echo "$m"; fi; done | paste -sd, -)
+          fi
+          echo "modules: ${MODULES:-<none>}"
+          [ -n "$MODULES" ] || { echo "$AFTER" > "$MARKER"; exit 0; }
+          for target in getupsoft-odoo20-odoo-1:getupsoft:18070 ecflive-odoo-1:ecflive:18069; do
+            IFS=: read -r c db port <<<"$target"
+            if ! docker ps --format '{{.Names}}' | grep -qx "$c"; then echo "skip $c (not running)"; continue; fi
+            # a container whose layer was pruned keeps serving but refuses `docker exec` (and would not start again):
+            # recreate it from its own compose project before upgrading
+            if ! docker exec "$c" true 2>/dev/null; then
+              echo "$c does not accept exec (stale container): recreating it from its compose project"
+              pdir=$(docker inspect "$c" --format '{{index .Config.Labels "com.docker.compose.project.working_dir"}}')
+              psvc=$(docker inspect "$c" --format '{{index .Config.Labels "com.docker.compose.service"}}')
+              [ -n "$pdir" ] && [ -n "$psvc" ] || { echo "$c has no compose labels, cannot recreate"; exit 1; }
+              (cd "$pdir" && docker compose up -d --force-recreate --no-deps "$psvc")
+              for i in $(seq 1 30); do docker exec "$c" true 2>/dev/null && break; sleep 2; done
+              docker exec "$c" true
+            fi
+            echo "== $c / $db"
+            docker exec "$c" sh -c 'odoo --db_host "$HOST" --db_user "$USER" --db_password "$PASSWORD" -d "$0" -u "$1" --stop-after-init --no-http --log-level=warn' "$db" "$MODULES"
+            docker restart "$c" >/dev/null
+            for i in $(seq 1 40); do
+              code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$port/web/login" || true)
+              [ "$code" = 200 ] && break; sleep 3
+            done
+            echo "$c /web/login -> $code"; [ "$code" = 200 ]
+          done
+          echo "$AFTER" > "$MARKER"
+          REMOTE
+
