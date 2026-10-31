@@ -16,8 +16,8 @@ class FripickGateway(http.Controller):
         auth = request.httprequest.headers.get("Authorization", "")
         token = auth[7:] if auth.startswith("Bearer ") else ""
         if len(token) < 20:
-            return request.env["fripick.printer"].browse()
-        return request.env["fripick.printer"].sudo().search([("token", "=", token), ("connection", "=", "gateway")], limit=1)
+            return request.env["pos.printer"].browse()
+        return request.env["pos.printer"].sudo().search([("gateway_token", "=", token), ("printer_type", "=", "cloud_gateway")], limit=1)
 
     # readonly=False: Odoo 20 runs GET routes read-only, and taking the jobs marks them as sent
     @http.route("/fripick/gateway/jobs", type="http", auth="none", methods=["GET"], csrf=False, readonly=False)
@@ -29,7 +29,9 @@ class FripickGateway(http.Controller):
         jobs.write({"state": "sent"})
         payload = [{"id": job.id, "type": job.content_type,
                     "data": job.payload} for job in jobs]
-        return request.make_json_response({"printer": {"host": printer.host, "port": printer.port, "paper": printer.paper},
+        return request.make_json_response({"printer": {"name": printer.local_printer_name or printer.name,
+                                                       "host": printer._printing_host(), "port": printer.network_port,
+                                                       "paper": printer.paper_size},
                                            "jobs": payload})
 
     @http.route("/fripick/gateway/ack", type="http", auth="none", methods=["POST"], csrf=False, readonly=False)
