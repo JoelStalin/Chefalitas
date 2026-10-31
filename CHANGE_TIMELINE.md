@@ -138,3 +138,10 @@ Revertir: `git revert 20dcf5c c478dd1 63d4be7 77376d3 0f6a923 dce2510 fe918d1 d5
 - Port: codigos de barras de caja en product.uom (producto + unidad de empaque + codigo); unidades por caja = conversion de la unidad de empaque a la del producto (effective_unit_factor, qty_per_box como alias); jerarquia palet/caja = jerarquia de unidades de Odoo. Creacion al vuelo de cajas ITF-14 crea la unidad "Caja xN" y su product.uom. Movimientos: se usa packaging_uom_id de Odoo 20 (no se escribe). Vista sobre product.product_uom_view_form/list. Sin el mixin eliminado (el escaner usa la app OWL por RPC). Bug corregido: custom_brand False hacia fallar la creacion al vuelo.
 - Pruebas reescritas (las originales esperaban claves que el codigo nunca devolvia): 7/7 en BD temporal tmp_barcode (borrada al terminar).
 - No instalado en produccion (18082). Revertir: revertir este commit.
+
+## 2026-10-31 Una sola impresora: fripick_orders usa pos.printer de pos_printing_suite (feat/fripick-printers-unified)
+- Pedido del usuario: unificar en un solo modulo las funciones de impresora repetidas. fripick_orders tenia su propio modelo fripick.printer (IP directa, agente HTTP, gateway en la nube) duplicando pos.printer de pos_printing_suite.
+- Ahora: pos.printer (pos_printing_suite) es el unico modelo. Agrega el tipo "Gateway / tunel (Odoo en la nube)", puerto, compania y token del gateway/agente (rotable). Las impresoras que encuentra el asistente de descubrimiento de red (IP, 9100) sirven directo para las comandas y etiquetas de Fripick. fripick.printer eliminado; cola, gateway (pull por token) y empresa apuntan a pos.printer; menu Fripick > Impresoras abre las impresoras POS.
+- Datos: la base de produccion chefalitas tenia 0 fripick_printer y 0 trabajos (verificado en solo lectura): no hace falta migrar.
+- Pruebas: fripick_orders + pos_printing_suite 14/14 en BD temporal tmp_printers (borrada).
+- Revertir: revertir este commit.

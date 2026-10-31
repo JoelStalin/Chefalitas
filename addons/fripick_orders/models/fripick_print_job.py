@@ -16,7 +16,7 @@ class FripickPrintJob(models.Model):
     _description = "Fripick print job"
     _order = "id"
 
-    printer_id = fields.Many2one("fripick.printer", required=True, ondelete="cascade", index=True)
+    printer_id = fields.Many2one("pos.printer", required=True, ondelete="cascade", index=True)
     company_id = fields.Many2one(related="printer_id.company_id", store=True)
     kind = fields.Selection([("kitchen", "Comanda de cocina"), ("label", "Etiqueta")], required=True)
     content_type = fields.Selection([("raw", "ESC/POS"), ("pdf", "PDF")], required=True, default="raw")
@@ -28,19 +28,20 @@ class FripickPrintJob(models.Model):
     error = fields.Char()
 
     def dispatch(self):
-        for job in self.filtered(lambda j: j.state == "queued" and j.printer_id.connection != "gateway"):
+        for job in self.filtered(lambda j: j.state == "queued" and j.printer_id._printing_connection() in ("direct", "agent")):
             try:
                 data = base64.b64decode(job.payload)
                 printer = job.printer_id
-                if printer.connection == "direct":
-                    with socket.create_connection((printer.host, printer.port or 9100), timeout=5) as conn:
+                if printer._printing_connection() == "direct":
+                    with socket.create_connection((printer._printing_host(), printer.network_port or 9100), timeout=5) as conn:
                         conn.sendall(data)
                 else:
-                    body = json.dumps({"type": job.content_type, "printer": printer.agent_printer_name or printer.name,
+                    token = printer.sudo().gateway_token
+                    body = json.dumps({"type": job.content_type, "printer": printer.local_printer_name or printer.name,
                                        "data": base64.b64encode(data).decode()}).encode()
-                    req = urllib.request.Request(f"http://{printer.host}:{printer.port or 8085}/print", data=body, method="POST",
-                                                 headers={"Content-Type": "application/json",
-                                                          **({"Authorization": f"Bearer {printer.sudo().token}"} if printer.sudo().token else {})})
+                    req = urllib.request.Request(f"http://{printer._printing_host()}:{printer.network_port or 8085}/print", data=body,
+                                                 method="POST", headers={"Content-Type": "application/json",
+                                                                         **({"Authorization": f"Bearer {token}"} if token else {})})
                     urllib.request.urlopen(req, timeout=10).read()
                 job.write({"state": "done", "error": False})
             except Exception as exc:  # network errors stay in the job; the cron retries

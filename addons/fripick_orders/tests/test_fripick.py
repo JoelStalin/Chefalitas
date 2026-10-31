@@ -54,15 +54,15 @@ class TestFripick(TransactionCase):
         self.assertFalse(self.env["fripick.billing"].run(today=date(2026, 10, 1)), "a second run must not invoice again")
 
     def test_gateway_jobs_stay_queued_until_pulled(self):
-        printer = self.env["fripick.printer"].create({"name": "Cocina", "role": "kitchen", "connection": "gateway"})
-        self.assertGreaterEqual(len(printer.token), 20)
+        printer = self.env["pos.printer"].create({"name": "Cocina", "printer_type": "cloud_gateway"})
+        self.assertGreaterEqual(len(printer.gateway_token), 20)
         job = self.env["fripick.print.job"].create({"printer_id": printer.id, "kind": "kitchen", "payload": base64.b64encode(b"x").decode()})
         job.dispatch()
         self.assertEqual(job.state, "queued")
 
     def test_direct_printer_failure_is_retried_then_failed(self):
-        printer = self.env["fripick.printer"].create({"name": "Caja", "role": "cashier", "connection": "direct",
-                                                     "host": "127.0.0.1", "port": 9})
+        printer = self.env["pos.printer"].create({"name": "Caja", "printer_type": "hw_proxy_any_printer",
+                                                  "hw_proxy_ip": "127.0.0.1", "network_port": 9})
         job = self.env["fripick.print.job"].create({"printer_id": printer.id, "kind": "label", "payload": base64.b64encode(b"x").decode()})
         for _ in range(5):
             job.dispatch()
@@ -73,16 +73,16 @@ class TestFripick(TransactionCase):
 @tagged("post_install", "-at_install", "fripick")
 class TestFripickGatewayHttp(HttpCase):
     def test_pull_and_ack_with_token_only(self):
-        printer = self.env["fripick.printer"].create({"name": "Cocina nube", "role": "kitchen", "connection": "gateway"})
+        printer = self.env["pos.printer"].create({"name": "Cocina nube", "printer_type": "cloud_gateway"})
         job = self.env["fripick.print.job"].create({"printer_id": printer.id, "kind": "kitchen", "payload": base64.b64encode(b"hola").decode()})
         self.assertEqual(self.url_open("/fripick/gateway/jobs", headers={"Authorization": "Bearer " + "x" * 30}).status_code, 401)
-        resp = self.url_open("/fripick/gateway/jobs", headers={"Authorization": f"Bearer {printer.token}"})
+        resp = self.url_open("/fripick/gateway/jobs", headers={"Authorization": f"Bearer {printer.gateway_token}"})
         self.assertEqual(resp.status_code, 200)
         jobs = resp.json()["jobs"]
         self.assertEqual([j["id"] for j in jobs], [job.id])
         self.assertEqual(base64.b64decode(jobs[0]["data"]), b"hola")
         ack = self.url_open("/fripick/gateway/ack", data=json.dumps({"id": job.id, "ok": True}),
-                            headers={"Authorization": f"Bearer {printer.token}", "Content-Type": "application/json"})
+                            headers={"Authorization": f"Bearer {printer.gateway_token}", "Content-Type": "application/json"})
         self.assertTrue(ack.json()["ok"])
         job.invalidate_recordset()
         self.assertEqual(job.state, "done")
