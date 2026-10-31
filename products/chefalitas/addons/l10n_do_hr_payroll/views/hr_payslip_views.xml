@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_l10n_do_payslip_tree" model="ir.ui.view">
+        <field name="name">l10n_do.payslip.tree</field>
+        <field name="model">l10n_do.payslip</field>
+        <field name="arch" type="xml">
+            <list string="Recibos de Nómina RD" decoration-info="state == 'draft'" decoration-success="state == 'posted'">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="gross_wage" sum="Total Bruto"/>
+                <field name="total_tss_employee" sum="Total TSS"/>
+                <field name="isr_retention" sum="Total ISR"/>
+                <field name="net_wage" sum="Total Neto"/>
+                <field name="total_company_cost" sum="Costo Empresa"/>
+                <field name="l10n_do_expense_type"/>
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'posted'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_l10n_do_payslip_form" model="ir.ui.view">
+        <field name="name">l10n_do.payslip.form</field>
+        <field name="model">l10n_do.payslip</field>
+        <field name="arch" type="xml">
+            <form string="Recibo de Nómina Dominicana">
+                <header>
+                    <button name="action_calculate" type="object" string="Calcular Nómina" invisible="state != 'draft'" class="oe_highlight"/>
+                    <button name="action_draft" type="object" string="Volver a Borrador" invisible="state not in ('calculated', 'cancel')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,calculated,posted"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Datos del Colaborador">
+                            <field name="employee_id" readonly="state != 'draft'"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="l10n_do_expense_type" readonly="1"/>
+                        </group>
+                        <group string="Período de Liquidación">
+                            <field name="date_from" readonly="state != 'draft'"/>
+                            <field name="date_to" readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Ingresos y Percepciones" name="earnings">
+                            <group>
+                                <group string="Salario Ordinario">
+                                    <field name="wage_base" readonly="state != 'draft'"/>
+                                    <field name="overtime_amount" readonly="state != 'draft'"/>
+                                    <field name="commissions_amount" readonly="state != 'draft'"/>
+                                </group>
+                                <group string="Total Cotizable">
+                                    <field name="gross_wage" class="oe_subtotal_footer_separator"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Deducciones de Ley (Empleado)" name="deductions">
+                            <group>
+                                <group string="Seguridad Social (TSS)">
+                                    <field name="sfs_employee"/>
+                                    <field name="afp_employee"/>
+                                    <field name="total_tss_employee" class="oe_subtotal_footer_separator"/>
+                                </group>
+                                <group string="Impuesto Sobre la Renta (DGII)">
+                                    <field name="taxable_base_isr"/>
+                                    <field name="isr_retention" class="oe_subtotal_footer_separator"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Otras Deducciones">
+                                    <field name="other_deductions" readonly="state != 'draft'"/>
+                                </group>
+                                <group string="Resumen de Pago">
+                                    <field name="total_deductions"/>
+                                    <field name="net_wage" class="oe_subtotal_footer_separator" style="font-size: 1.2em; font-weight: bold; color: #166534;"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Aportes Patronales (Costo Empresa)" name="employer_costs">
+                            <group>
+                                <group string="Aportes a la Seguridad Social (TSS)">
+                                    <field name="sfs_employer"/>
+                                    <field name="afp_employer"/>
+                                    <field name="srl_employer"/>
+                                    <field name="infotep_employer"/>
+                                </group>
+                                <group string="Costo Consolidado">
+                                    <field name="total_employer_contributions"/>
+                                    <field name="total_company_cost" class="oe_subtotal_footer_separator" style="font-size: 1.2em; font-weight: bold;"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_l10n_do_payslip" model="ir.actions.act_window">
+        <field name="name">Nómina Dominicana</field>
+        <field name="res_model">l10n_do.payslip</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Cree un nuevo recibo de nómina dominicana con cálculo automático de TSS y DGII.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_l10n_do_payslip_root"
+              name="Nómina Dominicana"
+              parent="hr.menu_hr_root"
+              action="action_l10n_do_payslip"
+              sequence="25"/>
+</odoo>
