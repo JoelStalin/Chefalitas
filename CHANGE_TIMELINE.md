@@ -104,3 +104,8 @@ Revertir: `git revert 20dcf5c c478dd1 63d4be7 77376d3 0f6a923 dce2510 fe918d1 d5
 - El modulo (hecho para el diseno de Odoo 17-19) hereda product.packaging en models/product_packaging_barcode.py (311 lineas) y lo usa en stock_picking_barcode.py y barcode_enrichment_service.py: no se arregla con una dependencia, requiere portarlo a product.uom (el multiplicador sale de la relacion de uom.uom, ya no de un campo qty).
 - Estado: NO esta en main ni desplegado. La rama feat/orca-stock-logistics-barcode (4219b83) queda como borrador sin fusionar.
 - Siguiente paso: portar a product.uom y volver a correr las pruebas en una base temporal.
+
+## 2026-10-31 Guardian del formato de factura tambien en main
+- Mismo guardian que en la rama de despliegue (scripts/guard, .githooks, workflow guard-invoice-format.yml, CODEOWNERS) y compuerta en deploy-prod-odoo20.yml: un formato de factura distinto del validado en la certificacion DGII no se fusiona ni se despliega.
+- Activar los hooks locales en cada clon: bash scripts/guard/install-hooks.sh. Cambios de formato: solo con aprobacion del titular ([formato-factura-aprobado] y bash scripts/guard/check_invoice_format.sh --update).
+- Revertir: git revert del commit del PR.

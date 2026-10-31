@@ -22,5 +22,7 @@ jobs:
       url: https://chefalitas.com.do
     steps:
       - uses: actions/checkout@v4
+      - name: Guardian del formato de factura
+        run: bash scripts/guard/check_invoice_format.sh
       - name: Desplegar Odoo 20
         run: bash scripts/odoo20/deploy.sh
