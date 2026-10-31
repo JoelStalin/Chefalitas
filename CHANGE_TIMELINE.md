@@ -61,3 +61,10 @@ Revertir: `git revert 20dcf5c c478dd1 63d4be7 77376d3 0f6a923 dce2510 fe918d1 d5
 - Probado: aprueba la version buena y rechaza la danada de Gemini (por huella y por tocar el diseno base).
 - Limite: los hooks locales se saltan con --no-verify; el control real es el workflow en el PR. Recomendado (lo hace el titular): activar en GitHub la proteccion de rama exigiendo el check "Guardian del formato de factura" y la revision de CODEOWNERS.
 - Revertir: git revert del commit del PR; los parametros de la base se borran en Ajustes > Tecnico > Parametros del sistema.
+
+## 2026-10-31 Regresion mia: el Odoo de getupsoft perdio la red de EasyCount (fix/getupsoft-red-easycount)
+- Al recrear getupsoft-odoo20-odoo-1 (PR #58, para arreglar el formato de factura) el contenedor perdio la conexion manual a la red easycount-prod-net: solo conserva getupsoft-odoo20_default y no resuelve easycount-api. Efecto: toda emision e-CF desde odoo.getupsoft.com falla con "EasyCount no pudo asignar el e-NCF: No se pudo conectar con EasyCount (name resolution)". Descubierto al publicar el borrador 6 (E31 de RD$ 1 a Domingo): fallo seguro, no se envio nada a la DGII.
+- Correccion: el workflow conecta el contenedor a easycount-prod-net en cada despliegue (idempotente) y falla si el contenedor no resuelve easycount-api, para no dejar la emision rota en silencio.
+- Tambien se corrigio la configuracion del ITBIS 18% (impuesto 181 y grupo 63): estaban marcados con pais Estados Unidos (233) y la empresa es dominicana (61); Odoo 20 rechazaba crear facturas con ese impuesto. Ahora ambos son DO.
+- Borradores creados (sin publicar): factura 6 = E31 a SUPER COLMADO DOMINGO TORRES EIRL (130610177) y factura 7 = E31 a "Chefalitas y algo mas" (133136122, cliente creado id 22 con el nombre de la base vieja: confirmar la razon social registrada en la DGII), ambas RD$ 1.00 + ITBIS 18% = 1.18, emisor Joel Stalin Martinez Espinal.
+- Revertir: git revert del commit del PR y volver a ejecutar el workflow.
