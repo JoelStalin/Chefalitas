@@ -27,6 +27,9 @@ jobs:
       name: thinkcentre-odoo20
       url: https://odoo.getupsoft.com
     steps:
+      - uses: actions/checkout@v4
+      - name: Guardian del formato de factura
+        run: bash scripts/guard/check_invoice_format.sh
       - name: Install cloudflared
         env:
           CLOUDFLARED_VERSION: "2026.9.3"
