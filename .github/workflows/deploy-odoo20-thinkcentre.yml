@@ -81,6 +81,17 @@ jobs:
           for target in getupsoft-odoo20-odoo-1:getupsoft:18070 ecflive-odoo-1:ecflive:18069; do
             IFS=: read -r c db port <<<"$target"
             if ! docker ps --format '{{.Names}}' | grep -qx "$c"; then echo "skip $c (not running)"; continue; fi
+            # a container whose layer was pruned keeps serving but refuses `docker exec` (and would not start again):
+            # recreate it from its own compose project before upgrading
+            if ! docker exec "$c" true 2>/dev/null; then
+              echo "$c does not accept exec (stale container): recreating it from its compose project"
+              pdir=$(docker inspect "$c" --format '{{index .Config.Labels "com.docker.compose.project.working_dir"}}')
+              psvc=$(docker inspect "$c" --format '{{index .Config.Labels "com.docker.compose.service"}}')
+              [ -n "$pdir" ] && [ -n "$psvc" ] || { echo "$c has no compose labels, cannot recreate"; exit 1; }
+              (cd "$pdir" && docker compose up -d --force-recreate --no-deps "$psvc")
+              for i in $(seq 1 30); do docker exec "$c" true 2>/dev/null && break; sleep 2; done
+              docker exec "$c" true
+            fi
             echo "== $c / $db"
             docker exec "$c" sh -c 'odoo --db_host "$HOST" --db_user "$USER" --db_password "$PASSWORD" -d "$0" -u "$1" --stop-after-init --no-http --log-level=warn' "$db" "$MODULES"
             docker restart "$c" >/dev/null
