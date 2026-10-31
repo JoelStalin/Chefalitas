@@ -1,0 +1,6 @@
+<odoo>
+    <menuitem id="menu_pos_kitchen_root" name="POS Kitchen" sequence="80" />
+    <menuitem id="menu_pos_kitchen_core" name="Core" parent="menu_pos_kitchen_root" sequence="10" />
+    <menuitem id="menu_pos_kitchen_recipes" name="Recipes" parent="menu_pos_kitchen_core" action="action_rest_recipe" />
+    <menuitem id="menu_pos_kitchen_preparations" name="Preparations" parent="menu_pos_kitchen_core" action="action_rest_preparation" />
+</odoo>

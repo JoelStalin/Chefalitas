@@ -1,0 +1,114 @@
+﻿from odoo import api, fields, models
+
+
+class PosConfig(models.Model):
+    _inherit = "pos.config"
+
+    enable_local_printing = fields.Boolean(
+        string="Activar ImpresiÃ³n Local (WebSocket)",
+        help=(
+            "Habilita la comunicaciÃ³n con el agente de impresiÃ³n local para impresiones directas. "
+            "El valor por defecto se toma de los ajustes generales."
+        ),
+        default=lambda self: self._get_default_enable_local_printing(),
+    )
+    local_printer_name = fields.Char(
+        string="Nombre de la Impresora Local",
+        help=(
+            "Nombre de la impresora en el sistema operativo del cliente (por ejemplo, "
+            '"EPSON TM-T20II"), tomado de los ajustes generales.'
+        ),
+        default=lambda self: self._get_default_local_printer_name(),
+    )
+
+    @api.model
+    def _get_default_enable_local_printing(self):
+        """
+        Obtiene el valor por defecto desde el parÃ¡metro de sistema.
+        Se usa al crear nuevos TPVs para mantener consistencia con Ajustes.
+        """
+        param_value = (
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param("pos_any_printer_local.pos_enable_local_printing", "False")
+        )
+        return param_value in ("True", "1", True)
+
+    @api.model
+    def _get_default_local_printer_name(self):
+        """Recupera el nombre de impresora configurado en Ajustes."""
+        return (
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param("pos_any_printer_local.pos_local_printer_name", "")
+        )
+
+    def _loader_params_pos_config(self):
+        """Asegura que los nuevos campos estÃ©n disponibles en el frontend del POS."""
+        params = super()._loader_params_pos_config()
+        params["fields"].extend(["enable_local_printing", "local_printer_name"])
+        return params
+
+
+class ResConfigSettings(models.TransientModel):
+    _inherit = "res.config.settings"
+
+    # OpciÃ³n global para habilitar la impresiÃ³n local en TPV.
+    pos_enable_local_printing = fields.Boolean(
+        string="Habilitar impresiÃ³n local en TPV",
+        help=(
+            "Activa la impresiÃ³n directa a una impresora conectada al equipo del cajero "
+            "a travÃ©s del agente local."
+        ),
+        config_parameter="pos_any_printer_local.pos_enable_local_printing",
+        default=False,
+    )
+    # Nombre de la impresora local a utilizar de forma predeterminada.
+    pos_local_printer_name = fields.Char(
+        string="Nombre predeterminado de impresora local",
+        help="Se guarda como parÃ¡metro del sistema para reutilizarlo en nuevos TPV.",
+        config_parameter="pos_any_printer_local.pos_local_printer_name",
+        default="",
+    )
+
+    @api.model
+    def get_values(self):
+        """
+        Compatibilidad multi-versiÃ³n: en v16+ config_parameter gestiona la
+        persistencia, pero mantenemos get/set para instalaciones v15.
+        """
+        res = super().get_values()
+        icp = self.env["ir.config_parameter"].sudo()
+        res.update(
+            pos_enable_local_printing=icp.get_param(
+                "pos_any_printer_local.pos_enable_local_printing", "False"
+            )
+            in ("True", "1", True),
+            pos_local_printer_name=icp.get_param(
+                "pos_any_printer_local.pos_local_printer_name", ""
+            ),
+        )
+        return res
+
+    def set_values(self):
+        super().set_values()
+        icp = self.env["ir.config_parameter"].sudo()
+        for record in self:
+            icp.set_param(
+                "pos_any_printer_local.pos_enable_local_printing",
+                record.pos_enable_local_printing,
+            )
+            icp.set_param(
+                "pos_any_printer_local.pos_local_printer_name",
+                record.pos_local_printer_name or "",
+            )
+
+        # TambiÃ©n sincronizamos el valor por defecto en pos.config para futuros TPV.
+        for record in self:
+            self.env["pos.config"].sudo().search([]).write(
+                {
+                    "enable_local_printing": record.pos_enable_local_printing,
+                    "local_printer_name": record.pos_local_printer_name or "",
+                }
+            )
+
