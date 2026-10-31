@@ -1,0 +1,9 @@
+id,name,model_id,group_id/id,operation
+access_orca_barcode_enrichment_cache_user,orca.barcode.enrichment.cache.user,orca.barcode.enrichment.cache,stock.group_stock_user,cru
+access_orca_barcode_enrichment_cache_manager,orca.barcode.enrichment.cache.manager,orca.barcode.enrichment.cache,stock.group_stock_manager,crud
+access_orca_stock_inventory_user,stock.inventory.user,stock.inventory,stock.group_stock_user,cru
+access_orca_stock_inventory_manager,stock.inventory.manager,stock.inventory,stock.group_stock_manager,crud
+access_orca_stock_inventory_line_user,stock.inventory.line.user,stock.inventory.line,stock.group_stock_user,crud
+access_orca_stock_inventory_line_manager,stock.inventory.line.manager,stock.inventory.line,stock.group_stock_manager,crud
+access_orca_stock_barcode_scan_log_user,orca.stock.barcode.scan.log.user,orca.stock.barcode.scan.log,stock.group_stock_user,cr
+access_orca_stock_barcode_scan_log_manager,orca.stock.barcode.scan.log.manager,orca.stock.barcode.scan.log,stock.group_stock_manager,crud

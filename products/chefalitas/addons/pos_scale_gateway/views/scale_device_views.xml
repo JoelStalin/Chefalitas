@@ -1,0 +1,63 @@
+<odoo>
+    <record id="view_scale_device_list" model="ir.ui.view">
+        <field name="name">pos.scale.device.list</field>
+        <field name="model">pos.scale.device</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="company_id"/>
+                <field name="connected"/>
+                <field name="last_reading_id"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_scale_device_form" model="ir.ui.view">
+        <field name="name">pos.scale.device.form</field>
+        <field name="model">pos.scale.device</field>
+        <field name="arch" type="xml">
+            <form string="POS Scale">
+                <header>
+                    <button name="action_pair" type="object" string="Generate pairing code" class="btn-primary"/>
+                    <button name="action_revoke" type="object" string="Revoke connection"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="company_id"/>
+                        <field name="active"/>
+                        <field name="connected"/>
+                        <field name="last_reading_id"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="action_scale_devices" model="ir.actions.act_window">
+        <field name="name">Scales</field>
+        <field name="res_model">pos.scale.device</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_scale_devices" name="Scales" parent="point_of_sale.menu_point_root"
+              action="action_scale_devices" groups="point_of_sale.group_pos_manager" sequence="80"/>
+    <record id="view_pos_config_scale" model="ir.ui.view">
+        <field name="name">pos.config.scale.device</field>
+        <field name="model">pos.config</field>
+        <field name="inherit_id" ref="point_of_sale.pos_config_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="scale_device_id"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="view_product_scale_plu" model="ir.ui.view">
+        <field name="name">product.template.scale.plu</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="point_of_sale.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='to_weight']" position="after">
+                <field name="scale_plu"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
