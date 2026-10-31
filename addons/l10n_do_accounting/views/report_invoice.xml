@@ -1,41 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <template id="informations">
-        <div id="informations" class="row mt36 mb32">
-            <div class="col-6">
-                <strong t-field="o.company_id.partner_id.name" />
-                <br />
-                <span t-field="o.company_id.partner_id"
-                    class="text-muted"
-                    t-options='{"widget": "contact", "fields": ["address"], "no_marker": true}' />
-                <br />
-                <strong>RNC:</strong>
-                <span t-if="o.company_id.vat" t-field="o.company_id.vat" />
-                <br />
-                <strong>Fecha Emisión:</strong>
-                <span t-field="o.invoice_date" t-options='{"format": "dd/MM/yyyy"}' />
-                <br />
-                <t
-                    t-if="o.invoice_date_due and o.move_type == 'out_invoice' and o.state == 'posted'">
-                    <strong>Vencimiento:</strong>
-                    <span t-field="o.invoice_date_due" t-options='{"format": "dd/MM/yyyy"}' />
-                </t>
-            </div>
-            <div class="col-6">
-                <t t-if="o.l10n_latam_document_type_id">
-                    <h2>
-                        <span t-field="o.l10n_latam_document_type_id.report_name" />
-                    </h2>
-                </t>
-                <strong>NCF:</strong>
-                <span t-field="o.l10n_do_fiscal_number" />
-                <br />
-                <!-- <t t-if="o.l10n_do_ncf_expiration_date"> -->
-                <strong>Válida hasta:</strong>
-                <span t-field="o.l10n_do_ncf_expiration_date" t-options='{"format": "dd/MM/yyyy"}' />
-                <!-- </t> -->
-            </div>
-        </div>
+        <table class="table table-borderless w-100 mt-4 mb-4" style="width: 100%; border: none; margin-top: 24px; margin-bottom: 24px;">
+            <tr>
+                <td style="width: 50%; vertical-align: top; padding: 0;">
+                    <strong t-field="o.company_id.partner_id.name" />
+                    <br />
+                    <span t-field="o.company_id.partner_id"
+                        class="text-muted"
+                        t-options='{"widget": "contact", "fields": ["address"], "no_marker": true}' />
+                    <br />
+                    <strong>RNC:</strong>
+                    <span t-if="o.company_id.vat" t-field="o.company_id.vat" />
+                    <br />
+                    <strong>Fecha Emisión:</strong>
+                    <span t-field="o.invoice_date" t-options='{"format": "dd/MM/yyyy"}' />
+                    <br />
+                    <t
+                        t-if="o.invoice_date_due and o.move_type == 'out_invoice' and o.state == 'posted'">
+                        <strong>Vencimiento:</strong>
+                        <span t-field="o.invoice_date_due" t-options='{"format": "dd/MM/yyyy"}' />
+                    </t>
+                </td>
+                <td style="width: 50%; vertical-align: top; padding: 0;">
+                    <t t-if="o.l10n_latam_document_type_id">
+                        <h2 style="margin-top: 0;">
+                            <span t-field="o.l10n_latam_document_type_id.report_name" />
+                        </h2>
+                    </t>
+                    <strong>NCF:</strong>
+                    <span t-field="o.l10n_do_fiscal_number" />
+                    <br />
+                    <!-- <t t-if="o.l10n_do_ncf_expiration_date"> -->
+                    <strong>Válida hasta:</strong>
+                    <span t-field="o.l10n_do_ncf_expiration_date" t-options='{"format": "dd/MM/yyyy"}' />
+                    <!-- </t> -->
+                </td>
+            </tr>
+        </table>
         <div id="receiver_info" class="row mt32 mb32">
             <t t-set="vat_len" t-value="len(o.commercial_partner_id.vat or '')" />
             <div class="col-auto col-7 mw-100 mb-2">
@@ -120,6 +122,12 @@
     <!-- Main Report Inheritance -->
     <template id="report_invoice_document_inherited" inherit_id="account.report_invoice_document"
         primary="True">
+        <xpath expr="//t[@t-set='layout_document_title']" position="replace">
+            <t t-set="layout_document_title">
+                <span t-if="o.l10n_do_fiscal_number" t-field="o.l10n_do_fiscal_number" />
+                <span t-elif="o.name and o.name != '/'" t-field="o.name" />
+            </t>
+        </xpath>
         <xpath expr="//div[contains(@class, 'invoice_main')]" position="replace">
             <div class="clearfix invoice_main">
                 <div class="page mb-4">
@@ -205,6 +213,22 @@
                 t-call="l10n_do_accounting.report_invoice_document_inherited"
                 t-lang="lang" />
             <t t-else="" t-call="account.report_invoice_document" t-lang="lang" />
+        </xpath>
+    </template>
+
+    <!-- Suppress default Odoo logo if company has no custom logo -->
+    <template id="external_layout_standard_no_default_logo" inherit_id="web.external_layout_standard">
+        <xpath expr="//td[@t-if='company.logo']" position="replace">
+            <td t-if="company.logo and not getattr(company, 'uses_default_logo', False)" class="align-top pe-3">
+                <img class="o_company_logo_big" t-att-src="image_data_uri(company.logo)" alt="Logo"/>
+            </td>
+        </xpath>
+    </template>
+
+    <!-- Suppress duplicate invisible h3 in wkhtmltopdf -->
+    <template id="external_layout_body_clean_title" inherit_id="web.external_layout_body">
+        <xpath expr="//h3[contains(@class, 'opacity-0')]" position="replace">
+            <h3 t-if="report_type == 'pdf'" t-out="layout_document_title or ' '" style="display: none !important;" class="opacity-0 mb-0 h-0 d-none"/>
         </xpath>
     </template>
 </odoo>
