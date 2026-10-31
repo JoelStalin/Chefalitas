@@ -1,0 +1,5 @@
+id,name,model_id,group_id/id,operation,domain
+access_purchase_intake_user,purchase.intake user,purchase.intake,purchase.group_purchase_user,r,
+access_purchase_intake_manager,purchase.intake manager,purchase.intake,purchase.group_purchase_manager,crud,
+access_purchase_intake_line_user,purchase.intake.line user,purchase.intake.line,purchase.group_purchase_user,r,
+access_purchase_intake_line_manager,purchase.intake.line manager,purchase.intake.line,purchase.group_purchase_manager,crud,
