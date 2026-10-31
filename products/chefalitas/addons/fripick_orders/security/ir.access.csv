@@ -1,0 +1,8 @@
+id,name,model_id,group_id/id,operation,domain
+access_fripick_print_job_user,fripick_print_job_user,fripick.print.job,point_of_sale.group_pos_user,r,
+access_fripick_print_job_manager,fripick_print_job_manager,fripick.print.job,point_of_sale.group_pos_manager,crud,
+access_fripick_order_user,fripick_order_user,fripick.order,point_of_sale.group_pos_user,r,
+access_fripick_order_manager,fripick_order_manager,fripick.order,point_of_sale.group_pos_manager,crud,
+access_fripick_order_line_user,fripick_order_line_user,fripick.order.line,point_of_sale.group_pos_user,r,
+access_fripick_order_line_manager,fripick_order_line_manager,fripick.order.line,point_of_sale.group_pos_manager,crud,
+rule_fripick_order_company,Fripick orders: own companies,fripick.order,,crud,"[('company_id', 'in', company_ids)]"
