@@ -1,0 +1,22 @@
+{
+    "name": "POS Kitchen Core",
+    "version": "20.0.1.0.0",
+    "summary": "Core recipes, ingredients, and preparation tracking for POS kitchen suite",
+    "category": "Point of Sale",
+    "author": "GetUpSoft",
+    "license": "LGPL-3",
+    "depends": ["base", "product", "uom"],
+    "data": [
+        "security/security.xml",
+        "security/ir.access.csv",
+        "data/sequences.xml",
+        "views/product_views.xml",
+        "views/recipe_views.xml",
+        "views/preparation_views.xml",
+        "wizard_views/recipe_price_simulator_views.xml",
+        "report/recipe_cost_report.xml",
+        "views/menu.xml",
+    ],
+    "installable": True,
+    "application": False,
+}
