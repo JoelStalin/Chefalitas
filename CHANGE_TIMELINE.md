@@ -132,3 +132,9 @@ Revertir: `git revert 20dcf5c c478dd1 63d4be7 77376d3 0f6a923 dce2510 fe918d1 d5
 - Problemas encontrados y corregidos en el camino: (1) el ITBIS 18% (impuesto 181 y grupo 63) estaba con pais Estados Unidos y Odoo 20 rechazaba crear facturas con el: ahora DO; (2) REGRESION MIA: al recrear el contenedor de getupsoft este perdio la red easycount-prod-net y no podia emitir e-CF; el workflow la reconecta y verifica que resuelva la API (PR #67); la primera publicacion fallo de forma segura sin enviar nada.
 - Un e-CF real solo se anula con una nota de credito E34. Nada mas se envio a la DGII.
 - Pendiente: Chefalitas Odoo 20 (18082) sigue sin configurar para emitir por si mismo; imprimir ahi su primera factura de prueba; modulo orca_stock_logistics_barcode sin instalar en Odoo 20.
+
+## 2026-10-31 orca_stock_logistics_barcode portado a Odoo 20 (feat/barcode-odoo20-uom)
+- El modulo de Gemini (rama feat/orca-stock-logistics-barcode y repo odoo-orca-global-addons) heredaba product.packaging y barcodes.barcode_events_mixin, que no existen en Odoo 20: no instalaba.
+- Port: codigos de barras de caja en product.uom (producto + unidad de empaque + codigo); unidades por caja = conversion de la unidad de empaque a la del producto (effective_unit_factor, qty_per_box como alias); jerarquia palet/caja = jerarquia de unidades de Odoo. Creacion al vuelo de cajas ITF-14 crea la unidad "Caja xN" y su product.uom. Movimientos: se usa packaging_uom_id de Odoo 20 (no se escribe). Vista sobre product.product_uom_view_form/list. Sin el mixin eliminado (el escaner usa la app OWL por RPC). Bug corregido: custom_brand False hacia fallar la creacion al vuelo.
+- Pruebas reescritas (las originales esperaban claves que el codigo nunca devolvia): 7/7 en BD temporal tmp_barcode (borrada al terminar).
+- No instalado en produccion (18082). Revertir: revertir este commit.
