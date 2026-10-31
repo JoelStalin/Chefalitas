@@ -90,3 +90,10 @@ Revertir: `git revert 20dcf5c c478dd1 63d4be7 77376d3 0f6a923 dce2510 fe918d1 d5
 - Verificado en la base getupsoft el 2026-10-31 11:48 UTC: vista external_layout_body_clean_title = 0, cabecera sin table-borderless, titulo con Proforma/Cancelled/Credit Note, login 200 en 18070 y en odoo.getupsoft.com.
 - La rama de Gemini NO se borro y NO debe desplegarse. Pendiente: que Gemini no cambie de rama ni edite a mano el directorio ~/workspaces/chefalitas (es el codigo en vivo); homologar el formato en el repo global.
 - Revertir el arreglo del workflow: git revert del commit del PR #58 en feature/etapa1-easycount-ecf y volver a ejecutar el workflow.
+
+## 2026-10-31 Revision de todos los formatos de factura (huella md5 contra la version validada 51117e3)
+- Version validada: report_invoice.xml d00eb626, report_invoice_preview.xml 2fb3376f.
+- Correctos: Chefalitas main y rama de despliegue (Odoo 20 del puerto 18082 y odoo.getupsoft.com), odoo-l10n-do-ecf (preview).
+- Distintos y corregidos: report_invoice.xml de odoo-l10n-do-ecf (PR #4, fusionado a main) y de odoo-orca-global-addons (PR #1, abierto: es la rama activa de Gemini, ningun sitio en vivo la usa). Antes tenian la version inicial (209 lineas, 008a2804). El modulo global ya tiene los campos que usa el formato validado.
+- No se tocaron otras diferencias del modulo global (res_partner.py, account_journal.py, res_partner_views.xml): no son de formato.
+- Revertir: git revert del commit del PR #4 en odoo-l10n-do-ecf.
