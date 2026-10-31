@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Bloquea commits que dejen el formato de factura distinto del validado.
+staged="$(git diff --cached --name-only)"
+echo "$staged" | grep -qE '^(addons/l10n_do_accounting/|scripts/guard/)' || exit 0
+bash scripts/guard/check_invoice_format.sh || { echo "commit bloqueado por el guardian del formato de factura"; exit 1; }
