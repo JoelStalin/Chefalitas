@@ -94,6 +94,12 @@ jobs:
             fi
             echo "== $c / $db"
             docker exec "$c" sh -c 'odoo --db_host "$HOST" --db_user "$USER" --db_password "$PASSWORD" -d "$0" -u "$1" --stop-after-init --no-http --log-level=warn' "$db" "$MODULES"
+            # wkhtmltopdf runs inside the container and fetches the report styles and the QR image from report.url (or web.base.url):
+            # an admin login through 127.0.0.1:<port> rewrites web.base.url and leaves invoices without styles or QR.
+            # The restart below clears the parameter cache.
+            if [ "$c" = getupsoft-odoo20-odoo-1 ]; then
+              docker exec getupsoft-odoo20-db-1 psql -U odoo -d "$db" -v ON_ERROR_STOP=1 -c "insert into ir_config_parameter (key, value, create_uid, create_date, write_uid, write_date) values ('report.url','http://localhost:8069',1,now(),1,now()),('web.base.url','https://odoo.getupsoft.com',1,now(),1,now()),('web.base.url.freeze','True',1,now(),1,now()) on conflict (key) do update set value = excluded.value, write_date = now()"
+            fi
             docker restart "$c" >/dev/null
             for i in $(seq 1 40); do
               code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$port/web/login" || true)

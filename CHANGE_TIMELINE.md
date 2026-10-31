@@ -45,3 +45,11 @@ Revertir: `git revert 20dcf5c c478dd1 63d4be7 77376d3 0f6a923 dce2510 fe918d1 d5
 - Correccion: se redespliega feature/etapa1-easycount-ecf, cuyo report_invoice.xml es identico al validado (51117e3, PR #47), con deploy-odoo20-thinkcentre.yml y -u l10n_do_accounting. La rama de Gemini NO se borra y NO debe desplegarse.
 - Causa del primer intento fallido (run 41198020870): el contenedor getupsoft-odoo20-odoo-1 habia perdido su capa de disco (docker exec: rootfs no such file). El workflow ahora detecta eso y lo recrea desde su proyecto compose antes de actualizar (unos 30-40 s de caida).
 - Revertir: git revert del commit del PR y volver a ejecutar el workflow.
+
+## 2026-10-31 Facturas sin estilos ni QR en odoo.getupsoft.com: causa y correccion (fix/getupsoft-report-url)
+- Sintoma: el usuario descargo B0200000001 (5).pdf (31/10 08:06) con la cabecera apilada, titulo duplicado, tipografia del sistema y, en las e-CF, el QR sin dibujar. La referencia correcta es E310000000001.pdf (21/10, formato de certificacion: dos columnas, QR, codigo de seguridad y fecha de firma digital).
+- Causa: web.base.url de la base getupsoft quedo en http://127.0.0.1:18070 desde 2026-10-30 21:37 UTC (sesion del administrador entrando por esa direccion al probar). wkhtmltopdf corre DENTRO del contenedor y pide los estilos y la imagen del QR a esa URL, donde el puerto 18070 no existe (por dentro Odoo escucha en 8069). Las plantillas del 21/10 estaban bien.
+- Prueba antes de cambiar nada: con report.url=http://localhost:8069 dentro de una transaccion revertida, E310000000001 y B0200000001 salen identicas a la referencia (QR incluido) y no se guardo ningun parametro.
+- Correccion: deploy-odoo20-thinkcentre.yml fija en la base getupsoft report.url=http://localhost:8069, web.base.url=https://odoo.getupsoft.com y web.base.url.freeze=True (idempotente, antes del reinicio que limpia la cache).
+- Pendiente de comprobar: Chefalitas Odoo 20 (18082) tiene web.base.url=http://localhost:8069; una prueba desde dentro del contenedor dio timeout y hay que confirmar que sus PDF salen con estilos y QR.
+- Revertir: git revert del commit del PR y volver a ejecutar el workflow; los parametros se pueden borrar de Ajustes > Tecnico > Parametros del sistema.
