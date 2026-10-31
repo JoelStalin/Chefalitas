@@ -97,3 +97,10 @@ Revertir: `git revert 20dcf5c c478dd1 63d4be7 77376d3 0f6a923 dce2510 fe918d1 d5
 - Distintos y corregidos: report_invoice.xml de odoo-l10n-do-ecf (PR #4, fusionado a main) y de odoo-orca-global-addons (PR #1, abierto: es la rama activa de Gemini, ningun sitio en vivo la usa). Antes tenian la version inicial (209 lineas, 008a2804). El modulo global ya tiene los campos que usa el formato validado.
 - No se tocaron otras diferencias del modulo global (res_partner.py, account_journal.py, res_partner_views.xml): no son de formato.
 - Revertir: git revert del commit del PR #4 en odoo-l10n-do-ecf.
+
+## 2026-10-31 Modulo orca_stock_logistics_barcode: no instala en Odoo 20 (causa confirmada)
+- Pruebas en base temporal (tmp_barcode, ya eliminada): la instalacion falla con `TypeError: Model 'product.packaging' does not exist in registry`.
+- Causa: en Odoo 20 el modelo product.packaging YA NO EXISTE. El empaque por producto con codigo de barras es ahora `product.uom` (campos barcode, product_id, uom_id; product.product.product_uom_ids; uom.uom.product_uom_ids). Solo quedan stock.package* para empaques fisicos de bodega. Verificado dentro de la imagen chefalitas-odoo:20.0.
+- El modulo (hecho para el diseno de Odoo 17-19) hereda product.packaging en models/product_packaging_barcode.py (311 lineas) y lo usa en stock_picking_barcode.py y barcode_enrichment_service.py: no se arregla con una dependencia, requiere portarlo a product.uom (el multiplicador sale de la relacion de uom.uom, ya no de un campo qty).
+- Estado: NO esta en main ni desplegado. La rama feat/orca-stock-logistics-barcode (4219b83) queda como borrador sin fusionar.
+- Siguiente paso: portar a product.uom y volver a correr las pruebas en una base temporal.
