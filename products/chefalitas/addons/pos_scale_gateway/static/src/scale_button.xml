@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="pos_scale_gateway.ControlButtons"
+       t-inherit="point_of_sale.ControlButtons" t-inherit-mode="extension">
+        <xpath expr="//t[@t-if='!this.props.showRemainingButtons']/SelectPartnerButton" position="after">
+            <button class="btn btn-secondary btn-lg lh-lg"
+                    t-on-click="captureScaleWeight">
+                <i class="oi oi-fw" data-icon="scale" aria-hidden="true"/>
+                <span>Scale</span>
+            </button>
+        </xpath>
+    </t>
+</templates>
