@@ -103,12 +103,19 @@ jobs:
             if [ "$c" = getupsoft-odoo20-odoo-1 ]; then
               docker exec getupsoft-odoo20-db-1 psql -U odoo -d "$db" -v ON_ERROR_STOP=1 -c "insert into ir_config_parameter (key, value, create_uid, create_date, write_uid, write_date) values ('report.url','http://localhost:8069',1,now(),1,now()),('web.base.url','https://odoo.getupsoft.com',1,now(),1,now()),('web.base.url.freeze','True',1,now(),1,now()) on conflict (key) do update set value = excluded.value, write_date = now()"
             fi
+            # the e-CF emission reaches the EasyCount API through its own network; a recreated container only has its compose network
+            if [ "$c" = getupsoft-odoo20-odoo-1 ]; then
+              docker network connect easycount-prod-net "$c" 2>/dev/null || true
+            fi
             docker restart "$c" >/dev/null
             for i in $(seq 1 40); do
               code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$port/web/login" || true)
               [ "$code" = 200 ] && break; sleep 3
             done
             echo "$c /web/login -> $code"; [ "$code" = 200 ]
+            if [ "$c" = getupsoft-odoo20-odoo-1 ]; then
+              docker exec "$c" python3 -c "import socket; socket.gethostbyname('easycount-api')" || { echo "$c cannot resolve easycount-api: e-CF emission would fail"; exit 1; }
+            fi
           done
           echo "$AFTER" > "$MARKER"
           REMOTE
