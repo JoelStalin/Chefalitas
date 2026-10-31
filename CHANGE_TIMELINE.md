@@ -53,3 +53,11 @@ Revertir: `git revert 20dcf5c c478dd1 63d4be7 77376d3 0f6a923 dce2510 fe918d1 d5
 - Correccion: deploy-odoo20-thinkcentre.yml fija en la base getupsoft report.url=http://localhost:8069, web.base.url=https://odoo.getupsoft.com y web.base.url.freeze=True (idempotente, antes del reinicio que limpia la cache).
 - Pendiente de comprobar: Chefalitas Odoo 20 (18082) tiene web.base.url=http://localhost:8069; una prueba desde dentro del contenedor dio timeout y hay que confirmar que sus PDF salen con estilos y QR.
 - Revertir: git revert del commit del PR y volver a ejecutar el workflow; los parametros se pueden borrar de Ajustes > Tecnico > Parametros del sistema.
+
+## 2026-10-31 Produccion corregida y guardian del formato de factura (feat/guardian-formato-factura)
+- Produccion (odoo.getupsoft.com): run 41200245577 en success; fijo report.url=http://localhost:8069, web.base.url=https://odoo.getupsoft.com y web.base.url.freeze=True en la base getupsoft. Verificado imprimiendo desde produccion E310000000001 y B0200000001 (sin guardar adjuntos): salen identicas a la referencia de certificacion, con QR, codigo de seguridad y fecha de firma.
+- Guardian para que nadie vuelva a danar el formato: scripts/guard/check_invoice_format.sh (huella sha256 de report_invoice.xml y report_invoice_preview.xml, exige QR/codigo de seguridad/fecha de firma de la DGII y prohibe heredar web.external_layout_body/report_layout/html_container/minimal_layout desde l10n_do_accounting); hooks de git en .githooks (pre-commit y commit-msg, se activan con bash scripts/guard/install-hooks.sh); workflow guard-invoice-format.yml en cada PR y push; compuerta en deploy-odoo20-thinkcentre.yml (un formato danado no se despliega); CODEOWNERS.
+- Cambiar el formato es posible solo con aprobacion del titular: regenerar la huella (--update) y poner [formato-factura-aprobado] en el commit y en el PR.
+- Probado: aprueba la version buena y rechaza la danada de Gemini (por huella y por tocar el diseno base).
+- Limite: los hooks locales se saltan con --no-verify; el control real es el workflow en el PR. Recomendado (lo hace el titular): activar en GitHub la proteccion de rama exigiendo el check "Guardian del formato de factura" y la revision de CODEOWNERS.
+- Revertir: git revert del commit del PR; los parametros de la base se borran en Ajustes > Tecnico > Parametros del sistema.
