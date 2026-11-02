@@ -169,3 +169,8 @@ Revertir: `git revert 20dcf5c c478dd1 63d4be7 77376d3 0f6a923 dce2510 fe918d1 d5
 - Prueba en contenedores desechables (imagen chefalitas-odoo:20.0 + postgres propio, ya eliminados; no se toco ninguna base real): el modulo orca_printer_plugin se instala sin errores; el boton crea una impresora de preparacion en 127.0.0.1:9051 con acceso de red local, la liga al POS, no la duplica al repetirse y tambien funciona desde Ajustes.
 - Sigue sin desplegarse en Domingo ni probarse con la impresora fisica de cocina.
 - Revertir: sin cambios de codigo en este paso.
+
+## 2026-11-02 Captura de bascula en el plugin AnyPrinter (feat/anyprinter-bascula-captura)
+- Nuevos capturar_bascula.ps1 y capturar_bascula.bat en el paquete que se descarga desde Odoo: se conectan a la bascula por red (IP:puerto) o por puerto serie y guardan lo que manda, en hexadecimal y texto, sin interpretarlo. Para conocer el formato real de la Merkato MK-A01, de la que no hay protocolo publico, y escribir despues el lector de peso. Probado contra una bascula simulada por TCP y contra un puerto cerrado; el modo serie no se probo sin hardware.
+- No integra todavia el peso en el POS: falta el formato real y la IP/puerto de la bascula.
+- Revertir: revertir este commit.

@@ -9,7 +9,7 @@ from odoo import http
 from odoo.http import request
 
 PLUGIN_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static", "plugin")
-FILES = ("AnyPrinter.ps1", "instalar.bat", "desinstalar.bat", "abrir_caja.bat", "LEEME.txt")
+FILES = ("AnyPrinter.ps1", "instalar.bat", "desinstalar.bat", "abrir_caja.bat", "capturar_bascula.bat", "capturar_bascula.ps1", "LEEME.txt")
 
 
 class AnyPrinterController(http.Controller):
