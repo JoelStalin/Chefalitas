@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_product_template_form_orca_units" model="ir.ui.view">
+        <field name="name">product.template.form.orca.units</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Cajas y libras" name="orca_units">
+                    <group>
+                        <group string="Se compra por caja y se vende por unidad">
+                            <field name="orca_units_per_box"/>
+                            <field name="orca_box_barcode" invisible="not orca_units_per_box"/>
+                        </group>
+                        <group string="Se vende por peso">
+                            <field name="orca_sold_by_pound"/>
+                        </group>
+                    </group>
+                    <p class="text-muted">
+                        Caja: indique cuántas unidades trae y el código de barras de la caja; el producto se sigue vendiendo por unidad
+                        y la caja queda relacionada. Libra: el precio de venta es el precio por libra y el punto de venta pregunta
+                        las libras al elegir el producto.
+                    </p>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
