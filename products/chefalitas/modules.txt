@@ -1,0 +1,23 @@
+# Modulos de nivel superior de Chefalitas en Odoo 20 (produccion). Las dependencias obligatorias se instalan solas;
+# trim-modules.sh desinstala los que Odoo agrega por su cuenta (auto_install). NO se instala la aplicacion de discusion
+# (en Odoo 20 forma parte de `mail`, dependencia base que no se puede quitar: se oculta su menu).
+# Facturacion, localizacion dominicana y reportes DGII
+l10n_do_accounting
+l10n_do_accounting_report
+# Inventario
+stock
+stock_account
+# POS, impresoras y cocina
+pos_system
+pos_printing_suite
+pos_kitchen_core
+pos_l10n_do_restaurant
+# Fripick
+fripick_orders
+# Nomina y empleados
+l10n_do_hr_payroll
+# Conexion con EasyCount/ORCA e IA conectada a ORCA
+orca_bridge
+ai_provider
+# Balanza
+pos_scale_gateway

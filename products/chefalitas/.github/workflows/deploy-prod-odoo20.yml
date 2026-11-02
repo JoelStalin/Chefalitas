@@ -1,0 +1,28 @@
+name: Deploy produccion Odoo 20
+
+# Produccion solo se despliega por GitHub Actions. Corre en el runner propio del servidor de produccion (label chefalitas-prod):
+# no usa computo de GitHub. Se dispara al publicar una version v20.* o a mano.
+on:
+  push:
+    tags: ['v20.*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-prod-odoo20
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, chefalitas-prod]
+    environment:
+      name: production
+      url: https://chefalitas.com.do
+    steps:
+      - uses: actions/checkout@v4
+      - name: Guardian del formato de factura
+        run: bash scripts/guard/check_invoice_format.sh
+      - name: Desplegar Odoo 20
+        run: bash scripts/odoo20/deploy.sh
