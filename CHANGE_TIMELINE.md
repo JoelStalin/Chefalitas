@@ -153,3 +153,8 @@ Revertir: `git revert 20dcf5c c478dd1 63d4be7 77376d3 0f6a923 dce2510 fe918d1 d5
 - EasyCount (produccion, inquilino 2 CHEFALITAS SRL, RNC 133136122): ambiente testecf (no ecf), certificado cargado vigente hasta 2027-10-07, sin token API para Odoo. NO se cambio nada ni se emitio nada a la DGII.
 - Pendiente: configurar empresa/plan contable DO e importar datos del respaldo; token API de EasyCount en l10n_do_accounting; autorizacion de emisor y secuencias de produccion en la OFV; pasar el inquilino a ecf con confirmacion del titular.
 - Revertir: respaldo de DNS y tuneles en ~/.agents_shared_memory/artifacts/domingo-2026-11-01/cf_chefalitas_antes_del_cambio.json (chefalitas.com.do y www CNAME -> 36e3796f-53c5-4046-9252-09ac17d395ac.cfargotunnel.com; quitar la regla viejo.* del tunel viejo si ya no se quiere).
+
+## 2026-11-02 Resultado de las pruebas de l10n_do_rnc_autofill y orca_printer_plugin (feat/domingo-modules)
+- Base temporal nueva de Odoo 20 (imagen chefalitas-odoo20:test, PostgreSQL aparte, sin tocar ninguna base real): ambos modulos instalan sin errores (0,34 s y 0,38 s) y 7 pruebas pasan, 0 fallos, 0 errores (5 de l10n_do_rnc_autofill: solo RNC, solo nombre unico, nombre ambiguo, RNC invalido, contacto existente; mas las de carga de los modulos).
+- Contenedores y red temporales eliminados al terminar. Falta probarlo en el POS real con sesion iniciada.
+- Revertir: git revert del commit de esta rama (o no fusionarla); los modulos no estan instalados en la base de produccion de Chefalitas.
