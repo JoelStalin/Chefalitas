@@ -164,3 +164,8 @@ Revertir: `git revert 20dcf5c c478dd1 63d4be7 77376d3 0f6a923 dce2510 fe918d1 d5
 - Verificado solo con py_compile y XML valido; no probado en una base Odoo ni desplegado en Domingo (servidor 10.0.0.24 sin ruta desde aqui; falta que el usuario pruebe la impresion de caja).
 - Falta: elegir las categorias que imprime cocina y probar con la impresora real.
 - Revertir: revertir el commit de la rama o cerrar el PR 72.
+
+## 2026-11-02 Impresora de cocina verificada en un Odoo 20 aislado (PR 72)
+- Prueba en contenedores desechables (imagen chefalitas-odoo:20.0 + postgres propio, ya eliminados; no se toco ninguna base real): el modulo orca_printer_plugin se instala sin errores; el boton crea una impresora de preparacion en 127.0.0.1:9051 con acceso de red local, la liga al POS, no la duplica al repetirse y tambien funciona desde Ajustes.
+- Sigue sin desplegarse en Domingo ni probarse con la impresora fisica de cocina.
+- Revertir: sin cambios de codigo en este paso.
