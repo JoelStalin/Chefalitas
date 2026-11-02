@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="orca_stock_logistics_barcode.OrcaBarcodeScannerApp">
+        <div class="o_orca_barcode_scanner_app d-flex flex-column h-100 bg-100 p-3">
+            <!-- Top Header Bar -->
+            <div class="o_orca_scanner_header d-flex flex-wrap justify-content-between align-items-center bg-white border rounded shadow-sm p-3 mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="badge text-bg-primary fs-6 px-3 py-2">
+                        <i class="fa fa-barcode me-2"/>ORCA Barcode v20
+                    </span>
+                    <div>
+                        <h4 class="mb-0 fw-bold" t-esc="state.documentName"/>
+                        <small class="text-muted">
+                            Modelo: <t t-esc="state.targetModel"/> |
+                            ID: <t t-esc="state.targetResId || 'N/A'"/>
+                        </small>
+                    </div>
+                </div>
+
+                <!-- IndexedDB & L1 Cache Telemetry Badges -->
+                <div class="d-flex flex-wrap align-items-center gap-2 mt-2 mt-md-0">
+                    <span class="badge text-bg-light border text-dark" title="Códigos cargados en memoria L1 / IndexedDB">
+                        <i class="fa fa-database me-1 text-primary"/>
+                        Caché: <t t-esc="state.cacheStats.l1MemorySize"/> códigos
+                    </span>
+                    <span class="badge text-bg-success" title="Lecturas instantáneas desde caché local (0 RPC)">
+                        Hits L1/IDB: <t t-esc="state.cacheStats.l1Hits + state.cacheStats.l2IndexedDBHits"/>
+                    </span>
+                    <span class="badge text-bg-secondary" title="Consultas de respaldo al servidor">
+                        RPCs: <t t-esc="state.cacheStats.rpcFallbacks"/>
+                    </span>
+                    <button type="button" class="btn btn-sm btn-outline-primary" t-on-click="onForceCacheWarmup">
+                        <i class="fa fa-refresh me-1"/>Sincronizar Caché
+                    </button>
+                    <t t-if="state.pendingBatchCount > 0">
+                        <button type="button" class="btn btn-sm btn-warning fw-bold" t-on-click="onFlushNowClick">
+                            <i class="fa fa-bolt me-1"/>
+                            Guardar Lote (<t t-esc="state.pendingBatchCount"/>)
+                        </button>
+                    </t>
+                </div>
+            </div>
+
+            <!-- Laser Scanner Input & Mode Controls -->
+            <div class="bg-white border rounded shadow-sm p-3 mb-3">
+                <form class="row g-2 align-items-center" t-on-submit="onManualFormSubmit">
+                    <div class="col-12 col-md-6">
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text bg-primary text-white">
+                                <i class="fa fa-qrcode"/>
+                            </span>
+                            <input
+                                type="text"
+                                class="form-control"
+                                t-ref="manualBarcodeInput"
+                                t-model="state.manualBarcode"
+                                placeholder="Escanee con pistola láser (Unidad o Caja/Bulto) o escriba el código..."
+                                autocomplete="off"
+                            />
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text">Cant.</span>
+                            <input
+                                type="number"
+                                step="any"
+                                min="0.01"
+                                class="form-control"
+                                t-model="state.manualMultiplier"
+                            />
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-2 d-grid">
+                        <button type="submit" class="btn btn-lg btn-primary">
+                            <i class="fa fa-check me-1"/>Procesar
+                        </button>
+                    </div>
+                    <div class="col-12 col-md-2 d-flex flex-column gap-1 ps-md-3">
+                        <div class="form-check form-switch">
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                id="continuousLaserSwitch"
+                                t-model="state.continuousLaserMode"
+                            />
+                            <label class="form-check-label small fw-semibold" for="continuousLaserSwitch">
+                                Modo Pistola Continua
+                            </label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                id="externalApiSwitch"
+                                t-model="state.externalEnrichmentEnabled"
+                            />
+                            <label class="form-check-label small fw-semibold" for="externalApiSwitch">
+                                API Open Food Facts
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- On-The-Fly External API Enrichment Alert Card -->
+            <t t-if="state.pendingEnrichment">
+                <div class="alert alert-warning border-warning shadow-sm d-flex flex-wrap justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="alert-heading mb-1">
+                            <i class="fa fa-cloud-download me-2"/>
+                            Producto Detectado en API Externa (<t t-esc="state.pendingEnrichment.sourceApi"/>)
+                        </h5>
+                        <p class="mb-1">
+                            <strong>Código:</strong> <t t-esc="state.pendingEnrichment.barcode"/>
+                            (<span class="badge text-bg-dark" t-esc="state.pendingEnrichment.typology"/>) |
+                            <strong>Nombre:</strong> <t t-esc="state.pendingEnrichment.name"/> |
+                            <strong>Marca:</strong> <t t-esc="state.pendingEnrichment.brand || 'N/A'"/> |
+                            <strong>Peso:</strong> <t t-esc="state.pendingEnrichment.weightKg"/> kg
+                            <t t-if="state.pendingEnrichment.suggestedBoxQty > 1">
+                                | <strong>Factor Caja Sugerido:</strong> x<t t-esc="state.pendingEnrichment.suggestedBoxQty"/>
+                            </t>
+                        </p>
+                    </div>
+                    <div class="d-flex gap-2 mt-2 mt-md-0">
+                        <button type="button" class="btn btn-success fw-bold" t-on-click="onCreateProductOnTheFly">
+                            <i class="fa fa-plus-circle me-1"/>Crear Producto al Vuelo y Contar
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" t-on-click="onDismissEnrichment">
+                            Descartar
+                        </button>
+                    </div>
+                </div>
+            </t>
+
+            <!-- Main Split Workspace: Document Lines vs Real-Time Scan Feed -->
+            <div class="row g-3 flex-grow-1 overflow-auto">
+                <!-- Left Column: Active Inventory / Picking Lines -->
+                <div class="col-12 col-lg-7 d-flex flex-column">
+                    <div class="card shadow-sm flex-grow-1">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-bold">
+                                <i class="fa fa-cubes me-2 text-primary"/>
+                                Líneas de Inventario / Movimiento
+                            </h5>
+                            <span class="badge text-bg-info">
+                                <t t-esc="state.lines.length"/> productos
+                            </span>
+                        </div>
+                        <div class="card-body p-0 table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Código</th>
+                                        <th>Empaque Escaneado</th>
+                                        <th class="text-end">Teórico / Demanda</th>
+                                        <th class="text-end">Contado / Escaneado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-if="!state.lines.length">
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted py-4">
+                                                Escanee un código de barras de unidad o caja maestra para iniciar el conteo.
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    <t t-foreach="state.lines" t-as="line" t-key="line.id">
+                                        <tr>
+                                            <td class="fw-semibold" t-esc="line.product_name"/>
+                                            <td>
+                                                <code t-esc="line.barcode || '-'"/>
+                                            </td>
+                                            <td>
+                                                <t t-if="line.packaging_name">
+                                                    <span class="badge text-bg-warning" t-esc="line.packaging_name"/>
+                                                </t>
+                                                <t t-else="">
+                                                    <span class="badge text-bg-light border text-secondary">Unidad</span>
+                                                </t>
+                                            </td>
+                                            <td class="text-end">
+                                                <t t-esc="state.targetModel === 'stock.picking' ? (line.demand || 0) : (line.theoretical_qty || 0)"/>
+                                            </td>
+                                            <td class="text-end fw-bold fs-5 text-success">
+                                                <t t-esc="state.targetModel === 'stock.picking' ? (line.quantity || 0) : (line.product_qty || 0)"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Real-Time Laser Scan Log (Multi-Packaging Multiplication Proof) -->
+                <div class="col-12 col-lg-5 d-flex flex-column">
+                    <div class="card shadow-sm flex-grow-1">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-bold">
+                                <i class="fa fa-history me-2 text-success"/>
+                                Bitácora de Escaneo Rápido
+                            </h5>
+                            <span class="badge text-bg-secondary">
+                                <t t-esc="state.scanHistory.length"/> lecturas
+                            </span>
+                        </div>
+                        <div class="card-body p-0 overflow-auto" style="max-height: 480px;">
+                            <ul class="list-group list-group-flush">
+                                <t t-if="!state.scanHistory.length">
+                                    <li class="list-group-item text-center text-muted py-4">
+                                        Sin lecturas recientes en esta sesión.
+                                    </li>
+                                </t>
+                                <t t-foreach="state.scanHistory" t-as="scan" t-key="scan_index">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="fw-bold">
+                                                <t t-esc="scan.productName"/>
+                                                <small class="text-muted ms-1">(<t t-esc="scan.barcode"/>)</small>
+                                            </div>
+                                            <div class="small text-muted">
+                                                <span class="badge text-bg-light border me-1" t-esc="scan.cacheLayer"/>
+                                                <t t-if="scan.matchType === 'packaging'">
+                                                    <span class="badge text-bg-warning me-1">
+                                                        Empaque: <t t-esc="scan.packagingName"/> (x<t t-esc="scan.unitFactor"/>)
+                                                    </span>
+                                                </t>
+                                                <t t-elif="scan.matchType === 'unit'">
+                                                    <span class="badge text-bg-info me-1">Unidad (x1)</span>
+                                                </t>
+                                                <span t-esc="scan.timestamp"/>
+                                            </div>
+                                        </div>
+                                        <div class="text-end">
+                                            <t t-if="scan.status === 'matched'">
+                                                <span class="badge text-bg-success fs-6">
+                                                    +<t t-esc="scan.totalUnits"/> uds
+                                                </span>
+                                            </t>
+                                            <t t-elif="scan.status === 'enrichment_ready'">
+                                                <span class="badge text-bg-warning">API Externa</span>
+                                            </t>
+                                            <t t-else="">
+                                                <span class="badge text-bg-danger">No existe</span>
+                                            </t>
+                                        </div>
+                                    </li>
+                                </t>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+
+</templates>

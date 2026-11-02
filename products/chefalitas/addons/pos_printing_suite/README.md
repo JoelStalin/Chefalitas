@@ -1,0 +1,79 @@
+# POS Printing Suite (Odoo 18+)
+
+Unified addon for POS printing via:
+- **Local Agent (Windows)** over HTTP
+- **HW Proxy / Any Printer**
+
+Configuration lives **only in `pos.config`**.
+
+## Features
+
+- **Local Agent (Windows)**: POS sends a **receipt image** to a local HTTP agent.
+- **HW Proxy**: POS sends a **receipt image** to `/hw_proxy/default_printer_action`.
+- **Simple configuration**: only printer names + host/port per POS.
+
+## Installation
+
+1. Install the addon (depends on `point_of_sale`).
+2. In each POS configuration, set:
+   - **Printing mode**: Local Agent or HW Proxy
+   - **Printer (Cashier)** and **Printer (Kitchen)**
+   - **Local Agent Host/Port** or **HW Proxy Host/Port**
+3. Run the Local Agent on the Windows PC if using Local Agent.
+
+## Local Agent (Windows)
+
+- **Source**: `addons/pos_printing_suite/agent_src/local_printer_agent/`
+- **Endpoints**:
+  - `GET /health`
+  - `GET /printers`
+  - `POST /print` (body: `type` raw|pdf|image, `printer`, `data` base64)
+- **Config**: `ProgramData\PosPrintingSuite\Agent\config.json`
+  - `host`, `port`, `log_dir`
+  - `token` is **optional**; if set in the agent config, requests must include `Authorization: Bearer <token>`.
+- **Service**: run via `python win_service.py install` (pywin32) or NSSM.
+- **Tray icon**: the ZIP installer adds a tray app (`tray_agent.ps1`) and creates:
+  - Desktop shortcut: **POS Printing Suite Agent**
+  - Startup shortcut (auto-run on login)
+
+## Notes
+
+- The addon converts the POS receipt to an **image** before sending it to the agent/proxy.
+- If no printer name is configured, the addon does **not** override standard Odoo printing.
+
+## Windows Agent (MVP)
+
+This module can generate a **ZIP installer** (placeholder) for a Windows agent.
+If an **MSI** is present in `agent_src/dist/`, Odoo will serve the MSI instead.
+
+**Flow**
+1. Open POS Config and go to the **Windows Agent** section.
+2. Click **Crear instalable del agente** to generate an installer (MSI preferred, ZIP fallback).
+3. Click **Descargar e instalar agente** to open instructions and download.
+4. If you downloaded an **MSI**, run it as Administrator.
+5. If you downloaded a **ZIP**, extract it and run `install.ps1` as Administrator.
+
+**MSI Build (optional)**
+- Build the MSI on a Windows build machine (e.g., WiX Toolset).
+- Place the resulting `.msi` in `agent_src/dist/` (example: `PosPrintingSuiteAgent.msi`).
+- Odoo will automatically serve the MSI when available.
+
+**Recommended MSI build (WiX Toolset)**
+1. Download the installer ZIP from Odoo (contains `config.json`, `install.ps1`, tray assets).
+2. On a Windows build machine with WiX installed, run:
+   ```
+   installer/build_msi.ps1 -ZipPath <path_to_zip> -Version 1.0.0
+   ```
+3. Copy the generated MSI from `agent_src/dist/` to the server’s `agent_src/dist/`.
+4. Odoo will serve the MSI instead of ZIP automatically.
+
+**Important**
+- The generated `agent.exe` is a **placeholder**. Replace it with a real service binary.
+- Recommended build options:
+  - **Python + PyInstaller** (simple)
+  - **.NET Worker Service** (robust)
+
+The agent should:
+- read `config.json` (server URL + token),
+- send periodic pings to `/pos_printing_suite/agent/ping`,
+- optionally expose a local endpoint for printing.

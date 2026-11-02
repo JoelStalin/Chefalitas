@@ -1,0 +1,70 @@
+# Live functional demo of DGII e-CF: Odoo 20 (Chefalitas addons) + EasyCount NestJS.
+# Default: DGII emulator (DGII_ENV=LOCAL), project ecflive. With DGII_ENV=TEST|CERT it issues against the real DGII
+# using the certificate mounted from DGII_P12_HOST (see up.sh). Throwaway: start with ./up.sh, remove with ./down.sh.
+name: ecflive
+
+services:
+  odoo-db:
+    restart: unless-stopped
+    image: postgres:16-alpine
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+    environment:
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
+      POSTGRES_DB: postgres
+    volumes: [odoo-db:/var/lib/postgresql/data]
+
+  odoo:
+    restart: unless-stopped
+    image: ${ODOO20_IMAGE:-chefalitas-odoo20:test}
+    depends_on:
+      odoo-db: {condition: service_healthy}
+    # After a reboot dockerd starts every container at once and ignores depends_on; Postgres may need minutes of
+    # recovery and the image's entrypoint only waits 30 s. Wait up to 10 min, then run the stock entrypoint.
+    entrypoint: ["sh", "-c", "wait-for-psql.py --db_host \"$$HOST\" --db_port 5432 --db_user \"$$USER\" --db_password \"$$PASSWORD\" --timeout=600 && exec /entrypoint.sh \"$$@\"", "odoo-entrypoint"]
+    environment:
+      HOST: odoo-db
+      USER: odoo
+      PASSWORD: odoo
+    command: ["odoo", "--http-interface=0.0.0.0", "-d", "ecflive", "--db-filter=^ecflive$$", "--log-level=warn", "--workers=0"]
+    volumes:
+      - ${CHEFALITAS_ADDONS:?}:/mnt/extra-addons:ro
+      - odoo-data:/var/lib/odoo
+    ports: ["127.0.0.1:${ODOO_PORT:-18069}:8069"]
+
+  easycount-db:
+    restart: unless-stopped
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: ec
+      POSTGRES_PASSWORD: ec
+      POSTGRES_DB: easycount
+    volumes: [easycount-db:/var/lib/postgresql/data]
+
+  easycount:
+    restart: unless-stopped
+    image: ${EASYCOUNT_IMAGE:-easycount-api-nest:live}
+    depends_on: [easycount-db]
+    environment:
+      DGII_ENV: ${DGII_ENV:-LOCAL}
+      DATABASE_URL: postgresql://ec:ec@easycount-db:5432/easycount
+      ODOO_API_TOKENS: ${ODOO_API_TOKENS:?}
+      # real DGII only (DGII_ENV=TEST|CERT): values come from the caller's environment, never from this file
+      DGII_P12_PATH: /run/dgii/cert.p12
+      DGII_P12_PASSWORD: ${DGII_P12_PASSWORD:-}
+      DGII_CERT_EXPECTED_RNC: ${DGII_CERT_EXPECTED_RNC:-}
+      DGII_SEQ_EXPIRY: ${DGII_SEQ_EXPIRY:-}
+      DGII_ISSUER_NAME: ${DEMO_NAME:-}
+      DGII_ISSUER_ADDRESS: ${DGII_ISSUER_ADDRESS:-}
+    volumes:
+      - ${DGII_P12_HOST:-/dev/null}:/run/dgii/cert.p12:ro
+    ports: ["127.0.0.1:${EC_PORT:-18800}:8000"]
+
+volumes:
+  odoo-db:
+  odoo-data:
+  easycount-db:

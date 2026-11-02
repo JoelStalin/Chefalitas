@@ -1,0 +1,15 @@
+<odoo>
+    <record id="group_prep_chef" model="res.groups">
+        <field name="name">Prep Chef</field>
+    </record>
+    <record id="group_prep_supervisor" model="res.groups">
+        <field name="name">Prep Supervisor</field>
+    </record>
+    <record id="group_prep_finance" model="res.groups">
+        <field name="name">Prep Finance</field>
+    </record>
+    <record id="group_prep_admin" model="res.groups">
+        <field name="name">Prep Admin</field>
+        <field name="implied_ids" eval="[(4, ref('group_prep_supervisor')),(4, ref('group_prep_finance'))]"/>
+    </record>
+</odoo>

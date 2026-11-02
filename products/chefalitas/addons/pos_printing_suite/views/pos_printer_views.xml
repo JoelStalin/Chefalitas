@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_pos_printer_form_printing_suite" model="ir.ui.view">
+        <field name="name">pos.printer.form.printing.suite</field>
+        <field name="model">pos.printer</field>
+        <field name="inherit_id" ref="point_of_sale.view_pos_printer_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group" position="inside">
+                <group string="Printing Suite">
+                    <field name="printer_type"/>
+                    <field name="company_id" groups="base.group_multi_company"/>
+                    <field name="hw_proxy_ip" invisible="printer_type not in ('hw_proxy_any_printer', 'local_agent')"/>
+                    <field name="network_port" invisible="printer_type not in ('hw_proxy_any_printer', 'local_agent')"/>
+                    <field name="local_printer_name" invisible="printer_type != 'local_agent'"/>
+                    <field name="gateway_token" groups="base.group_system" invisible="printer_type not in ('cloud_gateway', 'local_agent')"/>
+                    <button name="action_rotate_gateway_token" type="object" string="Nuevo token" groups="base.group_system"
+                            invisible="printer_type not in ('cloud_gateway', 'local_agent')"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

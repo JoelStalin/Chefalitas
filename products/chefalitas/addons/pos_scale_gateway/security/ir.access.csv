@@ -1,0 +1,4 @@
+id,name,model_id,group_id/id,operation,domain
+access_scale_device_manager,pos.scale.device.manager,pos.scale.device,point_of_sale.group_pos_manager,crud,"[('company_id','in',company_ids)]"
+access_scale_device_user,pos.scale.device.user,pos.scale.device,point_of_sale.group_pos_user,r,"[('company_id','in',company_ids)]"
+access_scale_reading_manager,pos.scale.reading.manager,pos.scale.reading,point_of_sale.group_pos_manager,r,"[('device_id.company_id','in',company_ids)]"
