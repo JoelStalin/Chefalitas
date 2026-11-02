@@ -145,3 +145,11 @@ Revertir: `git revert 20dcf5c c478dd1 63d4be7 77376d3 0f6a923 dce2510 fe918d1 d5
 - Datos: la base de produccion chefalitas tenia 0 fripick_printer y 0 trabajos (verificado en solo lectura): no hace falta migrar.
 - Pruebas: fripick_orders + pos_printing_suite 14/14 en BD temporal tmp_printers (borrada).
 - Revertir: revertir este commit.
+
+## 2026-11-01 chefalitas.com.do pasa al Odoo 20 del ThinkCentre; el Odoo 18 queda en viejo.chefalitas.com.do (feat/domingo-modules)
+- Cloudflare (cuenta del titular, zona chefalitas.com.do): chefalitas.com.do y www ahora van al tunel getupsoft-thinkcentre-stage (b26c7b0e) -> http://localhost:18082 (Odoo 20, proyecto chefalitas-prod). El MX (correo) NO se toco. Nuevo viejo.chefalitas.com.do -> tunel chefalitas-prod-wsl2 (36e3796f) -> http://127.0.0.1:8080 (Odoo 18 de la oficina; hoy apagado, responde 530). db. y ssh. siguen en el tunel viejo.
+- Verificado desde internet: chefalitas.com.do y www = HTTP 200 (Odoo 20); viejo = 530 (equipo de la oficina apagado). web.base.url del Odoo 20 = https://chefalitas.com.do.
+- Estado de la base Odoo 20 (chefalitas): VACIA (empresa "My Company", USD, plan generico, 0 facturas, 7 contactos). Datos reales de la empresa en el respaldo del 2026-10-05: "Chefalitas y algo mas", RNC 133136122, Agueda Suarez, Santo Domingo Oeste, tel 8095808619, administracion@chefalitas.com.do.
+- EasyCount (produccion, inquilino 2 CHEFALITAS SRL, RNC 133136122): ambiente testecf (no ecf), certificado cargado vigente hasta 2027-10-07, sin token API para Odoo. NO se cambio nada ni se emitio nada a la DGII.
+- Pendiente: configurar empresa/plan contable DO e importar datos del respaldo; token API de EasyCount en l10n_do_accounting; autorizacion de emisor y secuencias de produccion en la OFV; pasar el inquilino a ecf con confirmacion del titular.
+- Revertir: respaldo de DNS y tuneles en ~/.agents_shared_memory/artifacts/domingo-2026-11-01/cf_chefalitas_antes_del_cambio.json (chefalitas.com.do y www CNAME -> 36e3796f-53c5-4046-9252-09ac17d395ac.cfargotunnel.com; quitar la regla viejo.* del tunel viejo si ya no se quiere).
