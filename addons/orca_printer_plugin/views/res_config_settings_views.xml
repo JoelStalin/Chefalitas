@@ -16,6 +16,7 @@
                             </div>
                             <div class="mt-2">
                                 <a class="btn btn-primary" role="button" href="/orca_printer/download" target="_blank">Descargar AnyPrinter.zip</a>
+                                <button name="action_anyprinter_setup_kitchen" type="object" class="btn btn-secondary ms-2">Configurar impresora de cocina</button>
                             </div>
                         </div>
                     </div>
