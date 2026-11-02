@@ -158,3 +158,9 @@ Revertir: `git revert 20dcf5c c478dd1 63d4be7 77376d3 0f6a923 dce2510 fe918d1 d5
 - Base temporal nueva de Odoo 20 (imagen chefalitas-odoo20:test, PostgreSQL aparte, sin tocar ninguna base real): ambos modulos instalan sin errores (0,34 s y 0,38 s) y 7 pruebas pasan, 0 fallos, 0 errores (5 de l10n_do_rnc_autofill: solo RNC, solo nombre unico, nombre ambiguo, RNC invalido, contacto existente; mas las de carga de los modulos).
 - Contenedores y red temporales eliminados al terminar. Falta probarlo en el POS real con sesion iniciada.
 - Revertir: git revert del commit de esta rama (o no fusionarla); los modulos no estan instalados en la base de produccion de Chefalitas.
+
+## 2026-11-02 AnyPrinter: boton para configurar la impresora de cocina (feat/anyprinter-kitchen, PR 72)
+- orca_printer_plugin: nuevo boton en Ajustes del POS que crea o reutiliza una impresora de preparacion ePoS en 127.0.0.1:9051 (acceso de red local) y la liga al punto de venta.
+- Verificado solo con py_compile y XML valido; no probado en una base Odoo ni desplegado en Domingo (servidor 10.0.0.24 sin ruta desde aqui; falta que el usuario pruebe la impresion de caja).
+- Falta: elegir las categorias que imprime cocina y probar con la impresora real.
+- Revertir: revertir el commit de la rama o cerrar el PR 72.
