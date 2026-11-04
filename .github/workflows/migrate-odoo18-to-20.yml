@@ -1,0 +1,37 @@
+name: Migrar Odoo 18 a Odoo 20 (produccion)
+
+# Copia compañías, contactos y usuarios del Odoo 18 de produccion al Odoo 20 del mismo servidor (DESKTOP-3RD2JRI).
+# Respalda antes la base Odoo 18 completa. Con dry_run solo respalda y cuenta lo que exportaria.
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Solo respaldar y contar (no importa)"
+        type: boolean
+        default: true
+      old_db:
+        description: "Base de Odoo 18 (vacio = detectar si hay una sola)"
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-prod-odoo20
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: [self-hosted, chefalitas-wsl]
+    environment:
+      name: production
+      url: https://chefalitas.com.do
+    steps:
+      - uses: actions/checkout@v4
+      - name: Migrar
+        env:
+          DEPLOY_DIR: /home/yoeli/chefalitas-odoo20
+          DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
+          OLD_DB: ${{ inputs.old_db }}
+        run: bash scripts/odoo20/migrate-from-18.sh
