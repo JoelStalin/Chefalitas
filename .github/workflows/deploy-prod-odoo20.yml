@@ -25,4 +25,8 @@ jobs:
       - name: Guardian del formato de factura
         run: bash scripts/guard/check_invoice_format.sh
       - name: Desplegar Odoo 20
+        # produccion vive en DESKTOP-3RD2JRI (WSL2); en el home del usuario del runner, junto al Odoo 18 hasta terminar la migracion
+        env:
+          DEPLOY_DIR: /home/yoeli/chefalitas-odoo20
+          HTTP_PORT: '18080'
         run: bash scripts/odoo20/deploy.sh
