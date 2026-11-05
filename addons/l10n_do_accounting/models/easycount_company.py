@@ -44,6 +44,49 @@ class ResCompany(models.Model):
         except EasyCountError as exc:
             raise UserError(_("Configuracion de EasyCount incompleta: %s", exc)) from exc
 
+    def _l10n_do_easycount_validate_sequences(self, e_cf_type=None, sync_journals=True):
+        """Queries and validates active sequences in EasyCount and optionally syncs journal expiration dates."""
+        self.ensure_one()
+        client = self._l10n_do_easycount_client()
+        try:
+            if e_cf_type:
+                info = client.validate_sequence(e_cf_type)
+            else:
+                info = client.get_sequences()
+        except EasyCountError as exc:
+            raise UserError(_("No se pudieron validar las secuencias activas en EasyCount: %s", exc)) from exc
+
+        if sync_journals and isinstance(info, dict):
+            items = [info] if e_cf_type else (info.get("items") or [])
+            self._l10n_do_sync_easycount_journal_sequences(items)
+        return info
+
+    def _l10n_do_sync_easycount_journal_sequences(self, items):
+        """Synchronizes active sequence expiration dates from EasyCount into fiscal journal document types."""
+        self.ensure_one()
+        journals = self.env["account.journal"].search([
+            ("company_id", "=", self.id),
+            ("type", "in", ("sale", "purchase")),
+            ("l10n_latam_use_documents", "=", True),
+        ])
+        for journal in journals:
+            if not journal.l10n_do_document_type_ids:
+                journal._l10n_do_create_document_types()
+
+        by_prefix = {
+            (item.get("e_cf_type") or item.get("eCfType")): item
+            for item in (items or [])
+            if isinstance(item, dict) and (item.get("e_cf_type") or item.get("eCfType"))
+        }
+        if not by_prefix:
+            return
+        for jdoc in journals.mapped("l10n_do_document_type_ids"):
+            prefix = jdoc.l10n_latam_document_type_id.doc_code_prefix or ""
+            seq_item = by_prefix.get(prefix)
+            expires_on = (seq_item or {}).get("expires_on") or (seq_item or {}).get("expiresOn")
+            if seq_item and seq_item.get("active") and expires_on:
+                jdoc.l10n_do_ncf_expiration_date = expires_on
+
 
 class ResConfigSettings(models.TransientModel):
     _inherit = "res.config.settings"
@@ -70,4 +113,34 @@ class ResConfigSettings(models.TransientModel):
             "type": "ir.actions.client", "tag": "display_notification",
             "params": {"title": _("EasyCount"), "type": "success", "sticky": False,
                        "message": _("Conectado. RNC %(rnc)s, ambiente %(env)s.", rnc=info.get("rnc"), env=mode)},
+        }
+
+    def action_l10n_do_easycount_validate_sequences(self):
+        self.ensure_one()
+        info = self.company_id._l10n_do_easycount_validate_sequences(sync_journals=True)
+        items = info.get("items") or []
+        active = [i for i in items if i.get("active")]
+        inactive = [i for i in items if not i.get("active")]
+        if not active:
+            reason = (
+                "; ".join(i.get("reason") for i in inactive if i.get("reason"))
+                or _("No hay secuencias activas configuradas en EasyCount para este RNC.")
+            )
+            raise UserError(_("EasyCount: %s", reason))
+        summary = ", ".join(
+            f"{i.get('e_cf_type') or i.get('eCfType')} ({i.get('next_encf') or i.get('next_number')})"
+            for i in active
+        )
+        return {
+            "type": "ir.actions.client", "tag": "display_notification",
+            "params": {
+                "title": _("Secuencias EasyCount"),
+                "type": "success",
+                "sticky": False,
+                "message": _(
+                    "Secuencias activas validadas y sincronizadas (%(n)s): %(s)s",
+                    n=len(active),
+                    s=summary,
+                ),
+            },
         }

@@ -56,8 +56,21 @@ class AccountMove(models.Model):
         for move in todo:
             if not move.l10n_do_fiscal_number:
                 client = move.company_id._l10n_do_easycount_client()
+                prefix = move.l10n_latam_document_type_id.doc_code_prefix
+                if hasattr(client, "validate_sequence"):
+                    try:
+                        seq_info = client.validate_sequence(prefix)
+                    except EasyCountError as exc:
+                        raise UserError(_("EasyCount no pudo validar la secuencia %(p)s: %(e)s", p=prefix, e=exc)) from exc
+                    if isinstance(seq_info, dict):
+                        if seq_info.get("active") is False:
+                            reason = seq_info.get("reason") or _("La secuencia no esta activa en EasyCount.")
+                            raise UserError(_("Secuencia %(p)s inactiva en EasyCount: %(r)s", p=prefix, r=reason))
+                        expires_on = seq_info.get("expires_on") or seq_info.get("expiresOn")
+                        if expires_on:
+                            move.l10n_do_ncf_expiration_date = expires_on
                 try:
-                    encf = client.allocate_encf(move.l10n_latam_document_type_id.doc_code_prefix)
+                    encf = client.allocate_encf(prefix)
                 except EasyCountError as exc:
                     raise UserError(_("EasyCount no pudo asignar el e-NCF: %s", exc)) from exc
                 move.l10n_do_fiscal_number = encf

@@ -57,6 +57,30 @@ class EasyCountClient:
     def health(self) -> dict[str, Any]:
         return self._request("GET", "/health")
 
+    def get_sequences(self) -> dict[str, Any]:
+        """Lists all e-NCF sequences configured for the company in EasyCount and their active status."""
+        return self._request("GET", "/sequences")
+
+    def validate_sequence(self, e_cf_type: str | None = None) -> dict[str, Any]:
+        """Validates an active sequence for a specific e-CF type (e.g. 'E31') or all company sequences."""
+        payload = {"eCfType": e_cf_type} if e_cf_type else {}
+        return self._request("POST", "/sequences/validate", payload)
+
+    def upsert_sequence(
+        self,
+        e_cf_type: str,
+        next_number: int,
+        expires_on: str | None = None,
+        end_number: int | None = None,
+    ) -> dict[str, Any]:
+        """Registers or updates a DGII-authorized e-NCF sequence range in EasyCount."""
+        payload: dict[str, Any] = {"nextNumber": int(next_number)}
+        if expires_on is not None:
+            payload["expiresOn"] = expires_on
+        if end_number is not None:
+            payload["endNumber"] = int(end_number)
+        return self._request("PUT", f"/sequences/{e_cf_type}", payload)
+
     def allocate_encf(self, e_cf_type: str) -> str:
         return self._request("POST", "/encf/allocate", {"eCfType": e_cf_type})["encf"]
 
