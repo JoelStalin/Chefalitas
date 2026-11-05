@@ -174,3 +174,7 @@ Revertir: `git revert 20dcf5c c478dd1 63d4be7 77376d3 0f6a923 dce2510 fe918d1 d5
 - Nuevos capturar_bascula.ps1 y capturar_bascula.bat en el paquete que se descarga desde Odoo: se conectan a la bascula por red (IP:puerto) o por puerto serie y guardan lo que manda, en hexadecimal y texto, sin interpretarlo. Para conocer el formato real de la Merkato MK-A01, de la que no hay protocolo publico, y escribir despues el lector de peso. Probado contra una bascula simulada por TCP y contra un puerto cerrado; el modo serie no se probo sin hardware.
 - No integra todavia el peso en el POS: falta el formato real y la IP/puerto de la bascula.
 - Revertir: revertir este commit.
+
+## 2026-11-02 Recibo DGII (pos_system): codigo de barras de la orden para devoluciones
+- El diseno DGII de pos_system (e-CF/NCF) no tenia lugar para el codigo de barras de la orden; solo el ticket normal lo mostraba. Ahora imprime, bajo "Conserve este comprobante", el Code128 de la referencia del pedido (lo genera pos_receipt_order_barcode; si ese modulo no esta instalado el bloque no se muestra). Al escanearlo en Ordenes se abre el pedido exacto para la devolucion.
+- Revertir: revertir este commit.

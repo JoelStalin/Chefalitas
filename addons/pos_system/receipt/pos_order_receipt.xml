@@ -133,6 +133,11 @@
                 <div class="do-c">
                     <div t-if="r['is_ecf']" class="do-b">Representacion Impresa de e-CF</div>
                     <div>Conserve este comprobante</div>
+                    <!-- Código de barras de la orden (lo agrega pos_receipt_order_barcode): al escanearlo en Órdenes se abre este pedido para la devolución -->
+                    <div t-if="image.get('order_barcode')" class="do-c mt-2" name="order_barcode">
+                        <img t-att-src="image['order_barcode']" style="width:95%"/>
+                        <div>Escanee este codigo para una devolucion</div>
+                    </div>
                     <div t-if="config.get('receipt_footer')" class="mt-1" style="white-space:pre-line" t-out="config['receipt_footer']"/>
                 </div>
                 <div class="do-eq"/>
