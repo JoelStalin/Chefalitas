@@ -14,11 +14,66 @@ class FakeEasyCount:
 
     def __init__(self):
         self.seqs = {}
+        self.sequence_config = {}
         self.issued = []
         self.reject = None
         self.offline = False
 
+    def get_sequences(self):
+        if self.offline:
+            raise EasyCountError("No se pudo conectar con EasyCount: refused")
+        items = list(self.sequence_config.values())
+        if not items:
+            items = [
+                {
+                    "e_cf_type": "E31",
+                    "doc_type": "31",
+                    "next_number": 1,
+                    "next_encf": "E310000000001",
+                    "expires_on": "2028-12-31",
+                    "active": True,
+                    "reason": None,
+                },
+                {
+                    "e_cf_type": "E32",
+                    "doc_type": "32",
+                    "next_number": 1,
+                    "next_encf": "E320000000001",
+                    "expires_on": None,
+                    "active": True,
+                    "reason": None,
+                },
+            ]
+        return {
+            "rnc": "131793916",
+            "dgii_env": "LOCAL",
+            "emulated": True,
+            "valid": any(i.get("active") for i in items),
+            "active_types": [i["e_cf_type"] for i in items if i.get("active")],
+            "items": items,
+        }
+
+    def validate_sequence(self, e_cf_type=None):
+        if self.offline:
+            raise EasyCountError("No se pudo conectar con EasyCount: refused")
+        if not e_cf_type:
+            return self.get_sequences()
+        if e_cf_type in self.sequence_config:
+            return self.sequence_config[e_cf_type]
+        return {
+            "ok": True,
+            "active": True,
+            "e_cf_type": e_cf_type,
+            "eCfType": e_cf_type,
+            "next_number": 1,
+            "next_encf": f"{e_cf_type}0000000001",
+            "expires_on": None if e_cf_type in ("E32", "E34") else "2028-12-31",
+            "reason": None,
+        }
+
     def allocate_encf(self, e_cf_type):
+        if self.offline:
+            raise EasyCountError("No se pudo conectar con EasyCount: refused")
         seq = self.seqs.setdefault(e_cf_type, count(1))
         return f"{e_cf_type}{next(seq):010d}"
 
@@ -229,3 +284,39 @@ class EasyCountIntegrationTest(common.L10nDOTestsCommon):
         refund = self._partial_refund(self._posted_e31(days_ago=45), l10n_do_refund_type="fixed_amount",
                                       l10n_do_amount=100.0)
         self.assertEqual((refund.amount_untaxed, refund.amount_tax), (100.0, 0.0))
+
+    def test_15_validate_active_sequences_and_sync_journal_expiration(self):
+        self.fake.sequence_config["E31"] = {
+            "e_cf_type": "E31",
+            "doc_type": "31",
+            "next_number": 15,
+            "next_encf": "E310000000015",
+            "expires_on": "2029-06-30",
+            "active": True,
+            "reason": None,
+        }
+        settings = self.env["res.config.settings"].create({"company_id": self.do_company.id})
+        notif = settings.action_l10n_do_easycount_validate_sequences()
+        self.assertEqual(notif["params"]["type"], "success")
+        self.assertIn("E31", notif["params"]["message"])
+        jdoc = self.fiscal_sale_journal.l10n_do_document_type_ids.filtered(
+            lambda d: d.l10n_latam_document_type_id.doc_code_prefix == "E31"
+        )
+        self.assertEqual(str(jdoc.l10n_do_ncf_expiration_date), "2029-06-30")
+
+    def test_16_inactive_or_expired_sequence_in_easycount_blocks_invoice_post(self):
+        self.fake.sequence_config["E31"] = {
+            "e_cf_type": "E31",
+            "doc_type": "31",
+            "next_number": 1,
+            "next_encf": "E310000000001",
+            "expires_on": "2024-12-31",
+            "active": False,
+            "reason": "La secuencia E31 vencio el 2024-12-31",
+        }
+        invoice = self._invoice("e-fiscal", self.fiscal_partner)
+        with self.assertRaises(UserError) as cm:
+            invoice.action_post()
+        self.assertIn("2024-12-31", str(cm.exception))
+        self.assertEqual(self.fake.issued, [])
+
