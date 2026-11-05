@@ -4,6 +4,9 @@
 # Facturacion, localizacion dominicana y reportes DGII
 l10n_do_accounting
 l10n_do_accounting_report
+# Clientes y sitio web
+contacts
+website
 # Inventario
 stock
 stock_account
