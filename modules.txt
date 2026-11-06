@@ -4,6 +4,7 @@
 # Facturacion, localizacion dominicana y reportes DGII
 l10n_do_accounting
 l10n_do_accounting_report
+l10n_do_rnc_autofill
 # Inventario
 stock
 stock_account

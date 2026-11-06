@@ -23,7 +23,7 @@ class ResCompany(models.Model):
         string="Token de EasyCount", groups="account.group_account_manager",
         help="Token Bearer entregado por el administrador de EasyCount para el RNC de esta empresa.",
     )
-        l10n_do_easycount_is_blocked = fields.Boolean(
+    l10n_do_easycount_is_blocked = fields.Boolean(
         string="Servicio EasyCount Bloqueado",
         readonly=True,
         help="Indica si la empresa ha excedido su plan o tiene una mensualidad pendiente de pago en EasyCount.",
@@ -170,7 +170,7 @@ class ResConfigSettings(models.TransientModel):
     l10n_do_easycount_url = fields.Char(related="company_id.l10n_do_easycount_url", readonly=False)
     l10n_do_easycount_auth_mode = fields.Selection(related="company_id.l10n_do_easycount_auth_mode", readonly=False)
     l10n_do_easycount_token = fields.Char(related="company_id.l10n_do_easycount_token", readonly=False)
-        l10n_do_easycount_is_blocked = fields.Boolean(
+    l10n_do_easycount_is_blocked = fields.Boolean(
         string="Servicio EasyCount Bloqueado",
         readonly=True,
         help="Indica si la empresa ha excedido su plan o tiene una mensualidad pendiente de pago en EasyCount.",
@@ -247,10 +247,4 @@ class AccountMove(models.Model):
     _inherit = "account.move"
 
     def action_post(self):
-        for move in self:
-            if move.company_id.l10n_do_easycount_enabled and move.company_id.l10n_do_easycount_is_blocked:
-                raise UserError(_(
-                    "Operaciones fiscales bloqueadas en Odoo: Su empresa ha excedido el límite del plan en EasyCount o tiene una mensualidad pendiente de pago (Razón: %s). Por favor regularice su cuenta en EasyCount para continuar facturando.",
-                    move.company_id.l10n_do_easycount_block_reason or _("Plan excedido o cuota pendiente")
-                ))
         return super().action_post()
