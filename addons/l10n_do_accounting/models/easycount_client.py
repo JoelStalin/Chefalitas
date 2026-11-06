@@ -39,7 +39,7 @@ class EasyCountClient:
         data = json.dumps(body).encode() if body is not None else None
         req = urllib.request.Request(
             f"{self.base_url}{API_PREFIX}{path}", data=data, method=method,
-            headers={"Authorization": f"Bearer {self.token}", "Content-Type": "application/json", "Accept": "application/json"},
+            headers={"Authorization": f"Bearer {self.token}", "Content-Type": "application/json", "Accept": "application/json", "User-Agent": "EasyCount-Odoo-Client/2.0 (Dominican Republic DGII; Linux/Windows; x86_64)"},
         )
         try:
             with self._open(req, timeout=self.timeout) as resp:
@@ -97,3 +97,11 @@ class EasyCountClient:
     def upload_credentials(self, payload: dict[str, Any]) -> dict[str, Any]:
         """Certificate (.p12 base64) + its password + certification-portal password; EasyCount stores them encrypted."""
         return self._request("POST", "/credentials", payload)
+
+    def heartbeat(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Envia heartbeat a EasyCount para registrar estado de conexion y obtener banderas de plan/bloqueo."""
+        return self._request("POST", "/heartbeat", payload)
+
+    def list_clients(self) -> dict[str, Any]:
+        """Consulta lista de clientes conectados y su estado en EasyCount."""
+        return self._request("GET", "/clients")
