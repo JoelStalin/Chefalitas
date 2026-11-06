@@ -389,3 +389,92 @@ class Partner(models.Model):
     def _inverse_l10n_do_dgii_tax_payer_type(self):
         for partner in self:
             partner.l10n_do_dgii_tax_payer_type = partner.l10n_do_dgii_tax_payer_type
+
+    @api.model
+    def _name_search(self, name="", domain=None, operator="ilike", limit=None, order=None):
+        clean = _clean_rnc_string(name)
+        if len(clean) in (9, 11):
+            domain = domain or []
+            existing = self.search([("vat", "ilike", clean)] + domain, limit=limit)
+            if existing:
+                return existing.ids
+            is_valid, _doc_type, _ = _validate_dominican_vat_checksum(clean)
+            if is_valid:
+                info = self.dgii_query_rnc(clean)
+                if info and info.get("name"):
+                    do_country = self.env.ref("base.do", raise_if_not_found=False)
+                    vals = {
+                        "name": info["name"],
+                        "vat": clean,
+                        "is_company": bool(info.get("is_company", len(clean) == 9)),
+                        "country_id": do_country.id if do_country else False,
+                    }
+                    if info.get("commercial_name") and "commercial_name" in self._fields:
+                        vals["commercial_name"] = info["commercial_name"]
+                    if info.get("regime") and "l10n_do_tax_regime" in self._fields:
+                        vals["l10n_do_tax_regime"] = info["regime"]
+                    partner = self.sudo().create(vals)
+                    return [partner.id]
+        return super()._name_search(name, domain, operator, limit=limit, order=order)
+
+    @api.model
+    def name_search(self, name="", args=None, operator="ilike", limit=100):
+        clean = _clean_rnc_string(name)
+        if len(clean) in (9, 11):
+            args = args or []
+            existing = self.search([("vat", "ilike", clean)] + args, limit=limit)
+            if existing:
+                return [(p.id, p.display_name) for p in existing]
+            is_valid, _doc_type, _ = _validate_dominican_vat_checksum(clean)
+            if is_valid:
+                info = self.dgii_query_rnc(clean)
+                if info and info.get("name"):
+                    do_country = self.env.ref("base.do", raise_if_not_found=False)
+                    vals = {
+                        "name": info["name"],
+                        "vat": clean,
+                        "is_company": bool(info.get("is_company", len(clean) == 9)),
+                        "country_id": do_country.id if do_country else False,
+                    }
+                    if info.get("commercial_name") and "commercial_name" in self._fields:
+                        vals["commercial_name"] = info["commercial_name"]
+                    if info.get("regime") and "l10n_do_tax_regime" in self._fields:
+                        vals["l10n_do_tax_regime"] = info["regime"]
+                    partner = self.sudo().create(vals)
+                    return [(partner.id, partner.display_name)]
+        return super().name_search(name, args=args, operator=operator, limit=limit)
+
+    @api.model
+    def name_create(self, name):
+        clean = _clean_rnc_string(name)
+        if len(clean) in (9, 11):
+            existing = self.search([("vat", "ilike", clean)], limit=1)
+            if existing:
+                return (existing.id, existing.display_name)
+            is_valid, _doc_type, _ = _validate_dominican_vat_checksum(clean)
+            if is_valid:
+                info = self.dgii_query_rnc(clean)
+                if info and info.get("name"):
+                    do_country = self.env.ref("base.do", raise_if_not_found=False)
+                    vals = {
+                        "name": info["name"],
+                        "vat": clean,
+                        "is_company": bool(info.get("is_company", len(clean) == 9)),
+                        "country_id": do_country.id if do_country else False,
+                    }
+                    if info.get("commercial_name") and "commercial_name" in self._fields:
+                        vals["commercial_name"] = info["commercial_name"]
+                    if info.get("regime") and "l10n_do_tax_regime" in self._fields:
+                        vals["l10n_do_tax_regime"] = info["regime"]
+                    partner = self.sudo().create(vals)
+                    return (partner.id, partner.display_name)
+        return super().name_create(name)
+
+    @api.depends("vat")
+    def _compute_display_name(self):
+        super()._compute_display_name()
+        for partner in self:
+            if partner.vat and partner.country_code == "DO":
+                clean_vat = _clean_rnc_string(partner.vat)
+                if clean_vat and clean_vat not in (partner.display_name or ""):
+                    partner.display_name = f"{partner.name} ({partner.vat})"

@@ -575,6 +575,17 @@ class AccountMove(models.Model):
 
     @api.onchange("partner_id")
     def _onchange_partner_id(self):
+        if self.partner_id and self.country_code == "DO":
+            p_name = (self.partner_id.name or "").strip()
+            clean_digits = "".join(filter(str.isdigit, p_name))
+            if p_name == clean_digits and len(clean_digits) in (9, 11):
+                info = self.env["res.partner"].dgii_query_rnc(clean_digits)
+                if info and info.get("name"):
+                    self.partner_id.sudo().write({
+                        "name": info["name"],
+                        "vat": clean_digits,
+                        "is_company": bool(info.get("is_company", len(clean_digits) == 9)),
+                    })
         if (
             self.company_id.country_id == self.env.ref("base.do")
             and self.l10n_latam_document_type_id
