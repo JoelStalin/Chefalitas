@@ -12,6 +12,7 @@ cd "$DEPLOY_DIR"
 docker compose build odoo
 bash scripts/odoo20/install-modules.sh
 docker compose up -d
+docker compose restart odoo
 port="$(grep ^HTTP_PORT .env | cut -d= -f2)"
 for i in $(seq 1 60); do
   code="$(curl -s -o /dev/null -w '%{http_code}' -m 5 "http://127.0.0.1:${port:-18080}/web/login" || true)"; [ "$code" = 200 ] && break; sleep 5
