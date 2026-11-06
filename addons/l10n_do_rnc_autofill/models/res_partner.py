@@ -268,5 +268,11 @@ class ResPartner(models.Model):
         if info.get("name"):
             self.name = info["name"]
         self.is_company = bool(info.get("is_company", len(clean or "") == 9))
+        if info.get("commercial_name") and "commercial_name" in self._fields:
+            self.commercial_name = info["commercial_name"]
         if info.get("regime") and "l10n_do_tax_regime" in self._fields:
             self.l10n_do_tax_regime = info["regime"]
+        if "country_id" in self._fields and not self.country_id:
+            do_country = self.env.ref("base.do", raise_if_not_found=False)
+            if do_country:
+                self.country_id = do_country
