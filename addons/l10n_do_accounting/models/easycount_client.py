@@ -13,6 +13,7 @@ from typing import Any
 API_PREFIX = "/odoo/v1"
 AUTH_TOKEN = "token"
 AUTH_OAUTH2 = "oauth2"
+USER_AGENT = "EasyCount-Odoo-l10n_do/1.0 (+https://easycount.me)"
 
 
 class EasyCountError(Exception):
@@ -39,7 +40,11 @@ class EasyCountClient:
         data = json.dumps(body).encode() if body is not None else None
         req = urllib.request.Request(
             f"{self.base_url}{API_PREFIX}{path}", data=data, method=method,
-            headers={"Authorization": f"Bearer {self.token}", "Content-Type": "application/json", "Accept": "application/json"},
+            headers={
+                "Authorization": f"Bearer {self.token}", "Content-Type": "application/json", "Accept": "application/json",
+                # Cloudflare (error 1010) blocks the default "Python-urllib" signature in front of easycount.me
+                "User-Agent": USER_AGENT,
+            },
         )
         try:
             with self._open(req, timeout=self.timeout) as resp:
