@@ -12,7 +12,7 @@ class ResCompany(models.Model):
         help="Los e-NCF y la transmision a DGII los realiza el servicio EasyCount.",
     )
     l10n_do_easycount_url = fields.Char(
-        string="URL de EasyCount", default="https://api.getupsoft.com.do",
+        string="URL de EasyCount", default="https://easycount.me",
         help="Servidor EasyCount (desarrollo, staging o produccion).",
     )
     l10n_do_easycount_auth_mode = fields.Selection(
