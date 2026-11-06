@@ -4,6 +4,7 @@ name: Deploy produccion Odoo 20
 # no usa computo de GitHub. Se dispara al publicar una version v20.* o a mano.
 on:
   push:
+    branches: ['main']
     tags: ['v20.*']
   workflow_dispatch:
 
