@@ -36,6 +36,7 @@ class ClientTests(unittest.TestCase):
         method, url, headers, data = rec[0]
         self.assertEqual((method, url), ("POST", "http://ec.local/odoo/v1/encf/allocate"))
         self.assertEqual(headers["Authorization"], "Bearer tok")
+        self.assertIn("EasyCount-Odoo", headers["User-agent"])  # Cloudflare 1010 blocks the Python default
         self.assertEqual(json.loads(data), {"eCfType": "E31"})
 
     def test_http_error_mapped(self):
