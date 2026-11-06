@@ -23,6 +23,28 @@ class ResCompany(models.Model):
         string="Token de EasyCount", groups="account.group_account_manager",
         help="Token Bearer entregado por el administrador de EasyCount para el RNC de esta empresa.",
     )
+        l10n_do_easycount_is_blocked = fields.Boolean(
+        string="Servicio EasyCount Bloqueado",
+        readonly=True,
+        help="Indica si la empresa ha excedido su plan o tiene una mensualidad pendiente de pago en EasyCount.",
+    )
+    l10n_do_easycount_block_reason = fields.Char(
+        string="Razón de Bloqueo EasyCount",
+        readonly=True,
+    )
+    l10n_do_easycount_is_connected = fields.Boolean(
+        string="EasyCount Conectado",
+        readonly=True,
+    )
+    l10n_do_easycount_last_heartbeat = fields.Datetime(
+        string="Último Heartbeat EasyCount",
+        readonly=True,
+    )
+    l10n_do_easycount_tunnel_url = fields.Char(
+        string="URL del Túnel Odoo",
+        help="URL pública o túnel Cloudflare de esta instancia de Odoo para comunicación con EasyCount.",
+    )
+
     l10n_do_ecf_service_env = fields.Selection(
         [("TesteCF", "TesteCF (pruebas DGII)"), ("CerteCF", "CerteCF (certificacion)"), ("eCF", "eCF (produccion)")],
         string="Ambiente DGII", default="TesteCF",
@@ -33,6 +55,37 @@ class ResCompany(models.Model):
         for company in self.filtered("l10n_do_easycount_enabled"):
             if company.l10n_do_easycount_auth_mode == AUTH_OAUTH2:
                 raise UserError(_("OAuth 2.0 aun no esta disponible en EasyCount; use Token de acceso."))
+
+    
+    def _l10n_do_easycount_send_heartbeat(self):
+        self.ensure_one()
+        if not self.l10n_do_easycount_enabled:
+            return False
+        client = self._l10n_do_easycount_client()
+        import odoo
+        from odoo import fields as odoo_fields
+        payload = {
+            "databaseName": self.env.cr.dbname,
+            "odooVersion": getattr(odoo.release, "version", "20.0"),
+            "tunnelUrl": self.l10n_do_easycount_tunnel_url or "",
+            "odooUrl": self.env["ir.config_parameter"].sudo().get_param("web.base.url", ""),
+            "modules": ["l10n_do_accounting", "pos_system"],
+        }
+        try:
+            res = client.heartbeat(payload)
+            self.sudo().write({
+                "l10n_do_easycount_is_connected": True,
+                "l10n_do_easycount_is_blocked": bool(res.get("is_blocked")),
+                "l10n_do_easycount_block_reason": res.get("block_reason"),
+                "l10n_do_easycount_last_heartbeat": odoo_fields.Datetime.now(),
+            })
+            return res
+        except Exception as exc:
+            self.sudo().write({
+                "l10n_do_easycount_is_connected": False,
+                "l10n_do_easycount_last_heartbeat": odoo_fields.Datetime.now(),
+            })
+            raise
 
     def _l10n_do_easycount_client(self):
         self.ensure_one()
@@ -89,12 +142,56 @@ class ResCompany(models.Model):
 
 
 class ResConfigSettings(models.TransientModel):
+    l10n_do_easycount_is_blocked = fields.Boolean(related="company_id.l10n_do_easycount_is_blocked", readonly=True)
+    l10n_do_easycount_block_reason = fields.Char(related="company_id.l10n_do_easycount_block_reason", readonly=True)
+    l10n_do_easycount_is_connected = fields.Boolean(related="company_id.l10n_do_easycount_is_connected", readonly=True)
+    l10n_do_easycount_last_heartbeat = fields.Datetime(related="company_id.l10n_do_easycount_last_heartbeat", readonly=True)
+    l10n_do_easycount_tunnel_url = fields.Char(related="company_id.l10n_do_easycount_tunnel_url", readonly=False)
+
+    def action_l10n_do_easycount_send_heartbeat(self):
+        self.ensure_one()
+        res = self.company_id._l10n_do_easycount_send_heartbeat()
+        status_msg = _("Bloqueado") if res.get("is_blocked") else _("Activo (Sin Bloqueo)")
+        if res.get("is_free_plan"):
+            status_msg = _("Activo (Plan Gratuito)")
+        return {
+            "type": "ir.actions.client", "tag": "display_notification",
+            "params": {
+                "title": _("Heartbeat EasyCount"),
+                "type": "success" if not res.get("is_blocked") else "warning",
+                "sticky": False,
+                "message": _("Sincronizado con EasyCount. Estado: %(st)s. RNC: %(rnc)s.", st=status_msg, rnc=res.get("rnc")),
+            },
+        }
+
     _inherit = "res.config.settings"
 
     l10n_do_easycount_enabled = fields.Boolean(related="company_id.l10n_do_easycount_enabled", readonly=False)
     l10n_do_easycount_url = fields.Char(related="company_id.l10n_do_easycount_url", readonly=False)
     l10n_do_easycount_auth_mode = fields.Selection(related="company_id.l10n_do_easycount_auth_mode", readonly=False)
     l10n_do_easycount_token = fields.Char(related="company_id.l10n_do_easycount_token", readonly=False)
+        l10n_do_easycount_is_blocked = fields.Boolean(
+        string="Servicio EasyCount Bloqueado",
+        readonly=True,
+        help="Indica si la empresa ha excedido su plan o tiene una mensualidad pendiente de pago en EasyCount.",
+    )
+    l10n_do_easycount_block_reason = fields.Char(
+        string="Razón de Bloqueo EasyCount",
+        readonly=True,
+    )
+    l10n_do_easycount_is_connected = fields.Boolean(
+        string="EasyCount Conectado",
+        readonly=True,
+    )
+    l10n_do_easycount_last_heartbeat = fields.Datetime(
+        string="Último Heartbeat EasyCount",
+        readonly=True,
+    )
+    l10n_do_easycount_tunnel_url = fields.Char(
+        string="URL del Túnel Odoo",
+        help="URL pública o túnel Cloudflare de esta instancia de Odoo para comunicación con EasyCount.",
+    )
+
     l10n_do_ecf_service_env = fields.Selection(related="company_id.l10n_do_ecf_service_env", readonly=False)
 
     def action_l10n_do_easycount_credentials(self):
@@ -144,3 +241,16 @@ class ResConfigSettings(models.TransientModel):
                 ),
             },
         }
+
+
+class AccountMove(models.Model):
+    _inherit = "account.move"
+
+    def action_post(self):
+        for move in self:
+            if move.company_id.l10n_do_easycount_enabled and move.company_id.l10n_do_easycount_is_blocked:
+                raise UserError(_(
+                    "Operaciones fiscales bloqueadas en Odoo: Su empresa ha excedido el límite del plan en EasyCount o tiene una mensualidad pendiente de pago (Razón: %s). Por favor regularice su cuenta en EasyCount para continuar facturando.",
+                    move.company_id.l10n_do_easycount_block_reason or _("Plan excedido o cuota pendiente")
+                ))
+        return super().action_post()
