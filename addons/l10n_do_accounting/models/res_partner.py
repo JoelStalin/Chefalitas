@@ -442,7 +442,10 @@ class Partner(models.Model):
                         vals["l10n_do_tax_regime"] = info["regime"]
                     partner = self.sudo().create(vals)
                     return [(partner.id, partner.display_name)]
-        return super().name_search(name, args=args, operator=operator, limit=limit)
+        # Odoo 20 renamed the second name_search argument from ``args`` to
+        # ``domain``. Pass it positionally to remain compatible with both
+        # the web client and earlier supported Odoo signatures.
+        return super().name_search(name, args or [], operator, limit)
 
     @api.model
     def name_create(self, name):
@@ -478,3 +481,4 @@ class Partner(models.Model):
                 clean_vat = _clean_rnc_string(partner.vat)
                 if clean_vat and clean_vat not in (partner.display_name or ""):
                     partner.display_name = f"{partner.name} ({partner.vat})"
+
