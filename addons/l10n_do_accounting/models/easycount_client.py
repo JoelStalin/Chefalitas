@@ -13,6 +13,10 @@ from typing import Any
 API_PREFIX = "/odoo/v1"
 AUTH_TOKEN = "token"
 AUTH_OAUTH2 = "oauth2"
+# Emitting waits for the DGII: EasyCount signs, sends and polls ConsultaResultado (up to ~6 x 5 s) before answering.
+# 30 s cut the call while the DGII was still answering, so Odoo rolled the invoice back although the e-CF had
+# already been sent. 85 s stays under Cloudflare's 100 s and Odoo's 120 s request limits.
+ISSUE_TIMEOUT = 85.0
 
 
 class EasyCountError(Exception):
@@ -35,14 +39,14 @@ class EasyCountClient:
         self.timeout = timeout
         self._open = opener or urllib.request.urlopen
 
-    def _request(self, method: str, path: str, body: dict | None = None) -> dict[str, Any]:
+    def _request(self, method: str, path: str, body: dict | None = None, timeout: float | None = None) -> dict[str, Any]:
         data = json.dumps(body).encode() if body is not None else None
         req = urllib.request.Request(
             f"{self.base_url}{API_PREFIX}{path}", data=data, method=method,
             headers={"Authorization": f"Bearer {self.token}", "Content-Type": "application/json", "Accept": "application/json", "User-Agent": "EasyCount-Odoo-Client/2.0 (Dominican Republic DGII; Linux/Windows; x86_64)"},
         )
         try:
-            with self._open(req, timeout=self.timeout) as resp:
+            with self._open(req, timeout=timeout or self.timeout) as resp:
                 return json.loads(resp.read().decode() or "{}")
         except urllib.error.HTTPError as exc:
             raw = exc.read().decode(errors="replace")
@@ -85,7 +89,7 @@ class EasyCountClient:
         return self._request("POST", "/encf/allocate", {"eCfType": e_cf_type})["encf"]
 
     def issue(self, payload: dict[str, Any]) -> dict[str, Any]:
-        return self._request("POST", "/invoices/issue", payload)
+        return self._request("POST", "/invoices/issue", payload, timeout=max(self.timeout, ISSUE_TIMEOUT))
 
     def status(self, encf: str) -> dict[str, Any]:
         return self._request("GET", f"/invoices/{encf}/status")
