@@ -52,6 +52,19 @@ class ClientTests(unittest.TestCase):
             EasyCountClient("http://x", "t", opener=boom).health()
         self.assertIsNone(cm.exception.status)
 
+    def test_issue_waits_longer_than_other_calls(self):
+        seen = []
+        def opener(req, timeout=None):
+            seen.append((req.full_url.rsplit("/odoo/v1", 1)[1], timeout))
+            return FakeResp(json.dumps({"encf": "E310000000001", "accepted": True}).encode())
+        c = EasyCountClient("http://ec.local", "tok", opener=opener)
+        c.allocate_encf("E31")
+        c.issue({"encf": "E310000000001"})
+        self.assertEqual(seen[0], ("/encf/allocate", 30.0))
+        self.assertEqual(seen[1][0], "/invoices/issue")
+        self.assertGreaterEqual(seen[1][1], 60.0)
+        self.assertLess(seen[1][1], 100.0)  # Cloudflare cuts proxied requests at 100 s
+
     def test_config_validation_and_oauth2_reserved(self):
         for args in (("", "t"), ("http://x", "")):
             with self.assertRaises(EasyCountError):
