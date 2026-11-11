@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Members may create or change Python code in server actions (see models/orca_security.py).
+         The owner admin and the ORCA user keep that right; other administrators do not. -->
+    <record id="group_orca_dev_admin" model="res.groups">
+        <field name="name">ORCA Dev Admin</field>
+        <field name="user_ids" eval="[Command.link(ref('base.user_admin')), Command.link(ref('orca_bridge.user_orca_bridge'))]"/>
+    </record>
+</odoo>

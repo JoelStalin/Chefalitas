@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="view_partner_property_form_inherited" model="ir.ui.view">
+        <field name="name">view.partner.property.form</field>
+        <field name="inherit_id" ref="account.view_partner_property_form"/>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='vat']" position="after">
+                <button name="action_dgii_consult" type="object" string="Consultar DGII" class="btn btn-secondary btn-sm" icon="fa-search" invisible="not vat"/>
+                <button name="action_evaluate_rst_advisory" type="object" string="Evaluar RST (EasyCount)" class="btn btn-outline-primary btn-sm" icon="fa-calculator" invisible="not vat"/>
+                <field name="l10n_do_dgii_tax_payer_type" readonly="parent_id" required="[]"/>
+                <field name="l10n_do_tax_regime" readonly="1" invisible="not vat"/>
+                <field name="l10n_do_is_rst" readonly="1" invisible="not vat" widget="boolean_toggle"/>
+                <field name="l10n_do_ecf_enabled" invisible="not is_company or parent_id" widget="boolean_toggle"/>
+            </xpath>
+            <xpath expr="//field[@name='property_supplier_payment_term_id']" position="after">
+                <field name="l10n_do_expense_type"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

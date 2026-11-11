@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_fripick_a4" model="report.paperformat">
+        <field name="name">Fripick A4</field>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">10</field>
+        <field name="margin_bottom">10</field>
+        <field name="margin_left">10</field>
+        <field name="margin_right">10</field>
+    </record>
+    <record id="action_report_fripick_label_a4" model="ir.actions.report">
+        <field name="name">Etiqueta Fripick (A4)</field>
+        <field name="model">fripick.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">fripick_orders.report_fripick_label_a4</field>
+        <field name="paperformat_id" ref="paperformat_fripick_a4"/>
+    </record>
+    <template id="report_fripick_label_a4">
+        <t t-call="web.basic_layout">
+            <t t-foreach="docs" t-as="o">
+                <div class="page" style="font-family: sans-serif;">
+                    <h1 style="margin:0">FRIPICK</h1>
+                    <h2 style="margin:4px 0 12px"><t t-esc="o.name"/></h2>
+                    <p><t t-esc="o.company_id.name"/> · <t t-esc="o.closed_at"/></p>
+                    <table style="width:100%; border-collapse:collapse">
+                        <t t-foreach="o.line_ids" t-as="l">
+                            <tr style="border-bottom:1px solid #ddd">
+                                <td style="padding:4px"><t t-esc="'%g' % l.qty"/> x <t t-esc="l.name"/></td>
+                                <td style="padding:4px; color:#555"><t t-esc="l.preparation or ''"/></td>
+                            </tr>
+                        </t>
+                    </table>
+                    <p style="margin-top:12px; font-size:18px"><strong>Total: <t t-esc="'%.2f' % o.amount_total"/></strong></p>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

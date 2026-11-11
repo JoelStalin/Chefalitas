@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo noupdate="1">
+    <record id="cron_orca_bridge_outbox" model="ir.cron">
+        <field name="name">ORCA: send pending change events</field>
+        <field name="model_id" ref="model_orca_bridge_outbox"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_send()</field>
+        <field name="interval_number">5</field>
+        <field name="interval_type">minutes</field>
+    </record>
+</odoo>

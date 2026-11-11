@@ -1,0 +1,35 @@
+name: Guardian del formato de factura
+
+# Falla si el formato de factura validado en la certificacion DGII cambia sin aprobacion explicita.
+on:
+  pull_request:
+  push:
+    branches: [main, feature/etapa1-easycount-ecf]
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verificar el formato de factura
+        run: bash scripts/guard/check_invoice_format.sh
+      - name: Cambios al formato requieren aprobacion explicita
+        if: github.event_name == 'pull_request'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE: ${{ github.base_ref }}
+        run: |
+          changed=$(git diff --name-only "origin/$BASE"...HEAD)
+          if echo "$changed" | grep -qE '^(addons/l10n_do_accounting/views/report_invoice(_preview)?\.xml|scripts/guard/invoice_format\.sha256)$'; then
+            if ! printf '%s\n%s\n' "$PR_TITLE" "$PR_BODY" | grep -q '\[formato-factura-aprobado\]'; then
+              echo "Este PR cambia el formato de factura validado por la DGII. Debe incluir [formato-factura-aprobado] en el titulo o la descripcion, con aprobacion del titular."
+              exit 1
+            fi
+          fi
+          echo "sin cambios no aprobados al formato de factura"

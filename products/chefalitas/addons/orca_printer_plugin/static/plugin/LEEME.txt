@@ -1,0 +1,26 @@
+AnyPrinter - imprime el POS de Odoo en cualquier impresora (USB, Windows o red) y abre la gaveta
+
+INSTALAR (una vez, en la PC de caja)
+1. Descomprima esta carpeta (por ejemplo C:\AnyPrinter). Si ya la tenia, sobrescriba los archivos.
+2. Ejecute instalar.bat. Queda en segundo plano y arranca solo con Windows.
+3. Se abre una pagina: escoja la impresora de CAJA y la de COCINA, y pulse Guardar.
+   Use "Probar caja" para ver que imprime y abre la gaveta.
+
+CONECTAR CON ODOO (Punto de venta > Configuracion > Impresoras)
+  - Tipo: Impresora ePOS
+  - Marque "Acceso a red local"
+  - IP de la impresora de caja:   127.0.0.1:9050
+  - IP de la impresora de cocina: 127.0.0.1:9051
+  - Si el navegador pregunta por el acceso a la red local, pulse Permitir.
+  - Abra una sesion nueva del POS (Ctrl+F5).
+
+IMPRESORA DE RED: en config.json escriba el nombre como tcp://192.168.1.50:9100
+Si la gaveta no abre, cambie "drawer_pin" a 1 en config.json.
+Comprobar que corre: http://127.0.0.1:9050/ping  debe decir {"ok":true}
+Solo acepta pedidos de su Odoo. No comparta config.json.
+
+BASCULA (Merkato MK-A01 u otra)
+-------------------------------
+Antes de leer una bascula hay que conocer lo que manda. Ejecute capturar_bascula.bat, escriba la IP y el puerto
+de la bascula (por ejemplo 192.168.1.50:4001) o su puerto serie (COM3), ponga un peso encima y espere 60 segundos.
+Se crea el archivo captura_bascula_*.txt: envielo para configurar la lectura del peso en AnyPrinter.
