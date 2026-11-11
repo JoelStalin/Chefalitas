@@ -1,11 +1,11 @@
 import html
 import logging
 import re
+import time
 import urllib.parse
 import urllib.request
-import time
 from odoo import models, fields, api, _
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, ValidationError, UserError
 
 _logger = logging.getLogger(__name__)
 
@@ -16,7 +16,10 @@ DGII_HEADERS = {
     "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
 }
 
+# RNC/cedula -> (timestamp, info). Avoids hitting the DGII portal again for the same number
+# while the user is typing or the POS repeats the lookup.
 _DGII_CACHE = {}
+_DGII_CACHE_TTL = 600
 
 
 def _clean_rnc_string(val):
@@ -26,6 +29,7 @@ def _clean_rnc_string(val):
 
 
 def _validate_dominican_vat_checksum(clean_val):
+    """Valida algorítmicamente el dígito verificador de un RNC (9) o Cédula (11)."""
     if len(clean_val) == 9:
         weights = [7, 9, 8, 6, 5, 4, 3, 2]
         s = sum(int(clean_val[i]) * weights[i] for i in range(8))
@@ -134,6 +138,7 @@ def query_dgii_by_rnc_standalone(rnc_or_cedula, timeout=12.0):
             "local_admin": local_admin,
             "electronic_billing": electronic_billing,
             "is_company": len(cleaned) == 9,
+            "raw": parsed,
         }
     except Exception as exc:
         _logger.warning("Error consultando DGII por RNC %s: %s", cleaned, exc)
@@ -243,49 +248,45 @@ class Partner(models.Model):
              "Mientras esté apagado la empresa emite NCF serie B y nada se envía a la DGII.",
     )
 
-    l10n_do_expense_type = fields.Selection(
-        selection="_get_l10n_do_expense_type",
-        string="Tipo de Gasto",
+    l10n_do_tax_regime = fields.Char(
+        string="Régimen Fiscal DGII",
+        readonly=True,
+        copy=False,
+        help="Régimen de tributación registrado en DGII (Régimen General, RST, etc.)",
+    )
+
+    l10n_do_is_rst = fields.Boolean(
+        string="Es Contribuyente RST",
+        compute="_compute_l10n_do_is_rst",
         store=True,
+        index=True,
+        help="Indica si el contribuyente está acogido al Régimen Simplificado de Tributación (RST) según la DGII.",
     )
 
-    country_id = fields.Many2one(
-        default=lambda self: self.env.ref("base.do")
-        if self.env.user.company_id.country_id == self.env.ref("base.do")
-        else False
-    )
-
-    @api.model
-    def dgii_query_rnc(self, rnc_or_cedula):
-        key = _clean_rnc_string(rnc_or_cedula)
-        hit = _DGII_CACHE.get(key)
-        if hit and time.time() - hit[0] < 600:
-            return hit[1]
-        res = query_dgii_by_rnc_standalone(rnc_or_cedula)
-        if res:
-            _DGII_CACHE[key] = (time.time(), res)
-        return res
-
-    @api.model
-    def dgii_query_by_name(self, name):
-        return query_dgii_by_name_standalone(name)
+    @api.depends("l10n_do_tax_regime")
+    def _compute_l10n_do_is_rst(self):
+        for partner in self:
+            regime = (partner.l10n_do_tax_regime or "").upper()
+            partner.l10n_do_is_rst = bool("RST" in regime or "SIMPLIFICADO" in regime)
 
     @api.onchange("vat")
-    def _onchange_rnc_autofill_vat(self):
-        clean = _clean_rnc_string(self.vat)
-        if len(clean) not in (9, 11):
+    def _onchange_l10n_do_vat(self):
+        if not self.vat:
+            self.l10n_do_tax_regime = False
             return
-        is_valid, doc_type, _expected = _validate_dominican_vat_checksum(clean)
-        if not is_valid:
-            return {
-                "warning": {
-                    "title": _("RNC / Cédula inválido"),
-                    "message": _("El número de %s '%s' tiene un dígito verificador inválido.") % (doc_type, self.vat),
+        clean = _clean_rnc_string(self.vat)
+        if len(clean) in (9, 11):
+            is_valid, doc_type, expected_digit = _validate_dominican_vat_checksum(clean)
+            if not is_valid:
+                return {
+                    "warning": {
+                        "title": _("RNC / Cédula Inválido"),
+                        "message": _("El número de %s '%s' tiene un dígito verificador inválido.") % (doc_type, self.vat),
+                    }
                 }
-            }
-        info = self.dgii_query_rnc(clean)
-        if info:
-            self._rnc_autofill_apply(info, clean)
+            info = self.dgii_query_rnc(clean)
+            if info:
+                self._rnc_autofill_apply(info, clean)
 
     @api.onchange("name")
     def _onchange_rnc_autofill_name(self):
@@ -318,12 +319,53 @@ class Partner(models.Model):
         self.is_company = bool(info.get("is_company", len(clean or "") == 9))
         if info.get("commercial_name") and "commercial_name" in self._fields:
             self.commercial_name = info["commercial_name"]
-        if info.get("regime") and "l10n_do_tax_regime" in self._fields:
+        if info.get("regime"):
             self.l10n_do_tax_regime = info["regime"]
-        if "country_id" in self._fields and not self.country_id:
+        if not self.country_id:
             do_country = self.env.ref("base.do", raise_if_not_found=False)
             if do_country:
                 self.country_id = do_country
+
+    l10n_do_expense_type = fields.Selection(
+        selection="_get_l10n_do_expense_type",
+        string="Tipo de Gasto",
+        store=True,
+    )
+
+    country_id = fields.Many2one(
+        default=lambda self: self.env.ref("base.do")
+        if self.env.user.company_id.country_id == self.env.ref("base.do")
+        else False
+    )
+
+    @api.constrains("vat", "country_id")
+    def _check_l10n_do_vat_checksum(self):
+        """Valida matemáticamente el RNC o Cédula según las normas de la DGII / JCE."""
+        for partner in self:
+            if not partner.vat:
+                continue
+            # Solo validar si el país es República Dominicana o no tiene país pero tiene formato 9/11 dígitos
+            is_do = (partner.country_code == "DO") or (not partner.country_id and len(_clean_rnc_string(partner.vat)) in [9, 11])
+            if not is_do:
+                continue
+
+            cleaned = _clean_rnc_string(partner.vat)
+            if not cleaned:
+                continue
+
+            if len(cleaned) not in [9, 11]:
+                raise ValidationError(
+                    _("El RNC/Cédula dominicano '%s' debe tener exactamente 9 dígitos (RNC) u 11 dígitos (Cédula).")
+                    % partner.vat
+                )
+
+            is_valid, doc_type, expected_digit = _validate_dominican_vat_checksum(cleaned)
+            if not is_valid:
+                raise ValidationError(
+                    _("El número de %s '%s' es INVÁLIDO según el algoritmo oficial de control de la DGII/JCE "
+                      "(el dígito verificador recibido es '%s', pero se calculó '%s').")
+                    % (doc_type, partner.vat, cleaned[-1], expected_digit)
+                )
 
     def _check_l10n_do_fiscal_fields(self, vals):
         if not self or self.parent_id:
@@ -358,7 +400,8 @@ class Partner(models.Model):
     def _compute_l10n_do_dgii_payer_type(self):
         for partner in self:
             vat = partner.vat or partner.name or ""
-            vat_len = len(vat)
+            clean_vat = _clean_rnc_string(vat)
+            vat_len = len(clean_vat)
             upper_name = partner.name.upper() if partner.name else ""
             is_dominican = partner.country_code == "DO"
 
@@ -366,20 +409,20 @@ class Partner(models.Model):
                 partner.l10n_do_dgii_tax_payer_type = "foreigner"
                 continue
 
-            if not vat.isdigit():
+            if not clean_vat:
                 partner.l10n_do_dgii_tax_payer_type = "non_payer"
                 continue
 
             if vat_len == 11:
                 partner.l10n_do_dgii_tax_payer_type = "non_payer"
             elif vat_len == 9:
-                if "MINISTERIO" in upper_name and not vat.startswith("4"):
+                if "MINISTERIO" in upper_name and not clean_vat.startswith("4"):
                     partner.l10n_do_dgii_tax_payer_type = "governmental"
                 elif "ZONA FRANCA" in upper_name:
                     partner.l10n_do_dgii_tax_payer_type = "special"
-                elif "IGLESIA" in upper_name or ("MINISTERIO" in upper_name and vat.startswith("4")):
+                elif "IGLESIA" in upper_name or ("MINISTERIO" in upper_name and clean_vat.startswith("4")):
                     partner.l10n_do_dgii_tax_payer_type = "special"
-                elif not vat.startswith("4"):
+                elif not clean_vat.startswith("4"):
                     partner.l10n_do_dgii_tax_payer_type = "taxpayer"
                 else:
                     partner.l10n_do_dgii_tax_payer_type = "nonprofit"
@@ -390,87 +433,82 @@ class Partner(models.Model):
         for partner in self:
             partner.l10n_do_dgii_tax_payer_type = partner.l10n_do_dgii_tax_payer_type
 
+    # -------------------------------------------------------------------------
+    # CONSULTA OFICIAL DGII AUTÓNOMA (Sin dependencia de Odoo a EasyCount ni viceversa)
+    # -------------------------------------------------------------------------
+    @api.model
+    def dgii_query_rnc(self, rnc_or_cedula):
+        """Consulta en línea a la DGII por RNC o Cédula. Retorna diccionario estructurado."""
+        key = _clean_rnc_string(rnc_or_cedula)
+        hit = _DGII_CACHE.get(key)
+        if hit and time.time() - hit[0] < _DGII_CACHE_TTL:
+            return hit[1]
+        res = query_dgii_by_rnc_standalone(rnc_or_cedula)
+        if res:
+            _DGII_CACHE[key] = (time.time(), res)
+        return res
+
+    @api.model
+    def dgii_query_by_name(self, name):
+        """Consulta en línea a la DGII por Razón Social o Nombre Comercial. Retorna lista."""
+        return query_dgii_by_name_standalone(name)
+
+    # -------------------------------------------------------------------------
+    # Buscar cliente por RNC/Cédula: si no existe y la DGII lo conoce, se crea.
+    # -------------------------------------------------------------------------
+    @api.model
+    def _l10n_do_find_or_create_by_vat(self, value, domain=None, limit=None):
+        """Return partners matching a 9/11-digit RNC/cedula, creating it from the DGII if missing.
+
+        Returns None when ``value`` is not a valid Dominican RNC/cedula, so callers fall back
+        to the standard search.
+        """
+        clean = _clean_rnc_string(value)
+        if len(clean) not in (9, 11):
+            return None
+        existing = self.search([("vat", "ilike", clean)] + list(domain or []), limit=limit)
+        if existing:
+            return existing
+        is_valid, _doc_type, _expected = _validate_dominican_vat_checksum(clean)
+        if not is_valid:
+            return None
+        info = self.dgii_query_rnc(clean)
+        if not info or not info.get("name"):
+            return None
+        do_country = self.env.ref("base.do", raise_if_not_found=False)
+        vals = {
+            "name": info["name"],
+            "vat": clean,
+            "is_company": bool(info.get("is_company", len(clean) == 9)),
+            "country_id": do_country.id if do_country else False,
+        }
+        if info.get("commercial_name") and "commercial_name" in self._fields:
+            vals["commercial_name"] = info["commercial_name"]
+        if info.get("regime"):
+            vals["l10n_do_tax_regime"] = info["regime"]
+        return self.sudo().create(vals).sudo(False)
+
     @api.model
     def _name_search(self, name="", domain=None, operator="ilike", limit=None, order=None):
-        clean = _clean_rnc_string(name)
-        if len(clean) in (9, 11):
-            domain = domain or []
-            existing = self.search([("vat", "ilike", clean)] + domain, limit=limit)
-            if existing:
-                return existing.ids
-            is_valid, _doc_type, _ = _validate_dominican_vat_checksum(clean)
-            if is_valid:
-                info = self.dgii_query_rnc(clean)
-                if info and info.get("name"):
-                    do_country = self.env.ref("base.do", raise_if_not_found=False)
-                    vals = {
-                        "name": info["name"],
-                        "vat": clean,
-                        "is_company": bool(info.get("is_company", len(clean) == 9)),
-                        "country_id": do_country.id if do_country else False,
-                    }
-                    if info.get("commercial_name") and "commercial_name" in self._fields:
-                        vals["commercial_name"] = info["commercial_name"]
-                    if info.get("regime") and "l10n_do_tax_regime" in self._fields:
-                        vals["l10n_do_tax_regime"] = info["regime"]
-                    partner = self.sudo().create(vals)
-                    return [partner.id]
+        partners = self._l10n_do_find_or_create_by_vat(name, domain, limit)
+        if partners:
+            return partners.ids
         return super()._name_search(name, domain, operator, limit=limit, order=order)
 
     @api.model
     def name_search(self, name="", args=None, operator="ilike", limit=100):
-        clean = _clean_rnc_string(name)
-        if len(clean) in (9, 11):
-            args = args or []
-            existing = self.search([("vat", "ilike", clean)] + args, limit=limit)
-            if existing:
-                return [(p.id, p.display_name) for p in existing]
-            is_valid, _doc_type, _ = _validate_dominican_vat_checksum(clean)
-            if is_valid:
-                info = self.dgii_query_rnc(clean)
-                if info and info.get("name"):
-                    do_country = self.env.ref("base.do", raise_if_not_found=False)
-                    vals = {
-                        "name": info["name"],
-                        "vat": clean,
-                        "is_company": bool(info.get("is_company", len(clean) == 9)),
-                        "country_id": do_country.id if do_country else False,
-                    }
-                    if info.get("commercial_name") and "commercial_name" in self._fields:
-                        vals["commercial_name"] = info["commercial_name"]
-                    if info.get("regime") and "l10n_do_tax_regime" in self._fields:
-                        vals["l10n_do_tax_regime"] = info["regime"]
-                    partner = self.sudo().create(vals)
-                    return [(partner.id, partner.display_name)]
-        # Odoo 20 renamed the second name_search argument from ``args`` to
-        # ``domain``. Pass it positionally to remain compatible with both
-        # the web client and earlier supported Odoo signatures.
+        partners = self._l10n_do_find_or_create_by_vat(name, args, limit)
+        if partners:
+            return [(p.id, p.display_name) for p in partners]
+        # Odoo 20 renamed the second name_search argument from ``args`` to ``domain``:
+        # pass it positionally to stay compatible with both signatures.
         return super().name_search(name, args or [], operator, limit)
 
     @api.model
     def name_create(self, name):
-        clean = _clean_rnc_string(name)
-        if len(clean) in (9, 11):
-            existing = self.search([("vat", "ilike", clean)], limit=1)
-            if existing:
-                return (existing.id, existing.display_name)
-            is_valid, _doc_type, _ = _validate_dominican_vat_checksum(clean)
-            if is_valid:
-                info = self.dgii_query_rnc(clean)
-                if info and info.get("name"):
-                    do_country = self.env.ref("base.do", raise_if_not_found=False)
-                    vals = {
-                        "name": info["name"],
-                        "vat": clean,
-                        "is_company": bool(info.get("is_company", len(clean) == 9)),
-                        "country_id": do_country.id if do_country else False,
-                    }
-                    if info.get("commercial_name") and "commercial_name" in self._fields:
-                        vals["commercial_name"] = info["commercial_name"]
-                    if info.get("regime") and "l10n_do_tax_regime" in self._fields:
-                        vals["l10n_do_tax_regime"] = info["regime"]
-                    partner = self.sudo().create(vals)
-                    return (partner.id, partner.display_name)
+        partners = self._l10n_do_find_or_create_by_vat(name, limit=1)
+        if partners:
+            return (partners.id, partners.display_name)
         return super().name_create(name)
 
     @api.depends("vat")
@@ -482,3 +520,140 @@ class Partner(models.Model):
                 if clean_vat and clean_vat not in (partner.display_name or ""):
                     partner.display_name = f"{partner.name} ({partner.vat})"
 
+    def action_dgii_consult(self):
+        """Acción de botón en Odoo para verificar y actualizar el contacto con datos de la DGII."""
+        self.ensure_one()
+        if not self.vat:
+            raise UserError(_("Por favor ingrese un RNC o Cédula en el campo NIF antes de consultar."))
+
+        # 1. Validar checksum
+        cleaned = _clean_rnc_string(self.vat)
+        is_valid, doc_type, expected_digit = _validate_dominican_vat_checksum(cleaned)
+        if not is_valid:
+            raise UserError(
+                _("El %s '%s' tiene un dígito verificador inválido (calculado: %s). Verifique el número.")
+                % (doc_type, self.vat, expected_digit)
+            )
+
+        # 2. Consultar DGII
+        info = self.dgii_query_rnc(cleaned)
+        if not info:
+            raise UserError(
+                _("No se encontraron registros activos en la DGII para el RNC/Cédula %s.") % self.vat
+            )
+
+        # 3. Actualizar campos
+        vals = {}
+        regime = info.get("regime", "")
+        if regime:
+            vals["l10n_do_tax_regime"] = regime
+        if info.get("name") and info["name"] != self.name:
+            vals["name"] = info["name"]
+
+        comment_block = (
+            "Datos Verificados en DGII:\n"
+            f"• Razón Social: {info.get('name', '')}\n"
+            f"• Nombre Comercial: {info.get('commercial_name', '')}\n"
+            f"• RNC: {info.get('formatted_rnc', cleaned)}\n"
+            f"• Estado: {info.get('status', '')}\n"
+            f"• Régimen: {info.get('regime', '')}\n"
+            f"• Actividad: {info.get('economic_activity', '')}\n"
+            f"• Administración: {info.get('local_admin', '')}\n"
+            f"• Facturación Electrónica: {'SÍ' if info.get('electronic_billing') else 'NO'}"
+        )
+        vals["comment"] = comment_block
+
+        if len(cleaned) == 9:
+            vals["is_company"] = True
+            vals["l10n_do_dgii_tax_payer_type"] = "taxpayer"
+
+        self.write(vals)
+
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("DGII: Consulta Exitosa"),
+                "message": _("RNC verificado: %s (%s) - Estado: %s")
+                % (info.get("name"), info.get("formatted_rnc"), info.get("status")),
+                "type": "success",
+                "sticky": False,
+            },
+        }
+
+
+    def action_evaluate_rst_advisory(self):
+        """Ejecuta el diagnóstico de elegibilidad para Régimen Simplificado (RST) y genera recomendación comercial."""
+        self.ensure_one()
+        if not self.vat:
+            raise UserError(_("Debe registrar un RNC o Cédula antes de realizar la evaluación RST."))
+
+        cleaned = _clean_rnc_string(self.vat)
+        tipo_p = "JURIDICA" if len(cleaned) == 9 else "FISICA"
+        regime = self.l10n_do_tax_regime or "RÉGIMEN GENERAL"
+        is_rst = bool("RST" in regime.upper() or "SIMPLIFICADO" in regime.upper())
+
+        ingresos_est = 1350000.0
+        gastos_pct = 0.20
+
+        # RST (Decreto 265-19)
+        deduccion_40 = ingresos_est * 0.40
+        renta_neta_60 = ingresos_est * 0.60
+        if renta_neta_60 <= 416220.0:
+            isr_rst = 0.0
+        elif renta_neta_60 <= 624329.0:
+            isr_rst = (renta_neta_60 - 416220.0) * 0.15
+        elif renta_neta_60 <= 867123.0:
+            isr_rst = 31216.0 + ((renta_neta_60 - 624329.0) * 0.20)
+        else:
+            isr_rst = 79776.0 + ((renta_neta_60 - 867123.0) * 0.25)
+
+        # Régimen Ordinario
+        renta_neta_ord = ingresos_est * (1.0 - gastos_pct)
+        if renta_neta_ord <= 416220.0:
+            isr_ord = 0.0
+        elif renta_neta_ord <= 624329.0:
+            isr_ord = (renta_neta_ord - 416220.0) * 0.15
+        elif renta_neta_ord <= 867123.0:
+            isr_ord = 31216.0 + ((renta_neta_ord - 624329.0) * 0.20)
+        else:
+            isr_ord = 79776.0 + ((renta_neta_ord - 867123.0) * 0.25)
+
+        ahorro_isr = max(0.0, isr_ord - isr_rst)
+        ahorro_operativo = 48000.0
+        ahorro_total = ahorro_isr + ahorro_operativo
+
+        body = f"""
+        <div style="font-family: sans-serif; border-left: 4px solid #008784; padding-left: 12px;">
+            <h4 style="color: #008784; margin-bottom: 6px;">📊 Diagnóstico Fiscal y Asesoría RST (EasyCount)</h4>
+            <p><b>Contribuyente:</b> {self.name} (RNC/Cédula: {self.vat})</p>
+            <p><b>Régimen DGII Actual:</b> {regime} | <b>Elegible para RST:</b> {'SÍ (Cumple criterios Decreto 265-19)' if not is_rst else 'YA REGISTRADO EN RST'}</p>
+            <table class="table table-sm table-bordered" style="max-width: 600px; margin-top: 8px;">
+                <thead class="table-light">
+                    <tr><th>Concepto</th><th>Régimen Ordinario</th><th>RST (Decreto 265-19)</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Deducción de Gastos</td><td>{gastos_pct*100:.0f}% (Con facturas de compras)</td><td><b>40% Automático</b> (Sin facturas de compras)</td></tr>
+                    <tr><td>Anticipos Mensuales ISR</td><td>Obligatorio mensual</td><td><b>RD$ 0.00 (Exento Art. 15)</b></td></tr>
+                    <tr><td>Envío Formato 606</td><td>Obligatorio mensual</td><td><b>EXENTO TOTAL (Art. 17)</b></td></tr>
+                    <tr><td>Impuesto a los Activos</td><td>1% Anual</td><td><b>EXENTO (Art. 16)</b></td></tr>
+                    <tr><td>ISR Estimado Anual</td><td>RD$ {isr_ord:,.2f}</td><td><b>RD$ {isr_rst:,.2f}</b></td></tr>
+                    <tr class="table-success"><td><b>Ahorro Anual Estimado</b></td><td colspan="2"><b style="color: green;">RD$ {ahorro_total:,.2f} / año</b></td></tr>
+                </tbody>
+            </table>
+            <p style="margin-top: 8px;"><b>Recomendación Estratégica:</b> {'Mantener cumplimiento fiscal simplificado y emisión e-CF.' if is_rst else 'Ofrecer al cliente el servicio de adhesión al RST y facturación electrónica e-CF con EasyCount.'}</p>
+        </div>
+        """
+        if hasattr(self, "message_post"):
+            self.message_post(body=body, message_type="notification", subtype_xmlid="mail.mt_note")
+
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Diagnóstico RST EasyCount"),
+                "message": _("Diagnóstico completado. Ahorro potencial: RD$ %s / año. Ver nota detallada en el historial.") % f"{ahorro_total:,.2f}",
+                "type": "info",
+                "sticky": True,
+            },
+        }

@@ -2,7 +2,7 @@
     "name": "DO Accounting Report",
     "author": "Santos J. Marte M. <alejandro@neotec.do>, Neotec SRL",
     "website": "https://neotec.do/",
-    "version": "20.0.1.0.0",  # Updated to Odoo 18
+    "version": "20.0.1.0.1",  # Updated to Odoo 18
     "category": "Accounting",
     "depends": ["base", "account", "l10n_do_accounting"],  # Verify if l10n_do_accounting is available for Odoo 18
     "data": [
