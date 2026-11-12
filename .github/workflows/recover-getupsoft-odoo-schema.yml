@@ -74,7 +74,7 @@ jobs:
           mkdir "$backup"
           docker exec "$db" pg_dump -U odoo -d getupsoft -Fc > "$backup/getupsoft.dump"
           test -s "$backup/getupsoft.dump"
-          docker exec "$db" pg_restore -l < "$backup/getupsoft.dump" > /dev/null
+          docker exec -i "$db" pg_restore -l < "$backup/getupsoft.dump" > /dev/null
           docker exec "$app" tar -C /var/lib/odoo -czf - filestore/getupsoft > "$backup/filestore.tar.gz"
           test -s "$backup/filestore.tar.gz"
           tar -tzf "$backup/filestore.tar.gz" > /dev/null
