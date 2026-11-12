@@ -6,11 +6,21 @@ from odoo import SUPERUSER_ID, api
 _logger = logging.getLogger(__name__)
 
 
-def _xml_text(raw):
-    """El Binary puede llegar como XML crudo (BinaryBytes, Odoo 20) o en base64."""
+def _xml_bytes(value):
+    """Bytes del XML e-CF guardado, venga como venga el Binary.
+
+    Odoo 20 devuelve un BinaryValueAttachment (bytes en `.content`), no bytes: eso
+    rompió la primera versión de esta migración. Se aceptan también bytes/str
+    crudos o en base64.
+    """
+    if not value:
+        return None
+    raw = getattr(value, "content", value)
     if isinstance(raw, str):
         raw = raw.encode()
-    if not raw or b"<" in raw[:200]:
+    if not isinstance(raw, (bytes, bytearray)):
+        raw = bytes(raw)
+    if b"<" in raw[:200]:
         return raw
     try:
         return base64.b64decode(raw, validate=True)
@@ -33,7 +43,11 @@ def migrate(cr, version):
         ("l10n_do_ecf_monto_total", "=", False),
     ])
     for move in moves:
-        xml = _xml_text(move.l10n_do_ecf_edi_file)
+        try:
+            xml = _xml_bytes(move.l10n_do_ecf_edi_file)
+        except Exception as exc:  # noqa: BLE001 - un asiento raro no debe frenar el despliegue
+            _logger.warning("e-CF %s: no se pudo leer el XML (%s)", move.name, exc)
+            continue
         vals = {}
         monto = signed_monto_total(xml)
         if monto:
