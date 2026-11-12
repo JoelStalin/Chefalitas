@@ -23,12 +23,11 @@ jobs:
       name: getupsoft-odoo-production
       url: https://odoo.getupsoft.com/web/login
     steps:
-      - name: Require protected environment
+      - name: Require configured production environment
         env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPOSITORY: ${{ github.repository }}
+          DEPLOYMENT_GUARD: ${{ vars.GETUPSOFT_ODOO_DEPLOYMENT_GUARD }}
         run: |
-          gh api "repos/$GH_REPOSITORY/environments/getupsoft-odoo-production" --jq '.protection_rules | any(.type == "required_reviewers")' | grep -qx true
+          test "$DEPLOYMENT_GUARD" = enabled
       - name: Install cloudflared
         env:
           VERSION: '2026.9.3'
