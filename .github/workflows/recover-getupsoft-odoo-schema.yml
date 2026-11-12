@@ -1,0 +1,111 @@
+name: Recover GetUpSoft Odoo schema
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        required: true
+        type: choice
+        options: [getupsoft]
+      modules:
+        required: true
+        type: choice
+        options: [l10n_do_accounting]
+permissions:
+  contents: read
+concurrency:
+  group: getupsoft-odoo-schema-recovery
+  cancel-in-progress: false
+jobs:
+  recover:
+    if: github.ref == 'refs/heads/main' && inputs.target == 'getupsoft' && inputs.modules == 'l10n_do_accounting'
+    runs-on: ubuntu-latest
+    environment:
+      name: getupsoft-odoo-production
+      url: https://odoo.getupsoft.com/web/login
+    steps:
+      - name: Require configured production environment
+        env:
+          DEPLOYMENT_GUARD: ${{ vars.GETUPSOFT_ODOO_DEPLOYMENT_GUARD }}
+        run: |
+          test "$DEPLOYMENT_GUARD" = enabled
+      - name: Install cloudflared
+        env:
+          VERSION: '2026.9.3'
+        run: |
+          curl -fsSL -o /tmp/cloudflared.deb "https://github.com/cloudflare/cloudflared/releases/download/${VERSION}/cloudflared-linux-amd64.deb"
+          sudo dpkg -i /tmp/cloudflared.deb
+      - name: Configure SSH
+        env:
+          KEY: ${{ secrets.THINKCENTRE_SSH_KEY }}
+          HOST: ${{ secrets.THINKCENTRE_SSH_HOST }}
+          USER_: ${{ secrets.THINKCENTRE_SSH_USER }}
+          CF_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          cat > ~/.ssh/config <<CONF
+          Host thinkcentre
+            HostName ${HOST}
+            User ${USER_}
+            IdentityFile ~/.ssh/deploy_key
+            IdentitiesOnly yes
+            StrictHostKeyChecking accept-new
+            ProxyCommand cloudflared access ssh --hostname %h --service-token-id ${CF_ID} --service-token-secret ${CF_SECRET}
+          CONF
+      - name: Backup and upgrade GetUpSoft only
+        env:
+          SHA: ${{ github.sha }}
+        run: |
+          ssh thinkcentre "EXPECTED_SHA='$SHA' bash -s" <<'REMOTE'
+          set -Eeuo pipefail
+          umask 077
+          cd /home/ubuntu/workspaces/chefalitas
+          test -z "$(git status --porcelain --untracked-files=no)"
+          test "$(git branch --show-current)" = main
+          app=getupsoft-odoo20-odoo-1
+          db=getupsoft-odoo20-db-1
+          for c in "$app" "$db"; do docker ps --format '{{.Names}}' | grep -qx "$c"; done
+          root=/home/ubuntu/deploy-backups/getupsoft-odoo20
+          mkdir -p "$root"
+          backup="$root/$(date -u +%Y%m%dT%H%M%SZ)-$EXPECTED_SHA"
+          mkdir "$backup"
+          docker exec "$db" pg_dump -U odoo -d getupsoft -Fc > "$backup/getupsoft.dump"
+          test -s "$backup/getupsoft.dump"
+          docker exec -i "$db" pg_restore -l < "$backup/getupsoft.dump" > /dev/null
+          docker exec "$app" tar -C /var/lib/odoo -czf - filestore/getupsoft > "$backup/filestore.tar.gz"
+          test -s "$backup/filestore.tar.gz"
+          tar -tzf "$backup/filestore.tar.gz" > /dev/null
+          docker inspect "$app" "$db" > "$backup/docker-inspect.json"
+          git rev-parse HEAD > "$backup/previous-sha.txt"
+          (cd "$backup" && sha256sum getupsoft.dump filestore.tar.gz docker-inspect.json previous-sha.txt > SHA256SUMS)
+          echo "Verified backup: $backup"
+          git fetch -q origin main
+          git merge -q --ff-only origin/main
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          docker exec "$app" sh -c 'odoo --db_host "$HOST" --db_user "$USER" --db_password "$PASSWORD" -d getupsoft -u l10n_do_accounting --stop-after-init --no-http --log-level=warn'
+          docker exec "$db" psql -U odoo -d getupsoft -Atc "select column_name from information_schema.columns where table_name='res_company' and column_name='l10n_do_easycount_is_blocked'" | grep -qx l10n_do_easycount_is_blocked
+          docker restart "$app" > /dev/null
+          restarted_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          code=000
+          for i in $(seq 1 40); do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 10 http://127.0.0.1:18070/web/login || true)
+            test "$code" = 200 && break
+            sleep 3
+          done
+          echo "Local /web/login: $code"
+          test "$code" = 200
+          if docker logs --since "$restarted_at" "$app" 2>&1 | grep -q 'UndefinedColumn.*l10n_do_easycount_is_blocked'; then exit 1; fi
+          REMOTE
+      - name: Verify public login
+        run: |
+          code=000
+          for i in $(seq 1 20); do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 https://odoo.getupsoft.com/web/login || true)
+            test "$code" = 200 && break
+            sleep 5
+          done
+          echo "Public /web/login: $code"
+          test "$code" = 200

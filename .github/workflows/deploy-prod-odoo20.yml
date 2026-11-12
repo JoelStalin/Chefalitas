@@ -6,6 +6,10 @@ on:
   push:
     branches: ['main']
     tags: ['v20.*']
+    paths-ignore:
+      - '.github/workflows/deploy-prod-odoo20.yml'
+      - '.github/workflows/recover-getupsoft-odoo-schema.yml'
+      - 'docs/operations/getupsoft-odoo-schema-recovery.md'
   workflow_dispatch:
 
 permissions:
