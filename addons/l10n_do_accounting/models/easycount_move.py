@@ -1,5 +1,4 @@
 import logging
-import re
 
 from odoo import _, fields, models
 from odoo.tools import BinaryBytes
@@ -7,6 +6,7 @@ from odoo.exceptions import UserError
 
 from .easycount_client import EasyCountError
 from .easycount_payload import build_issue_payload
+from .ecf_xml import signed_monto_total, signed_sign_stamp
 
 _logger = logging.getLogger(__name__)
 ACCEPTED = {"Aceptado", "Aceptado Condicional", "En Proceso"}
@@ -108,9 +108,12 @@ class AccountMove(models.Model):
             "l10n_do_ecf_sign_date": fields.Datetime.now(),
         }
         if result.get("xml"):
-            signed = re.search(r"<FechaHoraFirma>([^<]+)</FechaHoraFirma>", result["xml"])
-            if signed:
-                vals["l10n_do_ecf_sign_stamp"] = signed.group(1).strip()
+            stamp = signed_sign_stamp(result["xml"])
+            if stamp:
+                vals["l10n_do_ecf_sign_stamp"] = stamp
+            monto = signed_monto_total(result["xml"])
+            if monto:
+                vals["l10n_do_ecf_monto_total"] = monto
             vals["l10n_do_ecf_edi_file"] = BinaryBytes(
                 result["xml"].encode(), f"{self.l10n_do_fiscal_number}.xml"
             )

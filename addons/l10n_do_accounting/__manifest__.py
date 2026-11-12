@@ -10,7 +10,7 @@
     "category": "Localization",
     "license": "LGPL-3",
     "website": "https://getupsoft.com",
-    "version": "20.0.1.1.1",
+    "version": "20.0.1.1.2",
     "countries": ["do"],
     "depends": [
         "l10n_latam_invoice_document",
