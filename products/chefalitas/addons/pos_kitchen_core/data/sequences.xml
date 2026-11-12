@@ -1,0 +1,8 @@
+<odoo>
+    <record id="seq_rest_preparation" model="ir.sequence">
+        <field name="name">Kitchen Preparation</field>
+        <field name="code">rest.preparation</field>
+        <field name="prefix">PREP-</field>
+        <field name="padding">5</field>
+    </record>
+</odoo>

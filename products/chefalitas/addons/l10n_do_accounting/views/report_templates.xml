@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- Dominican invoices print their own DGII header, so the standard
+         recipient and company address blocks are hidden for them.
+         Odoo 20: address_layout renders <div t-if="address">, and every
+         external layout prints the company block through web.company_address_list. -->
+    <template id="web_address_layout_inherited" inherit_id="web.address_layout">
+        <xpath expr="//div[@t-if='address']" position="attributes">
+            <attribute name="t-if">address and not (doc_model == 'account.move' and o and o.country_code == 'DO')</attribute>
+        </xpath>
+    </template>
+
+    <template id="company_address_list_inherited" inherit_id="web.company_address_list">
+        <xpath expr="//ul[@name='company_address_list']" position="attributes">
+            <attribute name="t-if">not (doc_model == 'account.move' and o and o.country_code == 'DO')</attribute>
+        </xpath>
+    </template>
+
+</odoo>
