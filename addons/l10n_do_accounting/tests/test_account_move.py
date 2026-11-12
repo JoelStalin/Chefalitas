@@ -623,6 +623,24 @@ class AccountMoveTest(common.L10nDOTestsCommon):
         sale_invoice_1_id.with_context(l10n_do_active_test=True)._post()
         self.assertEqual(sale_invoice_1_id.l10n_do_electronic_stamp, stamp)
 
+    def test_006b_invoice_electronic_stamp_uses_signed_total(self):
+        """
+        The QR must carry MontoTotal exactly as signed in the e-CF XML. With
+        Odoo's own total (0.01 apart) the DGII answers "No fue encontrada".
+        """
+        sign_date = "2021-10-16"
+        self.do_company.l10n_do_ecf_issuer = True
+        invoice = self._create_l10n_do_invoice(
+            data={"document_number": "E310000000001", "invoice_date": sign_date}
+        )
+        invoice.write({"l10n_do_ecf_security_code": "u83ac1", "l10n_do_ecf_sign_date": sign_date})
+        invoice.with_context(l10n_do_active_test=True)._post()
+        self.assertIn("MontoTotal%3D118%26", invoice.l10n_do_electronic_stamp)
+
+        invoice.l10n_do_ecf_monto_total = "117.99"
+        self.assertIn("MontoTotal%3D117.99%26", invoice.l10n_do_electronic_stamp)
+        self.assertNotIn("MontoTotal%3D118%26", invoice.l10n_do_electronic_stamp)
+
     def test_007_unique_sequence_number(self):
         """
         Check unique sequence number constraint works properly.
