@@ -1,0 +1,10 @@
+services:
+  db:
+    restart: "no"
+    profiles: [qa]
+  odoo:
+    restart: "no"
+    profiles: [qa]
+  nginx:
+    restart: "no"
+    profiles: [qa]

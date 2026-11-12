@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+   <t t-name="pos_system.CustomOrderLine">
+        <t t-set="line" t-value="props.line"/>
+        <tr>
+            <td class="col-qty ta-center">
+            <t t-esc="line.qty"/>
+            </td>
+
+            <td class="col-desc">
+            <div class="product-name fw-bolder">
+                <span t-esc="line.productName"/>
+                <t t-slot="product-name"/>
+            </div>
+
+            <t t-if="!props.basic_receipt and line.price !== 0">
+                <div class="line-secondary">
+                <s t-esc="line.oldUnitPrice" t-if="line.oldUnitPrice"/>
+                <t t-esc="line.unitPrice"/>
+                </div>
+            </t>
+
+            <t t-if="line.price !== 0 and line.discount and line.discount !== '0' and !props.basic_receipt">
+                <div class="line-secondary">
+                <t t-esc="line.price_without_discount"/> con un <em><t t-esc="line.discount"/>%</em> de descuento
+                </div>
+            </t>
+
+            <t t-if="line.customerNote">
+                <div class="customer-note mt-1">
+                <i class="fa fa-sticky-note me-1" role="img" aria-label="Customer Note" title="Customer Note"/>
+                <t t-esc="line.customerNote"/>
+                </div>
+            </t>
+
+            <div class="internal-note-container">
+                <t t-foreach="line.internalNote?.split?.('\n') or []" t-as="note" t-key="note_index">
+                <t t-if="note.trim() !== ''">
+                    <span class="internal-note" t-esc="note"/>
+                </t>
+                </t>
+            </div>
+            </td>
+
+            <td class="col-total ta-right">
+            <div class="product-price price fw-bolder">
+                <t t-if="line.price === 'free'">Free</t>
+                <t t-else="" t-esc="line.price"/>
+            </div>
+            <div t-if="props.showTaxGroupLabels" class="tax-label" t-esc="line.taxGroupLabels"/>
+            </td>
+        </tr>
+        </t>
+
+</templates>

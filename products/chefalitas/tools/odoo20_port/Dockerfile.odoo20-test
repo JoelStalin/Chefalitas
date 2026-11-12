@@ -1,0 +1,11 @@
+# Test-only image: Chefalitas Odoo 20 + Google Chrome + websocket-client for HttpCase/POS tours.
+# Not for deployment. (Ubuntu's "chromium" apt package is only a snap stub, unusable in Docker.)
+FROM chefalitas-odoo20:dev
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends wget ca-certificates gnupg \
+    && wget -q -O /tmp/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
+    && apt-get install -y --no-install-recommends /tmp/chrome.deb \
+    && rm -f /tmp/chrome.deb \
+    && pip3 install --no-cache-dir --break-system-packages websocket-client \
+    && rm -rf /var/lib/apt/lists/*
+USER odoo
