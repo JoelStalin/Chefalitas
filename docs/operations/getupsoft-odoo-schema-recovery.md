@@ -27,3 +27,8 @@ Dispatch `Recover GetUpSoft Odoo schema` from `main` with `target=getupsoft` and
 Stop and investigate if upgrade or health checks fail. Preserve the backup and logs. A rollback would require a separately reviewed GitHub Actions recovery workflow to restore the verified dump and filestore together, then deploy the recorded `previous-sha.txt`; never restore the database alone while running newer code. Do not run direct host SQL, restart, or tunnel changes.
 
 Risk: the `main` delta includes module version `20.0.1.1.2` and its ORM migration, which recalculates signed e-CF QR fields on historical invoices. Review its impact and backup before approving the environment.
+## Retry after run 43227621163
+
+The first approved run verified a backup at `/home/ubuntu/deploy-backups/getupsoft-odoo20/20261112T133617Z-813302767c1844868fe827667d3cc31d65cf26f8`, then stopped before restart because the Odoo CLI did not find `l10n_do_accounting`. The module is mounted at `/mnt/extra-addons`; the retry supplies that path and the Odoo config explicitly. The database now reports the module and its report dependency as `to upgrade`.
+
+The prior dump is retained for rollback but cannot serve as the retry's fresh pre-upgrade backup: the previous attempt changed module state. The retry creates one new DB dump and one filestore archive, checks archive readability and SHA256, then performs the upgrade. Separate workflow steps and UTC timestamps expose backup and upgrade durations; timeouts fail closed. Do not rerun the old workflow revision or invoke the ORM upgrade directly on the host.
